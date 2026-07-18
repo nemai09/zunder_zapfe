@@ -1,0 +1,570 @@
+ANFORDERUNGSKATALOG – ZUNDER ZAPFE
+Version: 0.1
+Stand: 2026-07-18
+Status: Arbeitsstand fuer Stakeholder-Review
+
+1. ZWECK UND FORMAT
+===================
+
+Dieser Katalog beschreibt die Anforderungen an eine automatisierte, offline
+betriebene Zapfanlage fuer den jaehrlich etwa einwoechigen Einsatz auf einem
+Campingplatz.
+
+ID-Schema: ZZ-<Bereich>-<laufende Nummer>
+Prioritaet: MUSS / SOLL / KANN
+Status: AKZEPTIERT / VORGESCHLAGEN / VERTAGT / VERWORFEN
+Pruefung: TEST / INSPEKTION / DEMONSTRATION / ANALYSE
+
+Die IDs bleiben dauerhaft stabil. Eine verworfene Anforderung wird nicht
+geloescht und ihre ID nicht wiederverwendet.
+
+
+2. SYSTEMGRENZEN UND BETRIEB
+============================
+
+[ZZ-SYS-001] Offlinebetrieb
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Das System muss ohne Internetverbindung vollstaendig zapf- und administrierbar
+sein.
+Abnahme: Alle Kernfunktionen funktionieren bei physisch getrennter
+Internetverbindung.
+
+[ZZ-SYS-002] Zielplattform
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Die Anwendung muss auf einem Raspberry Pi mit angeschlossenem Touchdisplay
+betrieben werden.
+Abnahme: Die freigegebene Software ist auf der Zielhardware installiert.
+
+[ZZ-SYS-003] Saisonaler Betrieb
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Das System muss fuer einen jaehrlichen Betriebszeitraum von etwa einer Woche
+geeignet sein und Daten verschiedener Veranstaltungsjahre getrennt verwalten.
+Abnahme: Buchungen koennen eindeutig einer Veranstaltung zugeordnet werden.
+
+[ZZ-SYS-004] Ein aktives Getraenk
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Zu einem Zeitpunkt darf genau ein Getraenk beziehungsweise ein Fass als aktiv
+zum Zapfen konfiguriert sein.
+Abnahme: Die Aktivierung eines neuen Fasses beendet die vorherige aktive
+Fasszuordnung.
+
+[ZZ-SYS-005] Mehrere Getraenke
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss Stammdaten fuer mehrere Getraenke verwalten koennen.
+Abnahme: Mindestens zwei unterschiedliche Getraenke koennen angelegt und
+nacheinander als aktiv verwendet werden.
+
+[ZZ-SYS-006] Konfigurierbare Betriebsparameter
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Zeitfenster, Mengenlimits, Zeitlimits und Durchfluss-Plausibilitaetsgrenzen
+muessen ueber die Adminoberflaeche konfigurierbar sein.
+Abnahme: Eine Parameteranderung wird ohne Quellcodeaenderung wirksam und
+protokolliert.
+
+
+3. BENUTZER, ROLLEN UND AUTHENTIFIZIERUNG
+=========================================
+
+[ZZ-AUT-001] Rollenmodell
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss die Rollen Benutzer und Admin unterstuetzen. Weitere Rollen sind
+nicht erforderlich.
+Abnahme: Berechtigungen werden fuer beide Rollen wie spezifiziert durchgesetzt.
+
+[ZZ-AUT-002] NFC-Authentifizierung am Geraet
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Benutzer und Admins muessen sich am Zapfgeraet mittels zugeordneter NFC-Karte
+authentifizieren koennen.
+Abnahme: Eine bekannte aktive Karte meldet den zugeordneten Benutzer an.
+
+[ZZ-AUT-003] Web-Authentifizierung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Der Zugriff auf geschuetzte Funktionen der Weboberflaeche muss mit einem
+Passwort authentifiziert werden koennen.
+Abnahme: Ohne gueltige Anmeldedaten ist kein Zugriff auf Adminfunktionen moeglich.
+
+[ZZ-AUT-004] Benutzerverwaltung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins muessen Benutzer anlegen, bearbeiten und NFC-Karten zuordnen koennen.
+Die konkrete Oberflaechengestaltung wird spaeter festgelegt.
+Abnahme: Ein Admin kann einen neuen Benutzer mit NFC-Karte funktionsfaehig
+anlegen.
+
+[ZZ-AUT-005] Adminvergabe
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins muessen Benutzer zu Admins ernennen und ihnen die Adminrolle wieder
+entziehen koennen.
+Abnahme: Die geaenderte Rolle wirkt bei der naechsten Autorisierungspruefung.
+
+[ZZ-AUT-006] Initialer Admin
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Das ausgelieferte System muss einen integrierten initialen Admin bereitstellen,
+damit die Erstkonfiguration ohne vorhandenen Benutzer moeglich ist.
+Abnahme: Nach einer Neuinstallation kann die Administration gestartet werden.
+
+[ZZ-AUT-007] Kartensperre
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins muessen verlorene NFC-Karten sperren koennen.
+Abnahme: Eine gesperrte Karte ermoeglicht keine Anmeldung oder Zapfung.
+
+[ZZ-AUT-008] Unbekannte NFC-Karten
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Unbekannte NFC-Karten muessen ohne Zustandsaenderung ignoriert werden.
+Abnahme: Das Vorhalten einer unbekannten Karte oeffnet kein Ventil und meldet
+keinen Benutzer an.
+
+[ZZ-AUT-009] NFC waehrend des Zapfens
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Weitere NFC-Leseereignisse muessen waehrend eines laufenden Zapfvorgangs
+ignoriert werden.
+Abnahme: Ein zweites NFC-Medium veraendert weder Benutzer noch Zapfvorgang.
+
+[ZZ-AUT-010] Manueller und automatischer Logout
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Die Benutzeroberflaeche muss einen Logout-Button anbieten und nach einer durch
+Admins konfigurierbaren Inaktivitaetszeit automatisch abmelden.
+Abnahme: Beide Wege beenden die Sitzung und verhindern anschliessendes Zapfen
+ohne neue Authentifizierung.
+
+
+4. GETRAENKE, FAESSER UND BESTAND
+================================
+
+[ZZ-KEG-001] Getraenkestammdaten
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Fuer ein Getraenk muessen mindestens Sorte, individuelle Fassgroesse und Preis
+pro Liter gespeichert werden.
+Abnahme: Alle drei Werte koennen gespeichert und beim Zapfen verwendet werden.
+
+[ZZ-KEG-002] Neues Fass
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Die Adminoberflaeche muss eine Funktion "Neues Fass" anbieten, mit der ein Admin
+das Getraenk und die Fassgroesse des neu angezapften Fasses festlegt.
+Abnahme: Nach Abschluss ist das neue Fass aktiv und der Startbestand gesetzt.
+
+[ZZ-KEG-003] Kein Umzapfen von Restbestand
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Eine Uebertragung des Restbestands eines alten Fasses in ein neues Fass muss
+nicht unterstuetzt werden.
+Abnahme: Der Fasswechsel kann ohne Restbestandsuebernahme abgeschlossen werden.
+
+[ZZ-KEG-004] Rechnerischer Fassbestand
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss den Fassbestand aus Startmenge und allen gemessenen Entnahmen
+fortschreiben.
+Abnahme: Der angezeigte Bestand entspricht Startmenge minus protokollierter
+Entnahmen.
+
+[ZZ-KEG-005] Erweiterung um Waage
+Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: INSPEKTION
+Die Architektur soll eine spaetere externe Fuellstandsmessung als sekundaere
+Bestandsueberwachung ueber eine austauschbare Schnittstelle erlauben.
+MQTT ist der derzeit bevorzugte, aber noch nicht verbindliche Transport.
+Abnahme: Die Architektur definiert eine vom konkreten Waagentyp unabhaengige
+Fuellstandsschnittstelle.
+
+
+5. PORTIONSWAHL UND ZAPFVORGANG
+===============================
+
+[ZZ-TAP-001] Standardgroessen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss mehrere vorkonfigurierte Standard-Portionsgroessen am
+Touchdisplay zur Auswahl anzeigen.
+Abnahme: Alle konfigurierten Standardgroessen sind fuer einen angemeldeten
+Benutzer auswaehlbar.
+
+[ZZ-TAP-002] Individuelle Sondergroesse
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein Admin muss fuer jeden Benutzer hoechstens eine individuelle Sondergroesse
+hinterlegen koennen.
+Abnahme: Die Sondergroesse erscheint nur beim zugeordneten Benutzer.
+
+[ZZ-TAP-003] Sondergroessen-Grenzen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Minimal- und Maximalwert fuer Sondergroessen muessen administrativ
+konfigurierbar sein. Eine Sondergroesse darf einer Standardgroesse entsprechen.
+Abnahme: Werte ausserhalb der Grenzen werden abgelehnt; gleiche Werte sind
+zulaessig.
+
+[ZZ-TAP-004] Protokollierung der Sondergroesse
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Aenderungen einer Sondergroesse muessen mit altem Wert, neuem Wert, Zeitpunkt
+und ausfuehrendem Admin protokolliert werden.
+Abnahme: Nach einer Aenderung ist ein entsprechender Protokolleintrag vorhanden.
+
+[ZZ-TAP-005] Start durch Groessenauswahl
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Die Auswahl einer Portionsgroesse muss den Zapfvorgang unmittelbar starten; ein
+separater Startknopf ist nicht vorzusehen.
+Abnahme: Eine gueltige Auswahl oeffnet das Ventil ohne weitere Bestaetigung.
+
+[ZZ-TAP-006] Automatisches Fuellen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss das Ventil oeffnen, Sensorimpulse zaehlen und bei Erreichen der
+gewaehlten Zielmenge schliessen.
+Abnahme: Der Vorgang endet selbststaendig aufgrund des gemessenen Volumens.
+
+[ZZ-TAP-007] Manueller Abbruch
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein laufender Zapfvorgang muss ueber einen Touchscreen-Button abgebrochen werden
+koennen.
+Abnahme: Die Betaetigung schliesst das Ventil und beendet die Messung.
+
+[ZZ-TAP-008] Abrechnung der Istmenge
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Bei Abschluss oder Abbruch darf ausschliesslich die tatsaechlich gemessene Menge
+verbucht werden.
+Abnahme: Die Buchungsmenge entspricht dem Zaehlergebnis und nicht der Zielmenge.
+
+[ZZ-TAP-009] Nachfuellfunktion
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Nach einer automatischen Portion muss fuer ein konfigurierbares kurzes Zeitfenster
+ein Nachfuellbutton angeboten werden, der das Ventil nur solange oeffnet, wie er
+gedrueckt gehalten wird.
+Abnahme: Druecken oeffnet, Loslassen schliesst und die gemessene Nachfuellmenge
+wird dem angemeldeten Benutzer zugerechnet.
+
+[ZZ-TAP-010] Begrenzung der Nachfuellfunktion
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das Nachfuellfenster sowie maximale Menge und Oeffnungszeit muessen ueber die
+Adminoberflaeche konfigurierbar sein.
+Abnahme: Das Ventil schliesst bei Loslassen oder Erreichen eines Grenzwerts.
+
+[ZZ-TAP-011] Freies Zapfen fuer Admins
+Prioritaet: SOLL | Status: AKZEPTIERT | Pruefung: TEST
+Admins sollen ausserhalb des Wartungsmodus eine freie Zapffunktion verwenden
+koennen. Dabei muss jede gemessene Menge dem Admin berechnet werden.
+Abnahme: Eine freie Adminzapfung erzeugt eine kostenpflichtige Mengenbuchung.
+
+[ZZ-TAP-012] Glasentfernung
+Prioritaet: KANN | Status: VERWORFEN | Pruefung: INSPEKTION
+Eine Erkennung, ob ein Glas waehrend des Zapfens entfernt wird, ist nicht
+Bestandteil des Systems.
+Abnahme: Keine Implementierung erforderlich.
+
+
+6. DURCHFLUSSMESSUNG UND HARDWAREANSTEUERUNG
+============================================
+
+[ZZ-HW-001] NFC-Leser
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Der NFC-Leser muss ueber USB an den Raspberry Pi angebunden werden.
+Abnahme: NFC-Karten koennen ueber das vorgesehene USB-Geraet gelesen werden.
+
+[ZZ-HW-002] Ventilansteuerung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Das Bierventil muss ueber eine GPIO-gesteuerte, elektrisch geeignete Treiberstufe
+freigegeben werden.
+Abnahme: Die Software kann das Ventil kontrolliert oeffnen und schliessen, ohne
+den GPIO elektrisch zu ueberlasten.
+
+[ZZ-HW-003] Stromlos geschlossenes Ventil
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das Ventil muss ohne Versorgung beziehungsweise Freigabe geschlossen sein.
+Abnahme: Bei ausgeschaltetem Raspberry Pi fliesst kein Getraenk.
+
+[ZZ-HW-004] Durchflusssensor
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Der Durchfluss muss ueber einen Dijiang OF07ZAT oder einen funktional
+gleichwertigen GPIO-Impulssensor gemessen werden.
+Abnahme: Sensorimpulse werden zu einem gemessenen Volumen verarbeitet.
+
+[ZZ-HW-005] Primaere Mengenquelle
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Der Durchflusszaehler muss die primaere Quelle fuer Fuellsteuerung, Verbrauch und
+Abrechnung sein.
+Abnahme: Zielabschaltung und Buchungsmenge beruhen auf den Sensorimpulsen.
+
+[ZZ-HW-006] Messwert als Abrechnungsgrundlage
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Die vom System gemessene Menge gilt unabhaengig von einer gesonderten
+Genauigkeitszusage als Abrechnungsgrundlage.
+Abnahme: Einzelabrechnungen verwenden die gespeicherte Messmenge.
+
+
+7. SICHERHEIT UND FEHLERBEHANDLUNG
+==================================
+
+[ZZ-SAF-001] Not-Aus-Oeffnerkontakt
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Der Not-Aus muss als Oeffnerkontakt ausgefuehrt werden.
+Abnahme: Betaetigung und Leitungsunterbrechung werden als Not-Aus erkannt.
+
+[ZZ-SAF-002] Hardwareseitige Ventilunterbrechung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Der Not-Aus-Schalter muss zusaetzlich zur Softwaremeldung die Ansteuerung des
+Ventils hardwareseitig unterbrechen.
+Abnahme: Das Ventil schliesst bei Not-Aus auch bei nicht reagierender Software.
+
+[ZZ-SAF-003] Rueckstellung durch Admin
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Nach einem Not-Aus muss die Anlage gesperrt bleiben, bis ein Admin sie bewusst
+zuruecksetzt.
+Abnahme: Das Wiederherstellen des Kontakts allein erlaubt noch keine Zapfung.
+
+[ZZ-SAF-004] Ausbleibender Durchfluss
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Bleiben bei geoeffnetem Ventil nach einer konfigurierten Anlaufzeit die
+Sensorimpulse aus, muss das System das Ventil schliessen und die Anlage sperren.
+Abnahme: Ein simulierter Impulsausfall beendet die Zapfung und setzt eine Sperre.
+
+[ZZ-SAF-005] Sekundaere Zeitueberwachung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss konfigurierbare Grenzen fuer Zeit bis zum ersten Impuls, Zeit
+zwischen Impulsen und gesamte Zapfdauer ueberwachen.
+Abnahme: Jede Grenzverletzung fuehrt zur konfigurierten sicheren Reaktion.
+
+[ZZ-SAF-006] Plausibilitaetsueberwachung
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: TEST
+Das System muss konfigurierbare Durchfluss-Plausibilitaetsregeln unterstuetzen.
+Die konkreten Grenzwerte und Sperrfaelle werden spaeter festgelegt.
+Abnahme: Konfigurierte Regeln erkennen simulierte unplausible Werte.
+
+[ZZ-SAF-007] Fehlerreset
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins muessen alle durch die Anwendung gesetzten Fehlersperren zuruecksetzen
+koennen, sofern der Not-Aus nicht mehr aktiv ist.
+Abnahme: Nach Behebung der Ursache kann ein Admin die Betriebsbereitschaft
+wiederherstellen.
+
+[ZZ-SAF-008] Backend-Watchdog
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein Backend-Watchdog muss das Ventil schliessen, wenn die Weboberflaeche oder die
+Steuerkommunikation waehrend einer Ventilfreigabe ausfaellt.
+Abnahme: Eine simulierte Kommunikationsunterbrechung fuehrt innerhalb des
+festgelegten Zeitlimits zum Schliessen.
+
+[ZZ-SAF-009] Sicherer Neustart
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Bei Browserfehler, Software-Neustart, Betriebssystem-Neustart oder Stromausfall
+darf das Ventil nicht geoeffnet bleiben oder automatisch erneut oeffnen.
+Abnahme: Nach jedem simulierten Ausfall ist das Ventil geschlossen.
+
+[ZZ-SAF-010] Automatische Start-Selbsttests
+Prioritaet: KANN | Status: VERWORFEN | Pruefung: INSPEKTION
+Umfassende automatische Hardware-Selbsttests beim Systemstart sind fuer die
+erste Ausbaustufe nicht erforderlich.
+Abnahme: Keine Implementierung erforderlich; sichere GPIO-Initialisierung bleibt
+davon unberuehrt.
+
+
+8. WARTUNG
+===========
+
+[ZZ-MNT-001] Wartungsmodus
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins muessen einen Wartungsmodus fuer Spuelungen und Testzapfungen aktivieren
+koennen.
+Abnahme: Nur ein Admin kann den Wartungsmodus starten und beenden.
+
+[ZZ-MNT-002] Wartungsmengen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Im Wartungsmodus muessen entnommene Mengen gemessen und als Wartungsverbrauch
+gespeichert, aber keinem Benutzer berechnet werden.
+Abnahme: Der Fassbestand sinkt, ohne dass eine kostenpflichtige Benutzerbuchung
+entsteht.
+
+
+9. PREISE UND ABRECHNUNG
+========================
+
+[ZZ-BIL-001] Getraenkepreis
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Jedes Getraenk muss einen eigenen Preis pro Liter besitzen.
+Abnahme: Zwei Getraenke koennen unterschiedliche Preise verwenden.
+
+[ZZ-BIL-002] Nachtraegliche Abrechnung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Im laufenden Betrieb duerfen keine Zahlungen verarbeitet werden; stattdessen
+muessen Mengen und daraus resultierende Betraege pro Benutzer akkumuliert werden.
+Abnahme: Eine Zapfung veraendert die Abrechnung, loest aber keinen Zahlungsvorgang
+aus.
+
+[ZZ-BIL-003] Unveraenderliche Zapfbuchungen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Gespeicherte Zapfbuchungen duerfen nach ihrer Erstellung nicht inhaltlich
+veraendert werden.
+Abnahme: Die Anwendung bietet keine Aenderung einer abgeschlossenen Buchung an.
+
+[ZZ-BIL-004] Einzelabrechnung
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
+Das System muss fuer jeden Benutzer eine Einzelabrechnung ueber Mengen und
+Betraege einer Veranstaltung erzeugen koennen. Format und Detailinhalt werden
+spaeter festgelegt.
+Abnahme: Fuer einen Benutzer kann eine nachvollziehbare Gesamtabrechnung erzeugt
+werden.
+
+[ZZ-BIL-005] Happy Hour
+Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
+Admins sollen eine zeitlich begrenzte Happy Hour mit einstellbarem Preis
+konfigurieren koennen. Detailregeln werden spaeter festgelegt.
+Abnahme: Zapfungen innerhalb eines konfigurierten Zeitraums verwenden den dafuer
+gesetzten Preis.
+
+[ZZ-BIL-006] Storno und Korrektur
+Prioritaet: KANN | Status: VERTAGT | Pruefung: INSPEKTION
+Ob und wie Fehlbuchungen durch separate, protokollierte Storno- oder
+Korrekturbuchungen berichtigt werden, wird spaeter entschieden.
+Abnahme: Noch keine Implementierung fuer die erste Planung verbindlich.
+
+
+10. BENUTZEROBERFLAECHE UND NETZWERK
+====================================
+
+[ZZ-UI-001] Lokale Weboberflaeche
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Benutzer- und Adminfunktionen muessen als lokale Webanwendung bereitgestellt
+werden.
+Abnahme: Die spezifizierten Funktionen sind ueber einen Browser erreichbar.
+
+[ZZ-UI-002] Kioskmodus
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Die Benutzeroberflaeche muss auf dem Touchdisplay im Kioskmodus angezeigt werden.
+Abnahme: Nach dem Systemstart erscheint die Zapfoberflaeche ohne allgemeine
+Browserbedienung.
+
+[ZZ-UI-003] Anzeige laufender Zapfung
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
+Die Oberflaeche soll waehrend einer Zapfung mindestens Zielmenge, gemessene Menge
+und eine Abbruchmoeglichkeit anzeigen.
+Abnahme: Die drei Informationen beziehungsweise Aktionen sind waehrend des
+Vorgangs sichtbar.
+
+[ZZ-NET-001] Admin-WLAN
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Das System muss dauerhaft ein lokales WLAN fuer den Zugriff auf die
+Adminoberflaeche bereitstellen.
+Abnahme: Ein berechtigtes Geraet kann sich ohne Internetzugang verbinden und die
+Adminoberflaeche erreichen.
+
+[ZZ-NET-002] WLAN- und Websicherheit
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
+Passwortschutz, Passwortwechsel und weitere Zugriffsschutzdetails fuer WLAN und
+Adminoberflaeche muessen vor dem Produktiveinsatz festgelegt werden.
+Abnahme: Die spaeter spezifizierten Schutzmassnahmen bestehen die Zugriffstests.
+
+
+11. DATEN, PROTOKOLLIERUNG UND EXPORT
+=====================================
+
+[ZZ-DAT-001] Persistente Speicherung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das System muss bestaetigte Buchungen und Konfiguration dauerhaft auf dem
+Raspberry Pi speichern.
+Abnahme: Daten bleiben nach einem Neustart erhalten.
+
+[ZZ-DAT-002] Zapfdatensatz
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Eine Zapfbuchung muss mindestens Veranstaltung, Benutzer, Getraenk, Fass,
+Zeitpunkt, gewaehlte Zielgroesse, gemessene Menge, gueltigen Preis, Betrag,
+Vorgangsart und Abschlussstatus enthalten.
+Abnahme: Ein Testvorgang erzeugt einen vollstaendigen Datensatz.
+
+[ZZ-DAT-003] Protokollierung von Adminaktionen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Alle zustands- oder konfigurationsaendernden Adminaktionen muessen mit Zeitpunkt,
+Admin, Aktion sowie relevanten alten und neuen Werten protokolliert werden.
+Abnahme: Jede getestete Adminaenderung ist im Protokoll nachvollziehbar.
+
+[ZZ-DAT-004] Technisches Ereignisprotokoll
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Technische Ereignisse, Fehler, Sperren, Not-Aus-Ausloesungen und Rueckstellungen
+muessen protokolliert werden.
+Abnahme: Simulierte Ereignisse erzeugen entsprechende Protokolleintraege.
+
+[ZZ-DAT-005] Sichtbarkeit von Verbrauchsdaten
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Admins duerfen alle Verbrauchsdaten sehen; ein Benutzer darf ausschliesslich
+seine eigenen persoenlichen Verbrauchs- und Abrechnungsdaten sehen.
+Abnahme: Ein Benutzer kann Daten eines anderen Benutzers nicht abrufen.
+
+[ZZ-DAT-006] Unbegrenzte Aufbewahrung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Veranstaltungs-, Verbrauchs- und Protokolldaten muessen ohne automatische
+Loeschfrist gespeichert werden.
+Abnahme: Es existiert keine automatische altersbasierte Loeschfunktion.
+
+[ZZ-DAT-007] Trennung der Veranstaltungsjahre
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Daten muessen nach Veranstaltung beziehungsweise Veranstaltungsjahr getrennt
+filter- und abrechenbar sein.
+Abnahme: Auswertungen einer Veranstaltung enthalten keine Buchungen einer
+anderen Veranstaltung.
+
+[ZZ-DAT-008] Backup und Wiederherstellung
+Prioritaet: SOLL | Status: VERTAGT | Pruefung: DEMONSTRATION
+Das System soll Backup, Export und Wiederherstellung der relevanten Daten
+unterstuetzen. Verfahren, Frequenz und Zielmedium werden spaeter festgelegt.
+Abnahme: Wird nach spaeterer Spezifikation ergaenzt.
+
+
+12. ZEITBASIS UND OPTIONALE ERWEITERUNGEN
+=========================================
+
+[ZZ-TIM-001] Verlaessliche Offline-Zeit
+Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
+Das System soll ohne Internet eine fuer Buchungen, Protokolle und Happy Hour
+ausreichend verlaessliche Uhrzeit bereitstellen. Eine I2C-Echtzeituhr wird als
+moegliche Loesung geprueft.
+Abnahme: Nach einem stromlosen Test sind Datum und Uhrzeit innerhalb der spaeter
+festgelegten Toleranz korrekt.
+
+
+13. NICHTFUNKTIONALE ANFORDERUNGEN
+=================================
+
+[ZZ-NFR-001] Sichere Grundstellung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+In jedem nicht eindeutig kontrollierten Zustand muss das System das Ventil
+schliessen beziehungsweise dessen Freigabe entfernen.
+Abnahme: Die definierten Ausfall- und Neustartszenarien hinterlassen ein
+geschlossenes Ventil.
+
+[ZZ-NFR-002] Nachvollziehbarkeit
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: INSPEKTION
+Anforderungen, Implementierung und Tests muessen ueber stabile Anforderungs-IDs
+nachverfolgbar sein.
+Abnahme: Tests und spaetere technische Entscheidungen referenzieren die jeweils
+betroffenen ZZ-IDs.
+
+[ZZ-NFR-003] Bedienung am Touchdisplay
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
+Die Kernbedienung muss mit dem vorgesehenen Touchdisplay ohne Tastatur und Maus
+moeglich sein.
+Abnahme: Authentifizierung, Portionswahl, Abbruch, Nachfuellen und Logout koennen
+am Zielgeraet ausgefuehrt werden.
+
+[ZZ-NFR-004] Messgenauigkeitsgarantie
+Prioritaet: KANN | Status: VERWORFEN | Pruefung: INSPEKTION
+Eine ueber die verwendete Sensorik und Konfiguration hinausgehende garantierte
+Messgenauigkeit ist nicht gefordert.
+Abnahme: Keine zusaetzliche Genauigkeitszusage erforderlich.
+
+
+14. OFFENE ENTSCHEIDUNGEN
+=========================
+
+OD-001: Konkrete Standard-Portionsgroessen.
+OD-002: Konkrete Defaultwerte fuer Nachfuellfenster und automatischen Logout.
+OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
+OD-004: Detailregeln der Happy Hour.
+OD-005: Format und Inhalt der Einzelabrechnung.
+OD-006: Storno- und Korrekturverfahren.
+OD-007: Backup-, Export- und Wiederherstellungsverfahren.
+OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
+OD-009: Sicherheitskonzept fuer dauerhaftes Admin-WLAN und Webzugriff.
+OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
+OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
+
+
+15. TRACEABILITY-REGELN
+=======================
+
+1. Implementierungsaufgaben referenzieren mindestens eine ZZ-ID.
+2. Testfaelle referenzieren alle durch sie verifizierten ZZ-IDs.
+3. Architekturentscheidungen nennen die betroffenen ZZ-IDs.
+4. Eine ZZ-ID wird niemals umnummeriert oder wiederverwendet.
+5. Inhaltliche Aenderungen erfolgen nachvollziehbar ueber Git.
+6. Vertagte Anforderungen werden vor Aufnahme in einen Release erneut bewertet.
+
