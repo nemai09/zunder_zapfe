@@ -29,3 +29,8 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Personal scratch notes (never shared)
+notes.local.md
+*.notes.local.md
+.local/
+

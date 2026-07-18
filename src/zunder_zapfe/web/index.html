@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17140f">
+    <title>Zunder Zapfe – Systemtest</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="screen">
+      <section class="hero" aria-labelledby="title">
+        <p class="eyebrow">Raspberry Pi · Kiosk-Test</p>
+        <h1 id="title">Zunder Zapfe</h1>
+        <p class="lead">Die lokale Weboberfläche ist gestartet.</p>
+      </section>
+
+      <section class="status-card" aria-live="polite">
+        <span class="status-light" id="status-light"></span>
+        <div>
+          <p class="status-label">Backendstatus</p>
+          <p class="status-value" id="status-value">Verbindung wird geprüft …</p>
+          <p class="status-detail" id="status-detail"></p>
+        </div>
+      </section>
+
+      <footer>
+        <span>Testseite · noch keine Ventilsteuerung</span>
+        <time id="clock"></time>
+      </footer>
+    </main>
+
+    <script>
+      const statusLight = document.querySelector("#status-light");
+      const statusValue = document.querySelector("#status-value");
+      const statusDetail = document.querySelector("#status-detail");
+      const clock = document.querySelector("#clock");
+
+      function updateClock() {
+        clock.textContent = new Intl.DateTimeFormat("de-DE", {
+          dateStyle: "medium",
+          timeStyle: "medium",
+        }).format(new Date());
+      }
+
+      async function updateHealth() {
+        try {
+          const response = await fetch("/api/health", { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const health = await response.json();
+          statusLight.className = "status-light ready";
+          statusValue.textContent = "Bereit";
+          statusDetail.textContent = `Backend ${health.version} · ${health.application}`;
+        } catch (error) {
+          statusLight.className = "status-light failed";
+          statusValue.textContent = "Backend nicht erreichbar";
+          statusDetail.textContent = String(error);
+        }
+      }
+
+      updateClock();
+      updateHealth();
+      window.setInterval(updateClock, 1000);
+      window.setInterval(updateHealth, 3000);
+    </script>
+  </body>
+</html>
