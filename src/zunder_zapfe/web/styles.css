@@ -1,0 +1,137 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #17140f;
+  color: #fff8e7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 10%, rgb(232 154 31 / 26%), transparent 35%),
+    radial-gradient(circle at 10% 90%, rgb(117 72 20 / 45%), transparent 40%),
+    #17140f;
+}
+
+.screen {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  min-height: 100vh;
+  padding: clamp(1.5rem, 4vw, 4rem);
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+.hero {
+  align-self: end;
+}
+
+.eyebrow,
+.status-label {
+  margin: 0 0 0.5rem;
+  color: #eaa53a;
+  font-size: clamp(0.85rem, 1.5vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  max-width: 10ch;
+  font-size: clamp(4rem, 13vw, 10rem);
+  line-height: 0.86;
+  letter-spacing: -0.065em;
+}
+
+.lead {
+  margin: 1.5rem 0 0;
+  color: #d7cbb2;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.5rem;
+  background: rgb(255 255 255 / 6%);
+  backdrop-filter: blur(10px);
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+}
+
+.status-card > div {
+  min-width: 0;
+}
+
+.status-light {
+  width: clamp(1.5rem, 4vw, 2.5rem);
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #8c806e;
+  box-shadow: 0 0 0 0.5rem rgb(140 128 110 / 12%);
+}
+
+.status-light.ready {
+  background: #58d68d;
+  box-shadow: 0 0 0 0.5rem rgb(88 214 141 / 13%), 0 0 2rem rgb(88 214 141 / 45%);
+}
+
+.status-light.failed {
+  background: #ff6b5f;
+  box-shadow: 0 0 0 0.5rem rgb(255 107 95 / 13%), 0 0 2rem rgb(255 107 95 / 45%);
+}
+
+.status-value,
+.status-detail {
+  margin: 0;
+}
+
+.status-value {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 750;
+}
+
+.status-detail {
+  margin-top: 0.25rem;
+  color: #b9ad96;
+  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  color: #948a78;
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+}
+
+@media (max-width: 640px) {
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  footer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

@@ -1,0 +1,22 @@
+[Unit]
+Description=Zunder Zapfe local web application
+After=local-fs.target
+
+[Service]
+Type=simple
+User=@@SERVICE_USER@@
+Group=@@SERVICE_USER@@
+WorkingDirectory=@@APP_DIR@@
+EnvironmentFile=-/etc/zunder-zapfe/web.env
+ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/zunder-zapfe /var/log/zunder-zapfe
+
+[Install]
+WantedBy=multi-user.target

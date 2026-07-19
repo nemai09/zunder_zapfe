@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .venv/
 
 # Node
@@ -29,3 +30,7 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Personal scratch notes (never shared)
+notes.local.md
+*.notes.local.md
+.local/

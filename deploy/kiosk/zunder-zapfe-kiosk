@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -u
+
+url="${ZUNDER_ZAPFE_KIOSK_URL:-http://127.0.0.1:8000}"
+
+# Give systemd up to 60 seconds to bring up the local application. Chromium is
+# opened afterwards even on failure so that the target display remains useful
+# for diagnosis instead of staying on the desktop indefinitely.
+for _attempt in $(seq 1 60); do
+  if curl --silent --fail --max-time 2 "${url}/api/health" >/dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+exec chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --no-first-run \
+  --disable-session-crashed-bubble \
+  --start-maximized \
+  --enable-features=OverlayScrollbar \
+  "${url}"
