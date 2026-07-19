@@ -3,6 +3,17 @@ set -euo pipefail
 
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "Commit: $(git -C "${repo_dir}" rev-parse --short HEAD)"
+echo "Modell: $(tr -d '\0' </proc/device-tree/model 2>/dev/null || echo unbekannt)"
+echo "Python: $("${repo_dir}/.venv/bin/python" --version)"
+echo
+
+echo "1/5 Python-Tests"
+env -u ZUNDER_ZAPFE_DATABASE_URL "${repo_dir}/.venv/bin/python" -m pytest
+
+# Load the deployed configuration only after the isolated test suite. Otherwise
+# Alembic would migrate the production database instead of each temporary test
+# database selected by the tests.
 if [[ -f /etc/zunder-zapfe/web.env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -10,14 +21,6 @@ if [[ -f /etc/zunder-zapfe/web.env ]]; then
   set +a
 fi
 export ZUNDER_ZAPFE_DATABASE_URL="${ZUNDER_ZAPFE_DATABASE_URL:-sqlite:////var/lib/zunder-zapfe/zunder-zapfe.db}"
-
-echo "Commit: $(git -C "${repo_dir}" rev-parse --short HEAD)"
-echo "Modell: $(tr -d '\0' </proc/device-tree/model 2>/dev/null || echo unbekannt)"
-echo "Python: $("${repo_dir}/.venv/bin/python" --version)"
-echo
-
-echo "1/5 Python-Tests"
-"${repo_dir}/.venv/bin/python" -m pytest
 
 echo "2/5 Datenbankschema"
 "${repo_dir}/.venv/bin/alembic" -c "${repo_dir}/alembic.ini" current --check-heads

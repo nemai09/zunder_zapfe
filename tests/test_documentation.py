@@ -102,3 +102,13 @@ def test_pi_installer_runs_repository_pip_as_service_user() -> None:
     assert installer.count(run_as_user) >= 3
     assert '  "${app_dir}/.venv/bin/python" -m pip install' in installer
     assert '\n"${app_dir}/.venv/bin/python" -m pip install' not in installer
+
+
+def test_pi_verification_isolates_tests_from_production_database() -> None:
+    verification = (PROJECT_ROOT / "scripts" / "pi-verify.sh").read_text(encoding="utf-8")
+
+    pytest_position = verification.index('python" -m pytest')
+    environment_position = verification.index("source /etc/zunder-zapfe/web.env")
+
+    assert "env -u ZUNDER_ZAPFE_DATABASE_URL" in verification
+    assert pytest_position < environment_position
