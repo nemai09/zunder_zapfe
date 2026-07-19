@@ -67,6 +67,12 @@ Verifikation erfolgt ausschliesslich auf dem Raspberry Pi:
 Die Einrichtung des USB-NFC-Lesers ACS ACR122U ist unter
 [`docs/operations/acr122u-nfc.md`](docs/operations/acr122u-nfc.md) beschrieben.
 
+Fuer die Diagnose kann die SQLite-Datenbank mit einer separat gestarteten,
+schreibgeschuetzten Weboberflaeche untersucht werden. Die sichere Verwendung ist
+unter
+[`docs/operations/database-browser.md`](docs/operations/database-browser.md)
+beschrieben.
+
 ## Zusammenarbeit
 
 Aenderungen an Anforderungen behalten ihre ID. Inhaltliche Aenderungen werden in

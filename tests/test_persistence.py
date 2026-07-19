@@ -103,6 +103,14 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     command.check(alembic_config(str(migrated_engine.url)))
 
 
+def test_initial_migration_creates_missing_database_directory(tmp_path: Path) -> None:
+    database_path = tmp_path / "new-data-directory" / "zunder-zapfe-test.db"
+
+    command.upgrade(alembic_config(sqlite_url(database_path)), "head")
+
+    assert database_path.is_file()
+
+
 def test_repository_persists_core_domain_and_calculates_amount(
     migrated_engine: Engine,
 ) -> None:

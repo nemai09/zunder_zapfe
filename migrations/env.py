@@ -5,9 +5,8 @@ from __future__ import annotations
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
 
-from zunder_zapfe.persistence.database import database_url
+from zunder_zapfe.persistence.database import create_database_engine, database_url
 from zunder_zapfe.persistence.models import Base
 
 config = context.config
@@ -31,11 +30,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = create_database_engine(config.get_main_option("sqlalchemy.url"))
     with connectable.connect() as connection:
         if connection.dialect.name == "sqlite":
             connection.exec_driver_sql("PRAGMA foreign_keys=ON")
