@@ -85,7 +85,9 @@ beschrieben.
 Ein vollstaendiger Alpha-Test mit Demo-Benutzer, simulierter Zapfung,
 Datenbankkontrolle und Neustart ist unter
 [`docs/operations/alpha-integration-test.md`](docs/operations/alpha-integration-test.md)
-dokumentiert.
+dokumentiert. Das Kommando `zunder-zapfe-smoke-test` fuehrt Zapfstart,
+simulierte Durchflussimpulse und die Persistenzpruefung ohne manuelle
+Watchdog-relevante Pause aus.
 
 ## Zusammenarbeit
 

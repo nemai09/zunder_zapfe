@@ -37,6 +37,7 @@ from zunder_zapfe.persistence.models import (
     UserRole,
 )
 from zunder_zapfe.persistence.repository import Repository
+from zunder_zapfe.smoke_test import run_smoke_test
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXED_TIME = datetime(2026, 7, 19, 20, 0, tzinfo=UTC)
@@ -342,6 +343,37 @@ def test_zz_saf_004_and_dat_004_fault_is_booked_and_logged(
         stop_service(service, hardware)
 
 
+def test_zz_saf_003_007_and_dat_004_admin_card_resets_and_logs_latched_fault(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    clock = ManualClock()
+    service, hardware, nfc, _flow_meter = start_service(sessions, clock)
+    try:
+        service.authenticate_card("04AABBCC")
+        service.start_portion(20)
+        clock.advance(2)
+        service.heartbeat()
+        assert service.poll()["state"] is TapState.FAULT_LOCKED
+
+        nfc.present_card("04AABBCC")
+        with pytest.raises(TapUnavailable, match="active admin card"):
+            service.reset_safety_lock()
+
+        nfc.present_card("04DDEEFF")
+        status = service.reset_safety_lock()
+
+        assert status["state"] is TapState.IDLE
+        assert status["user_id"] is None
+        assert hardware.valve.snapshot().is_open is False
+        with sessions() as session:
+            events = list(session.scalars(select(TechnicalEvent)))
+            assert any(event.event_type == "tap.safety_reset" for event in events)
+    finally:
+        stop_service(service, hardware)
+
+
 def test_zz_dat_001_persistence_failure_safely_locks_the_tap(
     database: tuple[Engine, sessionmaker[Session]],
 ) -> None:
@@ -417,6 +449,68 @@ def test_zz_nfr_003_simulator_api_exercises_integrated_flow(
         assert started.status_code == 200
         assert completed.json()["state"] == "top_up_available"
         assert consumption.json()["measured_volume_ml"] == 20
+
+
+def test_smoke_test_command_exercises_and_verifies_public_api(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    hardware, _nfc, _flow_meter = simulated_hardware()
+
+    with TestClient(
+        create_app(
+            hardware,
+            sessions,
+            enable_simulator_api=True,
+            run_background=False,
+        )
+    ) as client:
+        client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})
+
+        class TestClientAdapter:
+            @staticmethod
+            def request_json(
+                method: str, path: str, payload: dict[str, object] | None = None
+            ) -> dict[str, object]:
+                response = client.request(method, path, json=payload)
+                assert response.status_code < 400, response.text
+                return response.json()
+
+        result = run_smoke_test(TestClientAdapter(), target_volume_ml=20, pulses_per_liter=500)
+
+        assert result.measured_volume_ml == 20
+        assert result.amount_cents == 9
+        assert result.remaining_volume_ml == 49_980
+
+
+def test_safety_reset_api_accepts_presented_admin_card(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    hardware, _nfc, _flow_meter = simulated_hardware()
+    emergency_stop = hardware.emergency_stop
+    assert isinstance(emergency_stop, SimulatedEmergencyStop)
+
+    with TestClient(
+        create_app(
+            hardware,
+            sessions,
+            enable_simulator_api=True,
+            run_background=False,
+        )
+    ) as client:
+        client.post("/api/simulator/nfc/present", json={"uid": "04DDEEFF"})
+        emergency_stop.trigger()
+        assert client.post("/api/tap/poll").json()["state"] == "emergency_stop"
+        emergency_stop.release()
+
+        reset = client.post("/api/tap/safety/reset")
+
+        assert reset.status_code == 200
+        assert reset.json()["state"] == "idle"
+        assert reset.json()["user_id"] is None
 
 
 def test_zz_sys_004_pour_requires_matching_active_event_and_keg(

@@ -240,6 +240,41 @@ class TapService:
     def heartbeat(self) -> None:
         self._controller.heartbeat()
 
+    def reset_safety_lock(self) -> dict[str, Any]:
+        """Reset a latched safety state while an active admin card is present."""
+        nfc = self._hardware.nfc.snapshot()
+        if nfc.state != "card" or not nfc.uid:
+            raise TapUnavailable("Safety reset requires a presented admin card")
+
+        try:
+            canonical_uid = canonicalize_nfc_uid(nfc.uid)
+        except ValueError as error:
+            raise TapUnavailable("Safety reset requires a valid admin card") from error
+
+        with self._sessions() as session:
+            user = Repository(session).find_active_user_by_card(canonical_uid)
+            if user is None or user.role is not UserRole.ADMIN:
+                raise TapUnavailable("Safety reset requires an active admin card")
+
+        previous = self._controller.snapshot()
+        self._controller.reset_safety_lock(is_admin=True)
+        with self._mutex:
+            self._authenticated_user = None
+            self._pending_booking = None
+            self._persistence_error = None
+            self._last_presented_uid = canonical_uid
+            self._last_state = TapState.IDLE
+        self._record_technical_event(
+            severity="info",
+            event_type="tap.safety_reset",
+            message="Sicherheitssperre durch Admin-Karte zurueckgesetzt",
+            details={
+                "previous_state": previous.state.value,
+                "admin_user_id": user.id,
+            },
+        )
+        return self.status_dict()
+
     def poll(self) -> dict[str, Any]:
         status = self._controller.poll()
         self._observe_state(status.state, status.safety_reason)

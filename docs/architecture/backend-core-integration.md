@@ -18,7 +18,7 @@ Zustandsautomaten- und Persistenzschichten zu einem durchgaengigen Ablauf:
 Betroffen sind insbesondere `ZZ-AUT-002`, `ZZ-AUT-007` bis `ZZ-AUT-009`,
 `ZZ-KEG-004`, `ZZ-TAP-005` bis `ZZ-TAP-010`, `ZZ-MNT-002`, `ZZ-BIL-001` bis
 `ZZ-BIL-003`, `ZZ-DAT-001`, `ZZ-DAT-002`, `ZZ-DAT-004`, `ZZ-DAT-005` und
-`ZZ-SAF-004` bis `ZZ-SAF-009`.
+`ZZ-SAF-003` bis `ZZ-SAF-009`.
 
 ## Komponentenfluss
 
@@ -80,6 +80,12 @@ Durchfluss-, Zeit-, Watchdog- und Not-Aus-Zustaende. Neue Karten werden nur beim
 Auflegen verarbeitet; eine dauerhaft liegende Karte meldet sich nach einem
 Logout nicht sofort erneut an.
 
+Eine verriegelte Sicherheitsstoerung kann ueber die API nur zurueckgesetzt
+werden, wenn eine in der Datenbank aktive Admin-Karte tatsaechlich auf dem
+NFC-Leser liegt und ein Not-Aus-Kontakt wieder frei ist. Der Client uebergibt
+weder Benutzer-ID noch Admin-Flag. Nach dem Reset bleibt die Anlage ohne
+Sitzung in `IDLE`; fuer eine Anmeldung muss die Karte erneut aufgelegt werden.
+
 ## Lokale API
 
 Die API bietet fuer den naechsten UI-Schritt unter anderem:
@@ -91,6 +97,7 @@ Die API bietet fuer den naechsten UI-Schritt unter anderem:
 - `POST /api/tap/top-up/start` und `/stop`
 - `POST /api/tap/maintenance/enter`, `/start`, `/stop` und `/exit`
 - `POST /api/tap/heartbeat`
+- `POST /api/tap/safety/reset`
 - `GET /api/consumption/current`
 - `GET /api/keg/current`
 

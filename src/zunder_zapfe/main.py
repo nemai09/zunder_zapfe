@@ -197,6 +197,10 @@ def create_app(
     async def poll_tap() -> dict[str, Any]:
         return tap_service.poll()
 
+    @application.post("/api/tap/safety/reset")
+    async def reset_safety_lock() -> dict[str, Any]:
+        return tap_service.reset_safety_lock()
+
     @application.get("/api/consumption/current")
     async def current_consumption() -> dict[str, int]:
         return tap_service.current_consumption()

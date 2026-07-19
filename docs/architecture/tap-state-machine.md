@@ -75,7 +75,9 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
    abgelaufener Steuerungs-Watchdog schliessen das Ventil. Eine vom WebUI-Thread
    unabhaengige Hintergrundueberwachung wertet diese Bedingungen zyklisch aus.
 3. `EMERGENCY_STOP` und `FAULT_LOCKED` bleiben verriegelt. Das Beheben der
-   Ursache allein reicht nicht; ein Admin-Reset ist erforderlich.
+   Ursache allein reicht nicht; fuer den Reset muss eine aktive Admin-Karte
+   tatsaechlich auf dem NFC-Leser liegen. Danach startet keine Sitzung
+   automatisch.
 4. Weitere Kartenereignisse veraendern einen laufenden Zapfvorgang nicht.
 5. Buchungen verwenden die gemessenen Impulse, auch bei Abbruch und Fehler.
 6. Wartungszapfungen werden gemessen, aber als nicht kostenpflichtig markiert.

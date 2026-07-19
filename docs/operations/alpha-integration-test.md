@@ -35,26 +35,21 @@ $env:ZUNDER_ZAPFE_PULSES_PER_LITER = "500"
 .\.venv\Scripts\zunder-zapfe.exe
 ```
 
-In einem zweiten PowerShell-Fenster den Ablauf ausloesen:
+In einem zweiten PowerShell-Fenster die Karte simuliert auflegen und danach den
+vollstaendigen Ablauf ohne manuelle Pause ausloesen. Der Smoke-Test erzeugt eine
+echte Buchung in der konfigurierten Alpha-Datenbank:
 
 ```powershell
 Invoke-RestMethod -Method Post -ContentType "application/json" `
   -Uri "http://127.0.0.1:8000/api/simulator/nfc/present" `
   -Body '{"uid":"D00DCAFE"}'
 
-Invoke-RestMethod -Method Post -ContentType "application/json" `
-  -Uri "http://127.0.0.1:8000/api/tap/portion" `
-  -Body '{"target_volume_ml":500}'
-
-Invoke-RestMethod -Method Post -ContentType "application/json" `
-  -Uri "http://127.0.0.1:8000/api/simulator/flow/pulses" `
-  -Body '{"count":250}'
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/consumption/current"
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/keg/current"
+.\.venv\Scripts\zunder-zapfe-smoke-test.exe
 ```
 
-Erwartet werden 500 ml, 225 Cent und 49.500 ml rechnerischer Fassbestand.
+Das Werkzeug prueft Sitzung, Zustandswechsel, Buchungszaehler, Menge, Betrag und
+Fassbestand. Erwartet werden `Smoke test passed`, 500 ml, 225 Cent und 49.500 ml
+rechnerischer Fassbestand.
 
 ## Datenbank im Browser pruefen
 
@@ -95,17 +90,27 @@ sudo systemctl start zunder-zapfe-web.service
 Fuer den simulierten Durchfluss wird temporaer
 `ZUNDER_ZAPFE_ENABLE_SIMULATOR_API=1` in `/etc/zunder-zapfe/web.env` gesetzt und
 der Dienst neu gestartet. Die echte Karte meldet den Demo-Benutzer automatisch
-an. Portion und Impulse koennen lokal auf dem Pi ausgeloest werden:
+an. Der komplette Test wird danach lokal auf dem Pi ohne Pause zwischen
+Zapfstart und simulierten Impulsen ausgefuehrt:
 
 ```bash
-curl --request POST --header 'Content-Type: application/json' \
-  --data '{"target_volume_ml":500}' \
-  http://127.0.0.1:8000/api/tap/portion
-
-curl --request POST --header 'Content-Type: application/json' \
-  --data '{"count":250}' \
-  http://127.0.0.1:8000/api/simulator/flow/pulses
+.venv/bin/zunder-zapfe-smoke-test
 ```
 
 Nach dem Test muss `ZUNDER_ZAPFE_ENABLE_SIMULATOR_API` wieder auf `0` gesetzt
 und der Dienst neu gestartet werden.
+
+## Verriegelten Fehlerzustand zuruecksetzen
+
+Ein Watchdog-, Durchfluss- oder Not-Aus-Fehler bleibt absichtlich verriegelt.
+Zum Reset muss die Fehlerursache behoben und eine aktive Admin-Karte auf dem
+NFC-Leser liegen. Dann lokal auf dem Zielsystem:
+
+```bash
+curl --request POST http://127.0.0.1:8000/api/tap/safety/reset
+```
+
+Erwartet wird der Zustand `idle`, ein geschlossenes Ventil und keine aktive
+Sitzung. Die Admin-Karte danach entfernen. Fuer die naechste Anmeldung muss die
+gewuenschte Karte neu aufgelegt werden. Eine normale Benutzerkarte und eine
+deaktivierte oder unbekannte Karte duerfen den Reset nicht ausloesen.
