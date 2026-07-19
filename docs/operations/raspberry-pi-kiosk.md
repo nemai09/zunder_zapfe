@@ -128,7 +128,8 @@ Das Skript prueft:
 
 - Python-Tests,
 - aktiven systemd-Dienst,
-- lokalen HTTP-Health-Endpunkt.
+- lokalen HTTP-Health-Endpunkt,
+- angeschlossenen und betriebsbereiten ACR122U.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
@@ -171,8 +172,8 @@ Dieser Abschnitt gilt erst, nachdem die oben beschriebene Erstinstallation und
 das initiale `git clone` abgeschlossen wurden.
 
 ```bash
-cd ~/zunder_zapfe
-sudo bash ./scripts/deploy-update.sh <desktop-benutzer>
+cd ~/sw/zunder_zapfe
+sudo ./scripts/deploy-update.sh
 ```
 
 Das Deployment-Skript aktualisiert den aktuell ausgecheckten Branch nur per
@@ -182,8 +183,13 @@ aus. Bei reinen Python-, HTML- oder CSS-Aenderungen wird nur der Dienst neu
 gestartet. Ein Neustart des Raspberry Pi ist nicht erforderlich.
 
 Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und
-laedt die Seite automatisch neu. Beim allerersten Deployment dieser Funktion
-muss die bereits geoeffnete alte Testseite einmal manuell neu geladen werden.
+laedt die Seite automatisch neu. Deshalb sind fuer normale Updates weder ein
+Raspberry-Pi-Neustart noch ein manueller Browser-Reload erforderlich.
+
+Beim einmaligen Wechsel von der urspruenglichen Testseite auf eine Version mit
+dieser Commit-Erkennung muss Chromium noch einmal neu geladen oder der
+Raspberry Pi einmal neu gestartet werden. Erst die danach geladene Seite
+enthaelt die automatische Aktualisierungslogik.
 
 ## Bekannte Grenzen dieses Meilensteins
 
