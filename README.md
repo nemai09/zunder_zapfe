@@ -15,6 +15,12 @@ den vorhandenen ACR122U-NFC-Leser an. Ventil, Durchflussmesser und Not-Aus sind
 zunaechst als Simulatoren hinter stabilen Hardware-Vertraegen ausgefuehrt. Die
 Architektur ist unter `docs/architecture/hardware-interface.md` beschrieben.
 
+Der aktuelle Backend-Alpha-Stand verbindet bekannte NFC-Karten, den
+Zapf-Zustandsautomaten und die SQLite-Persistenz. Simulierte Portionen erzeugen
+unveraenderliche Buchungen; Verbrauch, Betrag und Fassbestand bleiben ueber
+einen Backend-Neustart erhalten. Die Kiosk- und Adminoberflaechen sind noch
+nicht als Produktoberflaechen umgesetzt.
+
 ## Verzeichnisstruktur
 
 - `requirements/` – nummerierte Anforderungen und spaetere Traceability-Artefakte
@@ -47,6 +53,9 @@ Das lokale SQLite-Datenmodell und die Migrationsstrategie sind unter
 [`docs/architecture/persistence.md`](docs/architecture/persistence.md)
 dokumentiert.
 
+Die Verbindung von NFC, Zustandsautomat und dauerhafter Zapfbuchung beschreibt
+[`docs/architecture/backend-core-integration.md`](docs/architecture/backend-core-integration.md).
+
 ## Zielsystem installieren
 
 Voraussetzung ist Raspberry Pi OS (64 Bit) mit Desktop auf einem Raspberry Pi 4B.
@@ -72,6 +81,13 @@ schreibgeschuetzten Weboberflaeche untersucht werden. Die sichere Verwendung ist
 unter
 [`docs/operations/database-browser.md`](docs/operations/database-browser.md)
 beschrieben.
+
+Ein vollstaendiger Alpha-Test mit Demo-Benutzer, simulierter Zapfung,
+Datenbankkontrolle und Neustart ist unter
+[`docs/operations/alpha-integration-test.md`](docs/operations/alpha-integration-test.md)
+dokumentiert. Das Kommando `zunder-zapfe-smoke-test` fuehrt Zapfstart,
+simulierte Durchflussimpulse und die Persistenzpruefung ohne manuelle
+Watchdog-relevante Pause aus.
 
 ## Zusammenarbeit
 

@@ -11,6 +11,7 @@ from zunder_zapfe.hardware.models import status_dict
 from zunder_zapfe.hardware.simulators import (
     SimulatedEmergencyStop,
     SimulatedFlowMeter,
+    SimulatedNfcReader,
     SimulatedValve,
 )
 
@@ -47,10 +48,10 @@ class HardwareLayer:
         }
 
 
-def create_default_hardware() -> HardwareLayer:
+def create_default_hardware(*, simulate_nfc: bool = False) -> HardwareLayer:
     """Build the current hybrid setup: real NFC plus simulated tap hardware."""
     return HardwareLayer(
-        nfc=Acr122uNfcReader(),
+        nfc=SimulatedNfcReader() if simulate_nfc else Acr122uNfcReader(),
         valve=SimulatedValve(),
         flow_meter=SimulatedFlowMeter(),
         emergency_stop=SimulatedEmergencyStop(),

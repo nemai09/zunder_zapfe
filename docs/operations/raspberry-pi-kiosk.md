@@ -198,7 +198,7 @@ enthaelt die automatische Aktualisierungslogik.
 - Das Skript ist fuer aktuelle Raspberry Pi OS Desktop-Images mit labwc gedacht.
 - Automatische Desktop-Anmeldung wird vorausgesetzt und nicht veraendert.
 - Die Anwendung lauscht nur auf `127.0.0.1`; Fernzugriff ist noch nicht vorgesehen.
-- Das Datenbankschema ist vorhanden, aber noch nicht mit NFC-Anmeldung und
-  Zapf-Zustandsautomat verdrahtet.
+- NFC-Anmeldung, Zapf-Zustandsautomat und Datenbank sind integriert; die
+  aktuelle Kioskseite bietet dafuer aber noch keine vollstaendige Bedienung.
 - Die reale Ventil-, Durchfluss- und Not-Aus-Ansteuerung fehlt noch.
 - Ein vollstaendig offline durchfuehrbares Dependency-Deployment folgt spaeter.

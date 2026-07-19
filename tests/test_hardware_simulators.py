@@ -1,4 +1,4 @@
-from zunder_zapfe.hardware.layer import HardwareLayer
+from zunder_zapfe.hardware.layer import HardwareLayer, create_default_hardware
 from zunder_zapfe.hardware.simulators import (
     SimulatedEmergencyStop,
     SimulatedFlowMeter,
@@ -59,3 +59,10 @@ def test_hardware_layer_closes_valve_on_start_and_stop() -> None:
     valve.open()
     hardware.stop()
     assert valve.snapshot().is_open is False
+
+
+def test_default_hardware_can_explicitly_simulate_nfc_for_alpha_debugging() -> None:
+    hardware = create_default_hardware(simulate_nfc=True)
+
+    assert isinstance(hardware.nfc, SimulatedNfcReader)
+    assert hardware.nfc.snapshot().simulated is True

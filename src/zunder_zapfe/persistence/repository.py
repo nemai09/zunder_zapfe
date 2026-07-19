@@ -50,6 +50,26 @@ class NewTapBooking:
     chargeable: bool
 
 
+@dataclass(frozen=True)
+class ActiveTapContext:
+    event_id: int
+    event_name: str
+    beverage_id: int
+    beverage_name: str
+    keg_id: int
+    initial_volume_ml: int
+    price_per_liter_cents: int
+
+
+@dataclass(frozen=True)
+class ConsumptionSummary:
+    event_id: int
+    user_id: int
+    booking_count: int
+    measured_volume_ml: int
+    amount_cents: int
+
+
 class Repository:
     """Persist domain objects using the transaction owned by the caller."""
 
@@ -119,6 +139,31 @@ class Repository:
         self.session.flush()
         return beverage
 
+    def active_tap_context(self) -> ActiveTapContext | None:
+        statement = (
+            select(Event, Keg, Beverage)
+            .join(Keg, Keg.event_id == Event.id)
+            .join(Beverage, Beverage.id == Keg.beverage_id)
+            .where(
+                Event.active.is_(True),
+                Keg.active.is_(True),
+                Beverage.active.is_(True),
+            )
+        )
+        row = self.session.execute(statement).one_or_none()
+        if row is None:
+            return None
+        event, keg, beverage = row
+        return ActiveTapContext(
+            event_id=event.id,
+            event_name=event.name,
+            beverage_id=beverage.id,
+            beverage_name=beverage.name,
+            keg_id=keg.id,
+            initial_volume_ml=keg.initial_volume_ml,
+            price_per_liter_cents=beverage.price_per_liter_cents,
+        )
+
     def activate_new_keg(
         self,
         *,
@@ -167,6 +212,30 @@ class Repository:
             .order_by(TapBooking.occurred_at, TapBooking.id)
         )
         return list(self.session.scalars(statement))
+
+    def user_consumption(self, *, event_id: int, user_id: int) -> ConsumptionSummary:
+        if self.session.get(Event, event_id) is None:
+            raise LookupError(f"Event {event_id} does not exist")
+        if self.session.get(User, user_id) is None:
+            raise LookupError(f"User {user_id} does not exist")
+        booking_count, measured_volume_ml, amount_cents = self.session.execute(
+            select(
+                func.count(TapBooking.id),
+                func.coalesce(func.sum(TapBooking.measured_volume_ml), 0),
+                func.coalesce(func.sum(TapBooking.amount_cents), 0),
+            ).where(
+                TapBooking.event_id == event_id,
+                TapBooking.user_id == user_id,
+                TapBooking.chargeable.is_(True),
+            )
+        ).one()
+        return ConsumptionSummary(
+            event_id=event_id,
+            user_id=user_id,
+            booking_count=int(booking_count),
+            measured_volume_ml=int(measured_volume_ml),
+            amount_cents=int(amount_cents),
+        )
 
     def remaining_keg_volume_ml(self, keg_id: int) -> int:
         keg = self.session.get(Keg, keg_id)

@@ -122,6 +122,7 @@ class TapController:
         limits: TapLimits,
         clock: Callable[[], float] = time.monotonic,
         *,
+        record_sink: Callable[[PourRecord], None] | None = None,
         supervise: bool = True,
         supervisor_interval_seconds: float = 0.05,
     ) -> None:
@@ -130,6 +131,7 @@ class TapController:
         self._hardware = hardware
         self._limits = limits
         self._clock = clock
+        self._record_sink = record_sink
         self._supervise = supervise
         self._supervisor_interval_seconds = supervisor_interval_seconds
         self._mutex = threading.RLock()
@@ -399,6 +401,8 @@ class TapController:
         self._active_pour = None
         self._last_heartbeat = None
         self._state = next_state
+        if self._record_sink is not None:
+            self._record_sink(record)
         return record
 
     def _status_unlocked(self) -> TapStatus:
