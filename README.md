@@ -41,6 +41,9 @@ Verifikation erfolgt ausschliesslich auf dem Raspberry Pi:
 ./scripts/pi-verify.sh
 ```
 
+Die Einrichtung des USB-NFC-Lesers ACS ACR122U ist unter
+[`docs/operations/acr122u-nfc.md`](docs/operations/acr122u-nfc.md) beschrieben.
+
 ## Zusammenarbeit
 
 Aenderungen an Anforderungen behalten ihre ID. Inhaltliche Aenderungen werden in
