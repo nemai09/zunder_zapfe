@@ -38,6 +38,10 @@ Die WebUI greift nicht direkt auf Hardware zu. Der aktuelle Standardaufbau
 verwendet den realen ACR122U und Simulatoren fuer die noch nicht vorhandenen
 Komponenten.
 
+Der sicherheitsorientierte Zapfablauf und seine Zustaende sind unter
+[`docs/architecture/tap-state-machine.md`](docs/architecture/tap-state-machine.md)
+grafisch dokumentiert.
+
 ## Zielsystem installieren
 
 Voraussetzung ist Raspberry Pi OS (64 Bit) mit Desktop auf einem Raspberry Pi 4B.

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import threading
+import time
+from collections.abc import Callable
 
 from zunder_zapfe.hardware.models import (
     EmergencyStopStatus,
@@ -65,15 +67,18 @@ class SimulatedValve:
 
 
 class SimulatedFlowMeter:
-    def __init__(self) -> None:
+    def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
+        self._clock = clock
         self._pulse_count = 0
         self._measuring = False
+        self._last_pulse_at: float | None = None
         self._lock = threading.Lock()
 
     def start(self) -> None:
         with self._lock:
             self._pulse_count = 0
             self._measuring = False
+            self._last_pulse_at = None
 
     def stop(self) -> None:
         with self._lock:
@@ -83,6 +88,7 @@ class SimulatedFlowMeter:
         with self._lock:
             self._pulse_count = 0
             self._measuring = True
+            self._last_pulse_at = None
 
     def end_measurement(self) -> FlowReading:
         with self._lock:
@@ -99,11 +105,14 @@ class SimulatedFlowMeter:
         with self._lock:
             if self._measuring:
                 self._pulse_count += count
+                if count:
+                    self._last_pulse_at = self._clock()
 
     def _snapshot_unlocked(self) -> FlowReading:
         return FlowReading(
             pulse_count=self._pulse_count,
             measuring=self._measuring,
+            last_pulse_at=self._last_pulse_at,
             simulated=True,
         )
 

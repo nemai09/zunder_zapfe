@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from zunder_zapfe.hardware.layer import HardwareLayer
@@ -19,28 +20,30 @@ def simulated_hardware() -> HardwareLayer:
     )
 
 
+@pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(simulated_hardware()))
+    with TestClient(create_app(simulated_hardware())) as test_client:
+        yield test_client
 
 
-def test_health_endpoint_reports_ready() -> None:
-    response = client().get("/api/health")
+def test_health_endpoint_reports_ready(client: TestClient) -> None:
+    response = client.get("/api/health")
 
     assert response.status_code == 200
     assert response.json()["status"] == "ready"
     assert response.json()["application"] == "zunder-zapfe"
 
 
-def test_kiosk_page_is_available() -> None:
-    response = client().get("/")
+def test_kiosk_page_is_available(client: TestClient) -> None:
+    response = client.get("/")
 
     assert response.status_code == 200
     assert "Zunder Zapfe" in response.text
     assert "NFC-Leser" in response.text
 
 
-def test_nfc_status_uses_injected_hardware() -> None:
-    response = client().get("/api/nfc/status")
+def test_nfc_status_uses_injected_hardware(client: TestClient) -> None:
+    response = client.get("/api/nfc/status")
 
     assert response.status_code == 200
     assert response.json()["state"] == "ready"
@@ -48,10 +51,18 @@ def test_nfc_status_uses_injected_hardware() -> None:
     assert "uid" in response.json()
 
 
-def test_hardware_status_identifies_simulated_components() -> None:
-    response = client().get("/api/hardware/status")
+def test_hardware_status_identifies_simulated_components(client: TestClient) -> None:
+    response = client.get("/api/hardware/status")
 
     assert response.status_code == 200
     assert set(response.json()) == {"nfc", "valve", "flow_meter", "emergency_stop"}
     assert all(component["simulated"] for component in response.json().values())
     assert response.json()["valve"]["is_open"] is False
+
+
+def test_tap_starts_idle_with_closed_valve(client: TestClient) -> None:
+    response = client.get("/api/tap/status")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "idle"
+    assert response.json()["valve_open"] is False

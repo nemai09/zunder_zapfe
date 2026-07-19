@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from zunder_zapfe import __version__
+from zunder_zapfe.backend.tap_controller import TapController, development_limits
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
 from zunder_zapfe.hardware.models import status_dict
 
@@ -40,13 +41,16 @@ REVISION = current_revision()
 def create_app(hardware: HardwareLayer | None = None) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware()
+    tap_controller = TapController(hardware_layer, development_limits())
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
         hardware_layer.start()
+        tap_controller.start()
         try:
             yield
         finally:
+            tap_controller.shutdown()
             hardware_layer.stop()
 
     application = FastAPI(
@@ -79,6 +83,10 @@ def create_app(hardware: HardwareLayer | None = None) -> FastAPI:
     @application.get("/api/hardware/status")
     async def hardware_status() -> dict[str, dict[str, object]]:
         return hardware_layer.snapshot()
+
+    @application.get("/api/tap/status")
+    async def tap_status() -> dict[str, object]:
+        return tap_controller.snapshot_dict()
 
     return application
 

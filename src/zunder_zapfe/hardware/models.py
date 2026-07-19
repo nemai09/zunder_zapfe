@@ -27,6 +27,7 @@ class ValveStatus:
 class FlowReading:
     pulse_count: int
     measuring: bool
+    last_pulse_at: float | None = None
     available: bool = True
     simulated: bool = False
     detail: str | None = None
