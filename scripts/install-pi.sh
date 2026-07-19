@@ -21,7 +21,10 @@ echo "Installiere Zunder Zapfe aus ${app_dir}"
 echo "Zielsystem: ${model:-unbekannt}"
 
 apt-get update
-apt-get install --yes python3-venv chromium curl
+apt-get install --yes \
+  python3-venv python3-dev build-essential \
+  chromium curl \
+  pcscd libccid libpcsclite-dev pcsc-tools swig
 
 install -d -o "${kiosk_user}" -g "${kiosk_user}" /var/lib/zunder-zapfe /var/log/zunder-zapfe
 install -d -m 0755 /etc/zunder-zapfe

@@ -38,6 +38,12 @@ Die Ausgabe muss einen `ACS ACR122U PICC Interface`-Leser zeigen. Beim Auflegen
 einer NFC-Karte muss `pcsc_scan` die eingelegte Karte und deren ATR melden. Der
 Test wird mit `Ctrl+C` beendet.
 
+Die Kioskseite zeigt den erkannten Leser und die UID einer aufgelegten Karte an.
+Der maschinenlesbare Status ist lokal unter
+`http://127.0.0.1:8000/api/nfc/status` erreichbar. `scripts/pi-verify.sh`
+verlangt fuer eine erfolgreiche Zielsystempruefung einen angeschlossenen und
+betriebsbereiten ACR122U.
+
 Wenn der Leser in `lsusb`, aber nicht in `pcsc_scan` erscheint, helfen die
 Diagnoseausgaben:
 

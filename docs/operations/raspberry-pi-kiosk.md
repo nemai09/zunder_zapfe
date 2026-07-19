@@ -23,18 +23,70 @@ Raspberry Pi OS verwendet ab Bookworm standardmaessig Wayland mit labwc. Der
 Kioskstart wird deshalb in `~/.config/labwc/autostart` des Desktop-Benutzers
 eingetragen.
 
-## Repository auf dem Pi auschecken
+## Erstinstallation auf einem neuen Raspberry Pi
 
-Fuer das private GitHub-Repository sollte der Raspberry einen nur lesenden
-Deploy-Key erhalten. Danach:
+Auf dem Raspberry Pi existiert zu diesem Zeitpunkt noch kein lokaler Checkout.
+Die folgenden Schritte richten deshalb zuerst den GitHub-Zugriff ein und klonen
+danach das Repository zum ersten Mal.
+
+### 1. Git installieren
 
 ```bash
-git clone git@github.com:nemai09/zunder_zapfe.git
-cd zunder_zapfe
-git fetch origin
-git switch webui_backend
-git pull --ff-only
+sudo apt update
+sudo apt install --yes git openssh-client
 ```
+
+### 2. Lesezugriff auf das private GitHub-Repository einrichten
+
+Der Raspberry Pi sollte einen eigenen SSH-Deploy-Key mit ausschliesslichem
+Lesezugriff erhalten. Den Schluessel auf dem Pi erzeugen:
+
+```bash
+ssh-keygen -t ed25519 -C "zunder-zapfe-raspberry-pi" -f ~/.ssh/zunder_zapfe_deploy
+cat ~/.ssh/zunder_zapfe_deploy.pub
+```
+
+Den ausgegebenen oeffentlichen Schluessel in GitHub beim Repository
+`nemai09/zunder_zapfe` unter **Settings > Deploy keys > Add deploy key**
+hinterlegen. **Allow write access** bleibt deaktiviert.
+
+Anschliessend festlegen, dass GitHub diesen Schluessel verwendet:
+
+```bash
+cat >>~/.ssh/config <<'EOF'
+Host github-zunder-zapfe
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/zunder_zapfe_deploy
+    IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+ssh -T git@github-zunder-zapfe
+```
+
+Beim ersten Verbindungsaufbau muss der angezeigte GitHub-Host-Key geprueft und
+bestaetigt werden. Die abschliessende Meldung von GitHub darf darauf hinweisen,
+dass kein Shell-Zugriff angeboten wird; die erfolgreiche Authentifizierung ist
+entscheidend.
+
+### 3. Repository erstmals klonen
+
+```bash
+cd ~
+git clone git@github-zunder-zapfe:nemai09/zunder_zapfe.git
+cd zunder_zapfe
+git switch webui_backend
+```
+
+Durch `git clone` wird automatisch das Remote `origin` angelegt. Kontrolle:
+
+```bash
+git remote -v
+git status
+```
+
+Erst ab diesem Zeitpunkt kennt der Checkout `origin`; ein vorheriges
+`git fetch origin` waere auf einem neuen Raspberry Pi nicht moeglich.
 
 Alternativ kann ein exakt benannter Commit getestet werden:
 
@@ -43,7 +95,7 @@ git fetch origin
 git switch --detach <commit-id>
 ```
 
-## Installation
+### 4. Anwendung installieren
 
 Im Repository auf dem Raspberry Pi:
 
@@ -66,7 +118,7 @@ Das Installationsskript:
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
 
-## Verifikation auf dem Zielsystem
+### 5. Auf dem Zielsystem verifizieren
 
 ```bash
 ./scripts/pi-verify.sh
@@ -113,19 +165,25 @@ Dienst neu starten:
 sudo systemctl restart zunder-zapfe-web.service
 ```
 
-## Einen neuen Branch oder Commit evaluieren
+## Spaetere Aktualisierungen evaluieren
+
+Dieser Abschnitt gilt erst, nachdem die oben beschriebene Erstinstallation und
+das initiale `git clone` abgeschlossen wurden.
 
 ```bash
-cd <repository-pfad>
-git fetch origin
-git switch <branch>
-git pull --ff-only
-sudo ./scripts/install-pi.sh <desktop-benutzer>
-./scripts/pi-verify.sh
+cd ~/zunder_zapfe
+sudo bash ./scripts/deploy-update.sh <desktop-benutzer>
 ```
 
-Die erneute Installation aktualisiert Python-Paket und systemd-Konfiguration,
-ohne die Datei `/etc/zunder-zapfe/web.env` zu ueberschreiben.
+Das Deployment-Skript aktualisiert den aktuell ausgecheckten Branch nur per
+Fast-Forward, installiert geaenderte Abhaengigkeiten beziehungsweise
+Systemdateien, startet den Webdienst neu und fuehrt die Zielsystem-Verifikation
+aus. Bei reinen Python-, HTML- oder CSS-Aenderungen wird nur der Dienst neu
+gestartet. Ein Neustart des Raspberry Pi ist nicht erforderlich.
+
+Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und
+laedt die Seite automatisch neu. Beim allerersten Deployment dieser Funktion
+muss die bereits geoeffnete alte Testseite einmal manuell neu geladen werden.
 
 ## Bekannte Grenzen dieses Meilensteins
 

@@ -15,13 +15,24 @@
         <p class="lead">Die lokale Weboberfläche ist gestartet.</p>
       </section>
 
-      <section class="status-card" aria-live="polite">
-        <span class="status-light" id="status-light"></span>
-        <div>
-          <p class="status-label">Backendstatus</p>
-          <p class="status-value" id="status-value">Verbindung wird geprüft …</p>
-          <p class="status-detail" id="status-detail"></p>
-        </div>
+      <section class="status-grid">
+        <article class="status-card" aria-live="polite">
+          <span class="status-light" id="status-light"></span>
+          <div>
+            <p class="status-label">Backendstatus</p>
+            <p class="status-value" id="status-value">Verbindung wird geprüft …</p>
+            <p class="status-detail" id="status-detail"></p>
+          </div>
+        </article>
+
+        <article class="status-card" aria-live="polite">
+          <span class="status-light" id="nfc-light"></span>
+          <div>
+            <p class="status-label">NFC-Leser</p>
+            <p class="status-value" id="nfc-value">Leser wird geprüft …</p>
+            <p class="status-detail" id="nfc-detail">UID: –</p>
+          </div>
+        </article>
       </section>
 
       <footer>
@@ -34,7 +45,11 @@
       const statusLight = document.querySelector("#status-light");
       const statusValue = document.querySelector("#status-value");
       const statusDetail = document.querySelector("#status-detail");
+      const nfcLight = document.querySelector("#nfc-light");
+      const nfcValue = document.querySelector("#nfc-value");
+      const nfcDetail = document.querySelector("#nfc-detail");
       const clock = document.querySelector("#clock");
+      let loadedRevision = null;
 
       function updateClock() {
         clock.textContent = new Intl.DateTimeFormat("de-DE", {
@@ -50,7 +65,11 @@
           const health = await response.json();
           statusLight.className = "status-light ready";
           statusValue.textContent = "Bereit";
-          statusDetail.textContent = `Backend ${health.version} · ${health.application}`;
+          statusDetail.textContent = `Backend ${health.version} · Commit ${health.revision}`;
+          if (loadedRevision && loadedRevision !== health.revision) {
+            window.location.reload();
+          }
+          loadedRevision = health.revision;
         } catch (error) {
           statusLight.className = "status-light failed";
           statusValue.textContent = "Backend nicht erreichbar";
@@ -58,10 +77,37 @@
         }
       }
 
+      async function updateNfc() {
+        try {
+          const response = await fetch("/api/nfc/status", { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const nfc = await response.json();
+          const labels = {
+            starting: "Wird gestartet",
+            unavailable: "Unterstützung fehlt",
+            disconnected: "Nicht verbunden",
+            ready: "Bereit – Karte auflegen",
+            card: "Karte erkannt",
+            error: "Fehler",
+          };
+          nfcLight.className = `status-light ${["ready", "card"].includes(nfc.state) ? "ready" : "failed"}`;
+          nfcValue.textContent = labels[nfc.state] || nfc.state;
+          nfcDetail.textContent = nfc.uid
+            ? `UID: ${nfc.uid}`
+            : nfc.reader || nfc.detail || "UID: –";
+        } catch (error) {
+          nfcLight.className = "status-light failed";
+          nfcValue.textContent = "Status nicht erreichbar";
+          nfcDetail.textContent = String(error);
+        }
+      }
+
       updateClock();
       updateHealth();
+      updateNfc();
       window.setInterval(updateClock, 1000);
       window.setInterval(updateHealth, 3000);
+      window.setInterval(updateNfc, 500);
     </script>
   </body>
 </html>

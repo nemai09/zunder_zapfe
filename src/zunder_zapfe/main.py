@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -12,17 +14,42 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from zunder_zapfe import __version__
+from zunder_zapfe.nfc import nfc_monitor
 
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 
 
+def current_revision() -> str:
+    """Return the deployed Git revision when running from a checkout."""
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=WEB_ROOT.parents[2],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+REVISION = current_revision()
+
+
 def create_app() -> FastAPI:
     """Create the HTTP application without accessing Raspberry Pi hardware."""
+    @asynccontextmanager
+    async def lifespan(_application: FastAPI):
+        nfc_monitor.start()
+        yield
+        nfc_monitor.stop()
+
     application = FastAPI(
         title="Zunder Zapfe",
         version=__version__,
         docs_url=None,
         redoc_url=None,
+        lifespan=lifespan,
     )
     application.mount("/static", StaticFiles(directory=WEB_ROOT), name="static")
 
@@ -36,8 +63,13 @@ def create_app() -> FastAPI:
             "application": "zunder-zapfe",
             "status": "ready",
             "version": __version__,
+            "revision": REVISION,
             "server_time": datetime.now(UTC).isoformat(),
         }
+
+    @application.get("/api/nfc/status")
+    async def nfc_status() -> dict[str, str | None]:
+        return nfc_monitor.snapshot()
 
     return application
 
