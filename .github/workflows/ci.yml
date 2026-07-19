@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Python einrichten
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Systemabhängigkeiten installieren
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libpcsclite-dev swig
+      - name: Projekt installieren
+        run: python -m pip install --editable '.[dev]'
+      - name: Ruff
+        run: |
+          python -m ruff check src tests scripts
+          python -m ruff format --check src tests scripts
+      - name: Tests
+        run: python -m pytest

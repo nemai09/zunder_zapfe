@@ -1,0 +1,47 @@
+name: Fehler melden
+description: Reproduzierbares Fehlverhalten dokumentieren
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keine Zugangsdaten, realen NFC-UIDs oder Datenbanken anhängen. Vertrauliche Schwachstellen gemäß SECURITY.md melden.
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      description: Was ist passiert und was wurde erwartet?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduktion
+      description: Möglichst kurze, nummerierte Schritte.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Revision
+      description: Commit-ID oder Branch.
+    validations:
+      required: true
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Umgebung
+      options:
+        - Windows-Entwicklung mit Simulatoren
+        - Raspberry Pi mit realem NFC
+        - Raspberry Pi mit weiterer realer Hardware
+        - Andere
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety-Auswirkung
+      description: Hat sich Ventil, Not-Aus oder Verriegelung unerwartet verhalten?

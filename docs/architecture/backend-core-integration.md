@@ -88,18 +88,12 @@ Sitzung in `IDLE`; fuer eine Anmeldung muss die Karte erneut aufgelegt werden.
 
 ## Lokale API
 
-Die API bietet fuer den naechsten UI-Schritt unter anderem:
-
-- `GET /api/session/status`
-- `POST /api/session/logout`
-- `POST /api/tap/portion`
-- `POST /api/tap/portion/abort`
-- `POST /api/tap/top-up/start` und `/stop`
-- `POST /api/tap/maintenance/enter`, `/start`, `/stop` und `/exit`
-- `POST /api/tap/heartbeat`
-- `POST /api/tap/safety/reset`
-- `GET /api/consumption/current`
-- `GET /api/keg/current`
+Die API bietet Sitzung, Portion, Nachfuellen, Wartung, Sicherheitsreset,
+Verbrauch und Fassstatus fuer die naechsten UI-Schritte. Der vollstaendige
+menschlich lesbare Vertrag liegt unter
+[`docs/interfaces/http-api.md`](../interfaces/http-api.md), die aus der
+Anwendung generierte OpenAPI-Spezifikation unter
+[`docs/interfaces/openapi.json`](../interfaces/openapi.json).
 
 Die Verbrauchsroute verwendet ausschliesslich den aktuell am Geraet
 angemeldeten Benutzer und akzeptiert keine fremde Benutzer-ID.

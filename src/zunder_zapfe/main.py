@@ -14,10 +14,23 @@ import uvicorn
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe import __version__
+from zunder_zapfe.api_models import (
+    ConsumptionResponse,
+    ErrorResponse,
+    HardwareStatusResponse,
+    HealthResponse,
+    KegStatusResponse,
+    NfcStatusResponse,
+    PortionRequest,
+    PourRecordResponse,
+    SessionStatusResponse,
+    SimulatedCardRequest,
+    SimulatedPulsesRequest,
+    TapStatusResponse,
+)
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
@@ -43,18 +56,6 @@ def current_revision() -> str:
 
 
 REVISION = current_revision()
-
-
-class PortionRequest(BaseModel):
-    target_volume_ml: int = Field(gt=0)
-
-
-class SimulatedCardRequest(BaseModel):
-    uid: str = Field(min_length=4, max_length=80)
-
-
-class SimulatedPulsesRequest(BaseModel):
-    count: int = Field(gt=0)
 
 
 def create_app(
@@ -101,7 +102,14 @@ def create_app(
 
     application = FastAPI(
         title="Zunder Zapfe",
+        description=(
+            "Local alpha API for NFC authentication, safe tap control and SQLite bookings."
+        ),
         version=__version__,
+        license_info={
+            "name": "GNU General Public License v3.0 or later",
+            "identifier": "GPL-3.0-or-later",
+        },
         docs_url=None,
         redoc_url=None,
         lifespan=lifespan,
@@ -117,7 +125,9 @@ def create_app(
     async def index() -> FileResponse:
         return FileResponse(WEB_ROOT / "index.html")
 
-    @application.get("/api/health")
+    conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
+
+    @application.get("/api/health", response_model=HealthResponse)
     async def health() -> dict[str, str]:
         return {
             "application": "zunder-zapfe",
@@ -127,19 +137,19 @@ def create_app(
             "server_time": datetime.now(UTC).isoformat(),
         }
 
-    @application.get("/api/nfc/status")
+    @application.get("/api/nfc/status", response_model=NfcStatusResponse)
     async def nfc_status() -> dict[str, object]:
         return status_dict(hardware_layer.nfc.snapshot())
 
-    @application.get("/api/hardware/status")
+    @application.get("/api/hardware/status", response_model=HardwareStatusResponse)
     async def hardware_status() -> dict[str, dict[str, object]]:
         return hardware_layer.snapshot()
 
-    @application.get("/api/tap/status")
+    @application.get("/api/tap/status", response_model=TapStatusResponse)
     async def tap_status() -> dict[str, object]:
         return tap_service.status_dict()
 
-    @application.get("/api/session/status")
+    @application.get("/api/session/status", response_model=SessionStatusResponse)
     async def session_status() -> dict[str, object]:
         status = tap_service.status_dict()
         return {
@@ -149,41 +159,61 @@ def create_app(
             "special_portion_ml": status["special_portion_ml"],
         }
 
-    @application.post("/api/session/logout", status_code=204)
+    @application.post("/api/session/logout", status_code=204, responses=conflict_response)
     async def logout() -> Response:
         tap_service.logout()
         return Response(status_code=204)
 
-    @application.post("/api/tap/portion")
+    @application.post(
+        "/api/tap/portion", response_model=TapStatusResponse, responses=conflict_response
+    )
     async def start_portion(request: PortionRequest) -> dict[str, Any]:
         return tap_service.start_portion(request.target_volume_ml)
 
-    @application.post("/api/tap/portion/abort")
+    @application.post(
+        "/api/tap/portion/abort",
+        response_model=PourRecordResponse,
+        responses=conflict_response,
+    )
     async def abort_portion() -> dict[str, Any]:
         return asdict(tap_service.abort_portion())
 
-    @application.post("/api/tap/top-up/start")
+    @application.post(
+        "/api/tap/top-up/start", response_model=TapStatusResponse, responses=conflict_response
+    )
     async def start_top_up() -> dict[str, Any]:
         return tap_service.start_top_up()
 
-    @application.post("/api/tap/top-up/stop")
+    @application.post(
+        "/api/tap/top-up/stop",
+        response_model=PourRecordResponse,
+        responses=conflict_response,
+    )
     async def stop_top_up() -> dict[str, Any]:
         return asdict(tap_service.stop_top_up())
 
-    @application.post("/api/tap/maintenance/enter", status_code=204)
+    @application.post("/api/tap/maintenance/enter", status_code=204, responses=conflict_response)
     async def enter_maintenance() -> Response:
         tap_service.enter_maintenance()
         return Response(status_code=204)
 
-    @application.post("/api/tap/maintenance/start")
+    @application.post(
+        "/api/tap/maintenance/start",
+        response_model=TapStatusResponse,
+        responses=conflict_response,
+    )
     async def start_maintenance_pour() -> dict[str, Any]:
         return tap_service.start_maintenance_pour()
 
-    @application.post("/api/tap/maintenance/stop")
+    @application.post(
+        "/api/tap/maintenance/stop",
+        response_model=PourRecordResponse,
+        responses=conflict_response,
+    )
     async def stop_maintenance_pour() -> dict[str, Any]:
         return asdict(tap_service.stop_maintenance_pour())
 
-    @application.post("/api/tap/maintenance/exit", status_code=204)
+    @application.post("/api/tap/maintenance/exit", status_code=204, responses=conflict_response)
     async def exit_maintenance() -> Response:
         tap_service.exit_maintenance()
         return Response(status_code=204)
@@ -193,25 +223,39 @@ def create_app(
         tap_service.heartbeat()
         return Response(status_code=204)
 
-    @application.post("/api/tap/poll")
+    @application.post("/api/tap/poll", response_model=TapStatusResponse)
     async def poll_tap() -> dict[str, Any]:
         return tap_service.poll()
 
-    @application.post("/api/tap/safety/reset")
+    @application.post(
+        "/api/tap/safety/reset",
+        response_model=TapStatusResponse,
+        responses=conflict_response,
+    )
     async def reset_safety_lock() -> dict[str, Any]:
         return tap_service.reset_safety_lock()
 
-    @application.get("/api/consumption/current")
+    @application.get(
+        "/api/consumption/current",
+        response_model=ConsumptionResponse,
+        responses=conflict_response,
+    )
     async def current_consumption() -> dict[str, int]:
         return tap_service.current_consumption()
 
-    @application.get("/api/keg/current")
+    @application.get(
+        "/api/keg/current", response_model=KegStatusResponse, responses=conflict_response
+    )
     async def current_keg() -> dict[str, Any]:
         return tap_service.current_keg()
 
     if simulator_api_enabled:
 
-        @application.post("/api/simulator/nfc/present")
+        @application.post(
+            "/api/simulator/nfc/present",
+            response_model=SessionStatusResponse,
+            responses=conflict_response,
+        )
         async def simulate_card(request: SimulatedCardRequest) -> dict[str, object]:
             if not isinstance(hardware_layer.nfc, SimulatedNfcReader):
                 return JSONResponse(
@@ -231,7 +275,11 @@ def create_app(
             tap_service.process_nfc_snapshot()
             return Response(status_code=204)
 
-        @application.post("/api/simulator/flow/pulses")
+        @application.post(
+            "/api/simulator/flow/pulses",
+            response_model=TapStatusResponse,
+            responses=conflict_response,
+        )
         async def simulate_flow(request: SimulatedPulsesRequest) -> dict[str, Any]:
             if not isinstance(hardware_layer.flow_meter, SimulatedFlowMeter):
                 return JSONResponse(

@@ -51,6 +51,11 @@ Das Werkzeug prueft Sitzung, Zustandswechsel, Buchungszaehler, Menge, Betrag und
 Fassbestand. Erwartet werden `Smoke test passed`, 500 ml, 225 Cent und 49.500 ml
 rechnerischer Fassbestand.
 
+Nach erfolgreichem Abschluss bleibt der Zustandsautomat acht Sekunden in
+`top_up_available`. Ein in diesem Zeitraum erneut gestarteter Smoke-Test wird
+bewusst abgelehnt. Fuer wiederholte Laeufe acht Sekunden warten oder ausloggen,
+die Karte entfernen und neu auflegen.
+
 ## Datenbank im Browser pruefen
 
 Bei laufendem oder gestopptem Backend in einem weiteren Fenster:

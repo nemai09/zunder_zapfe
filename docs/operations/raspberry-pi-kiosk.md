@@ -7,9 +7,10 @@ Endpunkt erreichbar ist, oeffnet Chromium automatisch die Testseite im
 Kioskmodus. Die Anwendung ist nur ueber Loopback erreichbar und benoetigt keine
 Internetverbindung zur Laufzeit.
 
-Dieser erste Meilenstein bindet den ACR122U-NFC-Leser ein. Ventil,
-Durchflussmesser und Not-Aus sind als Simulatoren im Hardware-Zwischenlayer
-vorhanden; eine reale Ansteuerung und die fachliche Zapfsteuerung folgen spaeter.
+Der aktuelle Alpha-Stand bindet den ACR122U-NFC-Leser ein und verbindet ihn mit
+Zapfzustandsautomat und SQLite-Persistenz. Ventil, Durchflussmesser und Not-Aus
+sind als Simulatoren im Hardware-Zwischenlayer vorhanden; ihre reale
+Ansteuerung fehlt noch.
 
 ## Voraussetzungen
 
@@ -76,7 +77,7 @@ entscheidend.
 cd ~
 git clone git@github-zunder-zapfe:nemai09/zunder_zapfe.git
 cd zunder_zapfe
-git switch webui_backend
+git switch main
 ```
 
 Durch `git clone` wird automatisch das Remote `origin` angelegt. Kontrolle:
@@ -192,6 +193,11 @@ Beim einmaligen Wechsel von der urspruenglichen Testseite auf eine Version mit
 dieser Commit-Erkennung muss Chromium noch einmal neu geladen oder der
 Raspberry Pi einmal neu gestartet werden. Erst die danach geladene Seite
 enthaelt die automatische Aktualisierungslogik.
+
+Das Installationsskript fuehrt die Python-Installation als Besitzer des
+Checkouts aus. Dadurch bleiben `.venv` und das generierte `*.egg-info` fuer
+spaetere Updates beschreibbar. `sudo pip` darf im Checkout nicht verwendet
+werden.
 
 ## Bekannte Grenzen dieses Meilensteins
 
