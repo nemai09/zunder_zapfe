@@ -9,8 +9,10 @@ Ausgangsbasis ist der nummerierte Katalog unter
 `requirements/anforderungskatalog.txt`.
 
 Der erste Software-Meilenstein stellt eine lokale Python-Testseite auf dem
-Raspberry Pi bereit und startet sie automatisch im Chromium-Kioskmodus. Die
-Einrichtung ist unter `docs/operations/raspberry-pi-kiosk.md` beschrieben.
+Raspberry Pi bereit, startet sie automatisch im Chromium-Kioskmodus und bindet
+den vorhandenen ACR122U-NFC-Leser an. Ventil, Durchflussmesser und Not-Aus sind
+zunaechst als Simulatoren hinter stabilen Hardware-Vertraegen ausgefuehrt. Die
+Architektur ist unter `docs/architecture/hardware-interface.md` beschrieben.
 
 ## Verzeichnisstruktur
 
@@ -23,6 +25,18 @@ Einrichtung ist unter `docs/operations/raspberry-pi-kiosk.md` beschrieben.
 - `tests/` – automatisierte und manuelle Tests
 - `config/` – Beispielkonfigurationen ohne Geheimnisse
 - `scripts/` – Entwicklungs-, Installations- und Betriebswerkzeuge
+
+## Architektur
+
+Die Anwendung ist in drei Verantwortungsbereiche gegliedert:
+
+- `hardware/` kapselt reale Geraete und Simulatoren hinter stabilen Vertraegen,
+- das Backend enthaelt spaeter Fachlogik, Datenhaltung und Zapfsteuerung,
+- `web/` stellt Kiosk- und Adminoberflaeche bereit.
+
+Die WebUI greift nicht direkt auf Hardware zu. Der aktuelle Standardaufbau
+verwendet den realen ACR122U und Simulatoren fuer die noch nicht vorhandenen
+Komponenten.
 
 ## Zielsystem installieren
 

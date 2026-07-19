@@ -7,8 +7,9 @@ Endpunkt erreichbar ist, oeffnet Chromium automatisch die Testseite im
 Kioskmodus. Die Anwendung ist nur ueber Loopback erreichbar und benoetigt keine
 Internetverbindung zur Laufzeit.
 
-Dieser erste Meilenstein implementiert noch keine NFC-, Ventil- oder
-Durchflusssteuerung.
+Dieser erste Meilenstein bindet den ACR122U-NFC-Leser ein. Ventil,
+Durchflussmesser und Not-Aus sind als Simulatoren im Hardware-Zwischenlayer
+vorhanden; eine reale Ansteuerung und die fachliche Zapfsteuerung folgen spaeter.
 
 ## Voraussetzungen
 

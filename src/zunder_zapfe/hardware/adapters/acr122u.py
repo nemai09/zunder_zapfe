@@ -1,9 +1,10 @@
-"""Background monitor for the USB-connected ACR122U NFC reader."""
+"""PC/SC adapter for the USB-connected ACR122U NFC reader."""
 
 from __future__ import annotations
 
 import threading
-from dataclasses import asdict, dataclass
+
+from zunder_zapfe.hardware.models import NfcStatus
 
 try:
     from smartcard.System import readers
@@ -11,16 +12,8 @@ except ImportError:  # The application must remain diagnosable without PC/SC.
     readers = None
 
 
-@dataclass(frozen=True)
-class NfcStatus:
-    state: str
-    reader: str | None = None
-    uid: str | None = None
-    detail: str | None = None
-
-
-class NfcMonitor:
-    """Poll PC/SC without blocking FastAPI request handling."""
+class Acr122uNfcReader:
+    """Poll PC/SC without blocking backend request handling."""
 
     def __init__(self, poll_interval: float = 0.5) -> None:
         self._poll_interval = poll_interval
@@ -41,9 +34,9 @@ class NfcMonitor:
         if self._thread:
             self._thread.join(timeout=2)
 
-    def snapshot(self) -> dict[str, str | None]:
+    def snapshot(self) -> NfcStatus:
         with self._lock:
-            return asdict(self._status)
+            return self._status
 
     def _set_status(self, status: NfcStatus) -> None:
         with self._lock:
@@ -61,9 +54,7 @@ class NfcMonitor:
                 available_readers = readers()
                 acr_readers = [reader for reader in available_readers if "ACR122" in str(reader)]
                 if not acr_readers:
-                    self._set_status(
-                        NfcStatus(state="disconnected", detail="Kein ACR122U erkannt")
-                    )
+                    self._set_status(NfcStatus(state="disconnected", detail="Kein ACR122U erkannt"))
                 else:
                     self._read_uid(acr_readers[0])
             except Exception as error:  # PC/SC errors vary between driver versions.
@@ -83,13 +74,10 @@ class NfcMonitor:
             self._set_status(NfcStatus(state="card", reader=reader_name, uid=uid))
         except Exception as error:
             # No card in the RF field is the normal idle state. PC/SC backends
-            # unfortunately expose this through driver-specific exceptions.
+            # expose this condition through driver-specific exceptions.
             detail = str(error).lower()
             no_card_markers = ("no smart card", "no card", "removed card", "0x8010000c")
             if any(marker in detail for marker in no_card_markers):
                 self._set_status(NfcStatus(state="ready", reader=reader_name))
             else:
                 self._set_status(NfcStatus(state="error", reader=reader_name, detail=str(error)))
-
-
-nfc_monitor = NfcMonitor()

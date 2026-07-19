@@ -14,7 +14,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from zunder_zapfe import __version__
-from zunder_zapfe.nfc import nfc_monitor
+from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
+from zunder_zapfe.hardware.models import status_dict
 
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 
@@ -36,13 +37,17 @@ def current_revision() -> str:
 REVISION = current_revision()
 
 
-def create_app() -> FastAPI:
-    """Create the HTTP application without accessing Raspberry Pi hardware."""
+def create_app(hardware: HardwareLayer | None = None) -> FastAPI:
+    """Create the HTTP application with replaceable hardware dependencies."""
+    hardware_layer = hardware or create_default_hardware()
+
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
-        nfc_monitor.start()
-        yield
-        nfc_monitor.stop()
+        hardware_layer.start()
+        try:
+            yield
+        finally:
+            hardware_layer.stop()
 
     application = FastAPI(
         title="Zunder Zapfe",
@@ -68,8 +73,12 @@ def create_app() -> FastAPI:
         }
 
     @application.get("/api/nfc/status")
-    async def nfc_status() -> dict[str, str | None]:
-        return nfc_monitor.snapshot()
+    async def nfc_status() -> dict[str, object]:
+        return status_dict(hardware_layer.nfc.snapshot())
+
+    @application.get("/api/hardware/status")
+    async def hardware_status() -> dict[str, dict[str, object]]:
+        return hardware_layer.snapshot()
 
     return application
 
