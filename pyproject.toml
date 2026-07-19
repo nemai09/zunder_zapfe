@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 zunder-zapfe = "zunder_zapfe.main:run"
+zunder-zapfe-seed-demo = "zunder_zapfe.demo:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]

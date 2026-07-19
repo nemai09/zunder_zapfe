@@ -62,5 +62,16 @@ Lokale Entwicklungsdaten liegen standardmaessig unter `data/` und sind von Git
 ausgeschlossen. Tests erzeugen fuer jeden Testfall eine eigene temporaere
 Datenbank und wenden darauf die vollstaendige Migrationshistorie an.
 
+## Laufzeitintegration
+
+`TapService` friert Veranstaltung, Benutzer, Getraenk, Fass, Zielmenge und Preis
+beim Start eines Zapfvorgangs ein. Der vom Zustandsautomaten abgeschlossene
+`PourRecord` wird nach dem Schliessen des Ventils synchron als `TapBooking`
+gespeichert. Ein Persistenzfehler setzt eine Fehlersperre und verhindert weitere
+Zapfungen ohne bewusste Fehlerbehandlung.
+
+Die Impulsumrechnung und der vollstaendige Komponentenfluss sind unter
+[`backend-core-integration.md`](backend-core-integration.md) beschrieben.
+
 Backup, Export, Wiederherstellung und die verbindliche Offline-Zeitbasis bleiben
 gemaess `OD-007` beziehungsweise `OD-008` offene Folgeschritte.
