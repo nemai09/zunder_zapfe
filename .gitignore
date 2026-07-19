@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .venv/
 
 # Node
@@ -33,4 +34,3 @@ Thumbs.db
 notes.local.md
 *.notes.local.md
 .local/
-

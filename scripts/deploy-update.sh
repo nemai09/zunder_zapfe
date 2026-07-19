@@ -20,8 +20,9 @@ git_as_owner() {
   runuser -u "${repo_user}" -- git -C "${repo_dir}" "$@"
 }
 
-if [[ -n "$(git_as_owner status --porcelain)" ]]; then
+if [[ -n "$(git_as_owner status --porcelain --untracked-files=no)" ]]; then
   echo "Deployment abgebrochen: Der Checkout enthaelt lokale Aenderungen." >&2
+  git_as_owner status --short --untracked-files=no >&2
   exit 1
 fi
 
