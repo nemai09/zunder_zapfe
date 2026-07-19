@@ -198,6 +198,33 @@ def test_top_up_window_expires_without_opening_valve() -> None:
         controller.start_top_up()
 
 
+def test_zz_tap_009_status_reports_remaining_top_up_window() -> None:
+    controller, _hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_portion(target_pulses=1)
+    flow_meter.add_pulses(1)
+
+    status = controller.poll()
+    assert status.top_up_remaining_ms == 5000
+
+    clock.advance(1.25)
+    assert controller.snapshot().top_up_remaining_ms == 3750
+
+
+def test_zz_aut_010_inactive_session_logs_out_automatically() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    clock.advance(59)
+    assert controller.poll().state is TapState.AUTHENTICATED
+    clock.advance(1)
+    status = controller.poll()
+
+    assert status.state is TapState.IDLE
+    assert status.user_id is None
+    assert hardware.valve.snapshot().is_open is False
+
+
 def test_missing_followup_pulses_lock_tap() -> None:
     controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")

@@ -23,6 +23,8 @@ zu korrigieren.
 ## Projekt und Zusammenarbeit
 
 - [Projektstatus](project-status.md)
+- [Entwicklungsmeilensteine](milestones.md)
+- [Versionierung](versioning.md)
 - [Projektorganisation](organization.md)
 - [Beiträge](../CONTRIBUTING.md)
 - [Agentenleitfaden](../AGENTS.md)
@@ -43,6 +45,7 @@ zu korrigieren.
 - [Hardware-Zwischenlayer](architecture/hardware-interface.md)
 - [Zapfzustandsautomat](architecture/tap-state-machine.md)
 - [Backend-Core-Integration](architecture/backend-core-integration.md)
+- [Kiosk-WebUI](architecture/kiosk-webui.md)
 - [Persistenz und Datenmodell](architecture/persistence.md)
 - [ADR 0001: GPL-3.0-or-later](decisions/0001-gpl-3-or-later.md)
 

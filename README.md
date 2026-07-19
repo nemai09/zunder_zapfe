@@ -23,7 +23,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
-| Kiosk-WebUI | Technischer Demonstrator, Produktoberfläche fehlt |
+| Kiosk-WebUI | Zustandsbasierte Touch-Alpha; Pi- und Bedienreview ausstehend |
 | Admin-WebUI | Noch nicht implementiert |
 | Reale Zapfhardware | Noch nicht implementiert |
 
@@ -101,7 +101,10 @@ parallele Entwicklung sind:
 - [Laufzeitkonfiguration](docs/interfaces/configuration.md)
 - [OpenAPI 3.1](docs/interfaces/openapi.json)
 - [Zapfzustandsautomat](docs/architecture/tap-state-machine.md)
+- [Kiosk-WebUI](docs/architecture/kiosk-webui.md)
 - [Persistenzmodell](docs/architecture/persistence.md)
+- [Entwicklungsmeilensteine](docs/milestones.md)
+- [Versionierung](docs/versioning.md)
 - [Anforderungskatalog](requirements/anforderungskatalog.txt)
 
 ## Mitwirken

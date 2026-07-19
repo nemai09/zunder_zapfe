@@ -27,7 +27,7 @@ stateDiagram-v2
     STARTING --> EMERGENCY_STOP: Not-Aus beim Start aktiv
 
     IDLE --> AUTHENTICATED: bekannte aktive Karte
-    AUTHENTICATED --> IDLE: Logout
+    AUTHENTICATED --> IDLE: Logout oder Inaktivität
 
     AUTHENTICATED --> PORTION_POURING: Portionswahl<br/>Messung starten, Ventil öffnen
     PORTION_POURING --> TOP_UP_AVAILABLE: Zielimpulse erreicht<br/>Ventil schließen, Istmenge buchen
@@ -76,7 +76,7 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `STARTING` | `start` | Not-Aus frei | `IDLE` | Ventil schließen, Hardware bereit |
 | `STARTING` | `start` | Not-Aus aktiv | `EMERGENCY_STOP` | Ventil schließen, Grund speichern |
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
-| `AUTHENTICATED` | `logout` | – | `IDLE` | Sitzung löschen |
+| `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
 | `AUTHENTICATED` | `start_portion` | Ziel > 0, aktiver Fachkontext | `PORTION_POURING` | Messung nullen, Ventil öffnen |
 | `PORTION_POURING` | Zielimpulse erreicht | – | `TOP_UP_AVAILABLE` | Ventil schließen, Istmenge buchen |
 | `PORTION_POURING` | `abort_portion` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
@@ -128,6 +128,10 @@ Die in `development_limits()` enthaltenen Werte und die Demonstrator-Kalibrierun
 sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
 Produktentscheidungen `OD-002` und `OD-003`; reale Ventil- und
 Durchfluss-Hardware sind noch nicht integriert.
+
+Für Milestone 5 gelten `60` Sekunden Inaktivität als konfigurierbarer
+Alpha-Default. Der Timeout läuft nur im Zustand `AUTHENTICATED`; eine aktive
+Zapfung oder das Nachfüllfenster werden nicht dadurch beendet.
 
 ## Traceability
 

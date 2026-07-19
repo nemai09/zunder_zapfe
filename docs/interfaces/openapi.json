@@ -207,6 +207,10 @@
             "title": "Application",
             "type": "string"
           },
+          "build": {
+            "title": "Build",
+            "type": "string"
+          },
           "revision": {
             "title": "Revision",
             "type": "string"
@@ -228,6 +232,7 @@
           "application",
           "status",
           "version",
+          "build",
           "revision",
           "server_time"
         ],
@@ -446,6 +451,39 @@
         "title": "SessionStatusResponse",
         "type": "object"
       },
+      "TapOptionsResponse": {
+        "properties": {
+          "session_timeout_seconds": {
+            "title": "Session Timeout Seconds",
+            "type": "integer"
+          },
+          "special_portion_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Special Portion Ml"
+          },
+          "standard_portions_ml": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Standard Portions Ml",
+            "type": "array"
+          }
+        },
+        "required": [
+          "standard_portions_ml",
+          "special_portion_ml",
+          "session_timeout_seconds"
+        ],
+        "title": "TapOptionsResponse",
+        "type": "object"
+      },
       "TapStatusResponse": {
         "properties": {
           "is_admin": {
@@ -464,6 +502,10 @@
           },
           "measured_pulses": {
             "title": "Measured Pulses",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
             "type": "integer"
           },
           "persistence_error": {
@@ -514,6 +556,28 @@
             ],
             "title": "Target Pulses"
           },
+          "target_volume_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Volume Ml"
+          },
+          "top_up_remaining_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Up Remaining Ms"
+          },
           "user_display_name": {
             "anyOf": [
               {
@@ -548,6 +612,9 @@
           "valve_open",
           "measured_pulses",
           "target_pulses",
+          "measured_volume_ml",
+          "target_volume_ml",
+          "top_up_remaining_ms",
           "safety_reason",
           "user_display_name",
           "special_portion_ml",
@@ -640,7 +707,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.1.0"
+    "version": "0.2.0-alpha.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -900,6 +967,24 @@
           }
         },
         "summary": "Stop Maintenance Pour"
+      }
+    },
+    "/api/tap/options": {
+      "get": {
+        "operationId": "tap_options_api_tap_options_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapOptionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Tap Options"
       }
     },
     "/api/tap/poll": {

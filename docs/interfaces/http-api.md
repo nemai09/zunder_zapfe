@@ -29,7 +29,7 @@ einspeisen.
 
 | Methode und Pfad | Erfolg | Beschreibung |
 | --- | --- | --- |
-| `GET /api/health` | `200 HealthResponse` | Prozess-, Versions- und Revisionsstatus |
+| `GET /api/health` | `200 HealthResponse` | Prozess-, Release-, Build- und Revisionsstatus |
 | `GET /api/nfc/status` | `200 NfcStatusResponse` | NFC-Leser und aktuell aufgelegte Karte |
 | `GET /api/hardware/status` | `200 HardwareStatusResponse` | Status aller Hardwarekomponenten |
 | `GET /api/tap/status` | `200 TapStatusResponse` | vollständiger Zapfzustand |
@@ -45,6 +45,9 @@ einspeisen.
 | `valve_open` | `bool` | angeforderter Ventilzustand |
 | `measured_pulses` | `int` | Impulse des aktiven Vorgangs |
 | `target_pulses` | `int | null` | Ziel einer Portion |
+| `measured_volume_ml` | `int` | backendseitig aus Impulsen berechnete Istmenge |
+| `target_volume_ml` | `int | null` | gewählte Zielmenge während einer Portion |
+| `top_up_remaining_ms` | `int | null` | verbleibendes Nachfüllfenster in Millisekunden |
 | `safety_reason` | `str | null` | Ursache einer Verriegelung |
 | `user_display_name` | `str | null` | Anzeigename |
 | `special_portion_ml` | `int | null` | individuelle Portion |
@@ -61,11 +64,14 @@ einspeisen.
 Anmeldung geschieht ereignisgesteuert durch Auflegen einer bekannten, aktiven
 Karte. Eine liegen gebliebene Karte meldet sich nach Logout nicht sofort erneut
 an; sie muss entfernt und neu aufgelegt werden.
+Eine Sitzung endet außerdem nach der konfigurierten Inaktivitätszeit. Aktive
+Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 
 ## Zapfen
 
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
+| `GET /api/tap/options` | keine | Standardportionen, persönliche Sonderportion und Sitzungszeit |
 | `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
 | `POST /api/tap/portion/abort` | `portion_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/top-up/start` | `top_up_available` innerhalb Zeitfenster | wechselt zu `top_up_pouring` |
@@ -75,6 +81,8 @@ an; sie muss entfernt und neu aufgelegt werden.
 Eine vollständig erreichte Portion endet in `top_up_available`. Der aktuelle
 Alpha-Grenzwert hält diesen Zustand acht Sekunden; erst danach ist eine neue
 Portion möglich.
+`POST /api/tap/portion` akzeptiert ausschließlich eine konfigurierte
+Standardportion oder die Sonderportion des angemeldeten Benutzers.
 
 ## Wartung und Sicherheit
 

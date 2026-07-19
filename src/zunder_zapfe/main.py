@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
@@ -29,10 +28,13 @@ from zunder_zapfe.api_models import (
     SessionStatusResponse,
     SimulatedCardRequest,
     SimulatedPulsesRequest,
+    TapOptionsResponse,
     TapStatusResponse,
 )
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
+from zunder_zapfe.build_info import current_build_info
+from zunder_zapfe.configuration import KioskSettings, load_kiosk_settings
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
 from zunder_zapfe.hardware.models import status_dict
 from zunder_zapfe.hardware.simulators import SimulatedFlowMeter, SimulatedNfcReader
@@ -41,21 +43,7 @@ from zunder_zapfe.persistence import create_database_engine, create_session_fact
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 
 
-def current_revision() -> str:
-    """Return the deployed Git revision when running from a checkout."""
-    try:
-        return subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=WEB_ROOT.parents[2],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        return "unknown"
-
-
-REVISION = current_revision()
+BUILD_INFO = current_build_info(WEB_ROOT.parents[2])
 
 
 def create_app(
@@ -64,6 +52,7 @@ def create_app(
     *,
     enable_simulator_api: bool | None = None,
     run_background: bool = True,
+    kiosk_settings: KioskSettings | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -78,13 +67,15 @@ def create_app(
         if enable_simulator_api is None
         else enable_simulator_api
     )
+    resolved_kiosk_settings = kiosk_settings or load_kiosk_settings()
     tap_service = TapService(
         hardware_layer,
         sessions,
-        development_limits(),
+        development_limits(session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds),
         calibration=FlowCalibration(
             pulses_per_liter=int(os.environ.get("ZUNDER_ZAPFE_PULSES_PER_LITER", "500"))
         ),
+        standard_portions_ml=resolved_kiosk_settings.standard_portions_ml,
         run_background=run_background,
     )
 
@@ -133,7 +124,8 @@ def create_app(
             "application": "zunder-zapfe",
             "status": "ready",
             "version": __version__,
-            "revision": REVISION,
+            "build": BUILD_INFO.display_version,
+            "revision": BUILD_INFO.revision,
             "server_time": datetime.now(UTC).isoformat(),
         }
 
@@ -157,6 +149,13 @@ def create_app(
             "user_display_name": status["user_display_name"],
             "is_admin": status["is_admin"],
             "special_portion_ml": status["special_portion_ml"],
+        }
+
+    @application.get("/api/tap/options", response_model=TapOptionsResponse)
+    async def tap_options() -> dict[str, Any]:
+        return {
+            **tap_service.portion_options(),
+            "session_timeout_seconds": resolved_kiosk_settings.session_timeout_seconds,
         }
 
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)

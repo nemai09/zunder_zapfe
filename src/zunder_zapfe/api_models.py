@@ -25,6 +25,7 @@ class HealthResponse(BaseModel):
     application: str
     status: str
     version: str
+    build: str
     revision: str
     server_time: str
 
@@ -82,6 +83,9 @@ class TapStatusResponse(BaseModel):
     valve_open: bool
     measured_pulses: int
     target_pulses: int | None
+    measured_volume_ml: int
+    target_volume_ml: int | None
+    top_up_remaining_ms: int | None
     safety_reason: str | None
     user_display_name: str | None
     special_portion_ml: int | None
@@ -94,6 +98,12 @@ class SessionStatusResponse(BaseModel):
     user_display_name: str | None
     is_admin: bool
     special_portion_ml: int | None
+
+
+class TapOptionsResponse(BaseModel):
+    standard_portions_ml: list[int]
+    special_portion_ml: int | None
+    session_timeout_seconds: int
 
 
 class PourRecordResponse(BaseModel):

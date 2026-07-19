@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend.tap_controller import TapLimits, TapState
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
+from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.demo import DemoSeedRefused, seed_demo_data
 from zunder_zapfe.hardware.layer import HardwareLayer
 from zunder_zapfe.hardware.simulators import (
@@ -34,6 +35,7 @@ from zunder_zapfe.persistence.models import (
     NfcCard,
     TapBooking,
     TechnicalEvent,
+    User,
     UserRole,
 )
 from zunder_zapfe.persistence.repository import Repository
@@ -41,6 +43,10 @@ from zunder_zapfe.smoke_test import run_smoke_test
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXED_TIME = datetime(2026, 7, 19, 20, 0, tzinfo=UTC)
+TEST_KIOSK_SETTINGS = KioskSettings(
+    standard_portions_ml=(20, 300),
+    session_timeout_seconds=60,
+)
 
 
 class ManualClock:
@@ -133,6 +139,7 @@ def start_service(
         hardware,
         sessions,
         limits(),
+        standard_portions_ml=(2, 20),
         calibration=FlowCalibration(pulses_per_liter=500),
         monotonic_clock=actual_clock,
         timestamp_clock=lambda: FIXED_TIME,
@@ -437,18 +444,53 @@ def test_zz_nfr_003_simulator_api_exercises_integrated_flow(
             sessions,
             enable_simulator_api=True,
             run_background=False,
+            kiosk_settings=TEST_KIOSK_SETTINGS,
         )
     ) as client:
         authenticated = client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})
+        rejected = client.post("/api/tap/portion", json={"target_volume_ml": 21})
         started = client.post("/api/tap/portion", json={"target_volume_ml": 20})
         completed = client.post("/api/simulator/flow/pulses", json={"count": 10})
         consumption = client.get("/api/consumption/current")
 
         assert authenticated.status_code == 200
         assert authenticated.json()["user_id"] == str(ids["user_id"])
+        assert rejected.status_code == 409
         assert started.status_code == 200
+        assert started.json()["target_volume_ml"] == 20
+        assert started.json()["measured_volume_ml"] == 0
         assert completed.json()["state"] == "top_up_available"
         assert consumption.json()["measured_volume_ml"] == 20
+
+
+def test_zz_tap_002_user_special_portion_is_exposed_and_enforced(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    ids = seed_data(sessions)
+    with sessions.begin() as session:
+        user = session.get(User, ids["user_id"])
+        assert user is not None
+        user.special_portion_ml = 420
+    hardware, _nfc, _flow_meter = simulated_hardware()
+
+    with TestClient(
+        create_app(
+            hardware,
+            sessions,
+            enable_simulator_api=True,
+            run_background=False,
+        )
+    ) as client:
+        client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})
+
+        options = client.get("/api/tap/options")
+        started = client.post("/api/tap/portion", json={"target_volume_ml": 420})
+
+        assert options.json()["standard_portions_ml"] == [300, 500]
+        assert options.json()["special_portion_ml"] == 420
+        assert started.status_code == 200
+        assert started.json()["target_volume_ml"] == 420
 
 
 def test_smoke_test_command_exercises_and_verifies_public_api(
@@ -464,6 +506,7 @@ def test_smoke_test_command_exercises_and_verifies_public_api(
             sessions,
             enable_simulator_api=True,
             run_background=False,
+            kiosk_settings=TEST_KIOSK_SETTINGS,
         )
     ) as client:
         client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})

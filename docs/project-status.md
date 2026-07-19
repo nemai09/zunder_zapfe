@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-19
+Stand: 2026-07-20
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -17,16 +17,19 @@ Phase: Alpha-Entwicklung
 - Verbrauchssummen, Preisberechnung und rechnerischer Fassbestand
 - automatisierter lokaler Smoke-Test mit realem NFC oder NFC-Simulator
 - schreibgeschützter SQLite-Datenbankbrowser für Diagnose
+- zustandsbasierte Touch-Kiosk-WebUI für Idle, Portion, Nachfüllen und Sperren
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
 Freigabe für reale Ventilhardware.
+Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
+geprüft; Bedienreview und Zielsystemprüfung sind für Milestone 5 noch offen.
 
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Kiosk-WebUI | Testseite und Statusanzeige | vollständiger Bedienablauf |
+| Kiosk-WebUI | vollständiger Alpha-Bedienablauf | Bedienfeedback und Pi-Prüfung |
 | Adminfunktionen | Rolle, Persistenz und Sicherheitsreset | Verwaltungsoberfläche und Webauthentifizierung |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
@@ -34,7 +37,7 @@ Freigabe für reale Ventilhardware.
 
 ## Nicht implementiert
 
-- produktive Kiosk- und Adminoberfläche
+- produktive Adminoberfläche
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
@@ -45,13 +48,16 @@ Freigabe für reale Ventilhardware.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Dokumentations- und Schnittstellenbaseline abschließen.
-2. Kiosk-WebUI gegen den versionierten HTTP-Vertrag implementieren.
-3. Admin-WebUI und notwendige Verwaltungsendpunkte ergänzen.
+1. Kiosk-WebUI gemeinsam reviewen und auf dem Raspberry Pi prüfen.
+2. Webauthentifizierung und notwendige Verwaltungsendpunkte ergänzen.
+3. Admin-WebUI implementieren.
 4. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
 5. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
    prüfen.
+
+Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
+[`milestones.md`](milestones.md).
 
 ## Bekannte Alpha-Eigenschaften
 

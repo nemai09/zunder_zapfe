@@ -32,6 +32,9 @@ def test_health_endpoint_reports_ready(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "ready"
     assert response.json()["application"] == "zunder-zapfe"
+    assert response.json()["version"] == "0.2.0-alpha.1"
+    assert response.json()["build"].startswith("zzapfe_v0.2.0_alpha.1_")
+    assert response.json()["build"].endswith(response.json()["revision"])
 
 
 def test_kiosk_page_is_available(client: TestClient) -> None:
@@ -40,6 +43,21 @@ def test_kiosk_page_is_available(client: TestClient) -> None:
     assert response.status_code == 200
     assert "Zunder Zapfe" in response.text
     assert "NFC-Leser" in response.text
+    assert "app.js" in response.text
+    script = client.get("/static/app.js")
+    assert script.status_code == 200
+    assert '"use strict"' in script.text
+
+
+def test_kiosk_options_expose_approved_standard_portions(client: TestClient) -> None:
+    response = client.get("/api/tap/options")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "standard_portions_ml": [300, 500],
+        "special_portion_ml": None,
+        "session_timeout_seconds": 60,
+    }
 
 
 def test_nfc_status_uses_injected_hardware(client: TestClient) -> None:

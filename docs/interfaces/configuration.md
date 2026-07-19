@@ -12,6 +12,8 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 | `ZUNDER_ZAPFE_PORT` | `8000` | lokaler HTTP-Port | ganzzahliger freier Port |
 | `ZUNDER_ZAPFE_DATABASE_URL` | SQLite unter `/var/lib/zunder-zapfe` | SQLAlchemy-Datenbankziel | Datenbank nicht ins Repository legen |
 | `ZUNDER_ZAPFE_PULSES_PER_LITER` | `500` | ganzzahlige Impulskalibrierung | Demonstratorwert, vor Realbetrieb kalibrieren |
+| `ZUNDER_ZAPFE_STANDARD_PORTIONS_ML` | `300,500` | kommaseparierte Standardportionen des Kiosks | mindestens zwei eindeutige positive Ganzzahlen |
+| `ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS` | `60` | Inaktivitätszeit bis zum automatischen Logout | positive ganze Sekundenzahl; Alpha-Default |
 | `ZUNDER_ZAPFE_SIMULATE_NFC` | `0` | ersetzt ACR122U durch NFC-Simulator | nur Entwicklung |
 | `ZUNDER_ZAPFE_ENABLE_SIMULATOR_API` | `0` | aktiviert Simulator-HTTP-Routen | im Normalbetrieb deaktiviert lassen |
 
@@ -26,3 +28,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 - Persistente fachliche Einstellungen gehören langfristig in die
   `settings`-Tabelle und benötigen Admin-Audit. Systemstartparameter und
   Geheimnisse bleiben Umgebungsvariablen.
+
+Standardportionen und Sitzungszeit sind bis zur Adminoberfläche als
+Umgebungsvariablen verfügbar. Milestone 7 überführt ihre fachliche Pflege in
+die auditierte Settings-Verwaltung.

@@ -3,111 +3,149 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#17140f">
-    <title>Zunder Zapfe – Systemtest</title>
+    <meta name="theme-color" content="#15120d">
+    <title>Zunder Zapfe</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
   </head>
   <body>
-    <main class="screen">
-      <section class="hero" aria-labelledby="title">
-        <p class="eyebrow">Raspberry Pi · Kiosk-Test</p>
-        <h1 id="title">Zunder Zapfe</h1>
-        <p class="lead">Die lokale Weboberfläche ist gestartet.</p>
+    <main class="kiosk-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Zunder Zapfe Startseite">
+          <span class="brand-mark" aria-hidden="true">Z</span>
+          <span>Zunder Zapfe</span>
+        </a>
+        <div class="connection" id="connection" role="status">
+          <span class="connection-dot"></span>
+          <span id="connection-label">Verbinde …</span>
+        </div>
+      </header>
+
+      <section class="screen screen-idle is-active" data-screen="idle" aria-labelledby="idle-title">
+        <div class="idle-copy">
+          <p class="eyebrow">Bereit zum Zapfen</p>
+          <h1 id="idle-title">Karte auflegen.<br><span>Bier genießen.</span></h1>
+          <p class="lead">Halte deine NFC-Karte kurz an den Leser.</p>
+          <div class="reader-status" id="reader-status">
+            <span class="reader-wave" aria-hidden="true"></span>
+            <span id="reader-label">NFC-Leser wird geprüft …</span>
+          </div>
+        </div>
+        <div class="glass-stage" aria-hidden="true">
+          <div class="glass">
+            <div class="foam foam-one"></div>
+            <div class="foam foam-two"></div>
+            <div class="foam foam-three"></div>
+            <div class="beer"></div>
+          </div>
+        </div>
       </section>
 
-      <section class="status-grid">
-        <article class="status-card" aria-live="polite">
-          <span class="status-light" id="status-light"></span>
+      <section class="screen" data-screen="authenticated" aria-labelledby="welcome-title">
+        <div class="session-heading">
           <div>
-            <p class="status-label">Backendstatus</p>
-            <p class="status-value" id="status-value">Verbindung wird geprüft …</p>
-            <p class="status-detail" id="status-detail"></p>
+            <p class="eyebrow">Hallo</p>
+            <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
+            <p class="lead compact">Wähle deine Portion. Das Zapfen startet sofort.</p>
           </div>
-        </article>
+          <button class="button button-quiet" id="logout-button" type="button">Abmelden</button>
+        </div>
 
-        <article class="status-card" aria-live="polite">
-          <span class="status-light" id="nfc-light"></span>
-          <div>
-            <p class="status-label">NFC-Leser</p>
-            <p class="status-value" id="nfc-value">Leser wird geprüft …</p>
-            <p class="status-detail" id="nfc-detail">UID: –</p>
+        <div class="tap-layout">
+          <div class="portion-panel">
+            <p class="section-label">Portionsgröße</p>
+            <div class="portion-grid" id="portion-grid"></div>
+            <p class="action-error" id="action-error" role="alert"></p>
           </div>
-        </article>
+
+          <aside class="info-panel">
+            <div class="beverage-card">
+              <p class="section-label">Aktiv am Hahn</p>
+              <p class="beverage-name" id="beverage-name">–</p>
+              <p class="beverage-detail" id="beverage-detail">Fassdaten werden geladen …</p>
+            </div>
+            <div class="stat-row">
+              <div class="stat">
+                <span>Dein Verbrauch</span>
+                <strong id="consumption-volume">–</strong>
+              </div>
+              <div class="stat">
+                <span>Dein Betrag</span>
+                <strong id="consumption-amount">–</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
-      <footer>
-        <span>Testseite · noch keine Ventilsteuerung</span>
+      <section class="screen screen-pour" data-screen="pouring" aria-labelledby="pour-title">
+        <div class="pour-copy">
+          <p class="eyebrow">Zapfung läuft</p>
+          <h1 class="compact-title" id="pour-title">Lass laufen.</h1>
+          <p class="lead compact">Die Portion stoppt automatisch bei der Zielmenge.</p>
+          <button class="button button-danger button-large" id="abort-button" type="button">
+            Zapfung abbrechen
+          </button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-ring" id="progress-ring">
+            <div class="progress-inner">
+              <strong id="measured-volume">0</strong>
+              <span>von <b id="target-volume">0</b> ml</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen screen-top-up" data-screen="top-up" aria-labelledby="top-up-title">
+        <div>
+          <p class="eyebrow">Noch etwas Platz?</p>
+          <h1 class="compact-title" id="top-up-title">Nachfüllen</h1>
+          <p class="lead compact" id="top-up-instruction">
+            Button gedrückt halten. Loslassen stoppt sofort.
+          </p>
+          <button class="button button-quiet top-up-logout" id="top-up-logout" type="button">
+            Fertig und abmelden
+          </button>
+        </div>
+        <div class="hold-area">
+          <button class="hold-button" id="top-up-button" type="button">
+            <span class="hold-countdown" id="top-up-countdown">8</span>
+            <strong id="top-up-label">Gedrückt halten</strong>
+            <small id="top-up-unit">zum Nachfüllen</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen screen-alert" data-screen="locked" aria-labelledby="locked-title">
+        <div class="alert-symbol" aria-hidden="true">!</div>
+        <div>
+          <p class="eyebrow alert-eyebrow">Anlage gesperrt</p>
+          <h1 class="compact-title" id="locked-title">Sicherheit zuerst.</h1>
+          <p class="lead compact" id="safety-reason">Die Anlage wurde sicher verriegelt.</p>
+          <p class="reset-help">Ursache beheben, Admin-Karte auflegen und anschließend entsperren.</p>
+          <button class="button button-light button-large" id="reset-button" type="button">
+            Mit Admin-Karte entsperren
+          </button>
+          <p class="action-error light" id="reset-error" role="alert"></p>
+        </div>
+      </section>
+
+      <section class="screen screen-offline" data-screen="offline" aria-labelledby="offline-title">
+        <div class="offline-pulse" aria-hidden="true"></div>
+        <div>
+          <p class="eyebrow alert-eyebrow">Verbindung unterbrochen</p>
+          <h1 class="compact-title" id="offline-title">Bitte kurz warten.</h1>
+          <p class="lead compact">
+            Die Steuerung wird erneut verbunden. Eine laufende Zapfung wird automatisch sicher beendet.
+          </p>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span id="build-version">zzapfe_v0.2.0_alpha.1_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
     </main>
-
-    <script>
-      const statusLight = document.querySelector("#status-light");
-      const statusValue = document.querySelector("#status-value");
-      const statusDetail = document.querySelector("#status-detail");
-      const nfcLight = document.querySelector("#nfc-light");
-      const nfcValue = document.querySelector("#nfc-value");
-      const nfcDetail = document.querySelector("#nfc-detail");
-      const clock = document.querySelector("#clock");
-      let loadedRevision = null;
-
-      function updateClock() {
-        clock.textContent = new Intl.DateTimeFormat("de-DE", {
-          dateStyle: "medium",
-          timeStyle: "medium",
-        }).format(new Date());
-      }
-
-      async function updateHealth() {
-        try {
-          const response = await fetch("/api/health", { cache: "no-store" });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const health = await response.json();
-          statusLight.className = "status-light ready";
-          statusValue.textContent = "Bereit";
-          statusDetail.textContent = `Backend ${health.version} · Commit ${health.revision}`;
-          if (loadedRevision && loadedRevision !== health.revision) {
-            window.location.reload();
-          }
-          loadedRevision = health.revision;
-        } catch (error) {
-          statusLight.className = "status-light failed";
-          statusValue.textContent = "Backend nicht erreichbar";
-          statusDetail.textContent = String(error);
-        }
-      }
-
-      async function updateNfc() {
-        try {
-          const response = await fetch("/api/nfc/status", { cache: "no-store" });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const nfc = await response.json();
-          const labels = {
-            starting: "Wird gestartet",
-            unavailable: "Unterstützung fehlt",
-            disconnected: "Nicht verbunden",
-            ready: "Bereit – Karte auflegen",
-            card: "Karte erkannt",
-            error: "Fehler",
-          };
-          nfcLight.className = `status-light ${["ready", "card"].includes(nfc.state) ? "ready" : "failed"}`;
-          nfcValue.textContent = labels[nfc.state] || nfc.state;
-          nfcDetail.textContent = nfc.uid
-            ? `UID: ${nfc.uid}`
-            : nfc.reader || nfc.detail || "UID: –";
-        } catch (error) {
-          nfcLight.className = "status-light failed";
-          nfcValue.textContent = "Status nicht erreichbar";
-          nfcDetail.textContent = String(error);
-        }
-      }
-
-      updateClock();
-      updateHealth();
-      updateNfc();
-      window.setInterval(updateClock, 1000);
-      window.setInterval(updateHealth, 3000);
-      window.setInterval(updateNfc, 500);
-    </script>
   </body>
 </html>
