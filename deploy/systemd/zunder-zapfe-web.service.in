@@ -7,7 +7,9 @@ Type=simple
 User=@@SERVICE_USER@@
 Group=@@SERVICE_USER@@
 WorkingDirectory=@@APP_DIR@@
+Environment=ZUNDER_ZAPFE_DATABASE_URL=sqlite:////var/lib/zunder-zapfe/zunder-zapfe.db
 EnvironmentFile=-/etc/zunder-zapfe/web.env
+ExecStartPre=@@APP_DIR@@/.venv/bin/alembic -c @@APP_DIR@@/alembic.ini upgrade head
 ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe
 Restart=on-failure
 RestartSec=2

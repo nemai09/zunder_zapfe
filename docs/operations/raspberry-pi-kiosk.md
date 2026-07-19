@@ -128,6 +128,7 @@ Die produktive Laufzeitkonfiguration liegt unter
 Das Skript prueft:
 
 - Python-Tests,
+- aktuellen Stand der SQLite-Datenbankmigrationen,
 - aktiven systemd-Dienst,
 - lokalen HTTP-Health-Endpunkt,
 - angeschlossenen und betriebsbereiten ACR122U.
@@ -197,5 +198,7 @@ enthaelt die automatische Aktualisierungslogik.
 - Das Skript ist fuer aktuelle Raspberry Pi OS Desktop-Images mit labwc gedacht.
 - Automatische Desktop-Anmeldung wird vorausgesetzt und nicht veraendert.
 - Die Anwendung lauscht nur auf `127.0.0.1`; Fernzugriff ist noch nicht vorgesehen.
-- Es existiert noch keine Datenbank und keine Hardwaresteuerung.
+- Das Datenbankschema ist vorhanden, aber noch nicht mit NFC-Anmeldung und
+  Zapf-Zustandsautomat verdrahtet.
+- Die reale Ventil-, Durchfluss- und Not-Aus-Ansteuerung fehlt noch.
 - Ein vollstaendig offline durchfuehrbares Dependency-Deployment folgt spaeter.

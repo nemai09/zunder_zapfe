@@ -4,9 +4,10 @@ Offline betriebene, automatisierte Zapfanlage auf Basis eines Raspberry Pi.
 
 ## Projektstatus
 
-Das Projekt befindet sich in der Anforderungs- und Planungsphase. Die verbindliche
-Ausgangsbasis ist der nummerierte Katalog unter
-`requirements/anforderungskatalog.txt`.
+Das Projekt befindet sich im Aufbau der Softwaregrundlagen. Die verbindliche
+Ausgangsbasis bleibt der nummerierte Katalog unter
+`requirements/anforderungskatalog.txt`; Implementierung und Tests referenzieren
+die betroffenen Anforderungs-IDs.
 
 Der erste Software-Meilenstein stellt eine lokale Python-Testseite auf dem
 Raspberry Pi bereit, startet sie automatisch im Chromium-Kioskmodus und bindet
@@ -42,6 +43,10 @@ Der sicherheitsorientierte Zapfablauf und seine Zustaende sind unter
 [`docs/architecture/tap-state-machine.md`](docs/architecture/tap-state-machine.md)
 grafisch dokumentiert.
 
+Das lokale SQLite-Datenmodell und die Migrationsstrategie sind unter
+[`docs/architecture/persistence.md`](docs/architecture/persistence.md)
+dokumentiert.
+
 ## Zielsystem installieren
 
 Voraussetzung ist Raspberry Pi OS (64 Bit) mit Desktop auf einem Raspberry Pi 4B.
@@ -61,6 +66,12 @@ Verifikation erfolgt ausschliesslich auf dem Raspberry Pi:
 
 Die Einrichtung des USB-NFC-Lesers ACS ACR122U ist unter
 [`docs/operations/acr122u-nfc.md`](docs/operations/acr122u-nfc.md) beschrieben.
+
+Fuer die Diagnose kann die SQLite-Datenbank mit einer separat gestarteten,
+schreibgeschuetzten Weboberflaeche untersucht werden. Die sichere Verwendung ist
+unter
+[`docs/operations/database-browser.md`](docs/operations/database-browser.md)
+beschrieben.
 
 ## Zusammenarbeit
 

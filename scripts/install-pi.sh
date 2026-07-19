@@ -35,7 +35,7 @@ fi
 
 python3 -m venv "${app_dir}/.venv"
 "${app_dir}/.venv/bin/python" -m pip install --upgrade pip
-"${app_dir}/.venv/bin/python" -m pip install --editable "${app_dir}[dev]"
+"${app_dir}/.venv/bin/python" -m pip install --editable "${app_dir}[dev,debug]"
 
 sed -e "s|@@APP_DIR@@|${app_dir}|g" \
   -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \
