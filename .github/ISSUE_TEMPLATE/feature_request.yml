@@ -1,0 +1,35 @@
+name: Funktion vorschlagen
+description: Neue Funktion oder Schnittstellenänderung diskutieren
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem und Nutzen
+      description: Welches konkrete Problem soll gelöst werden?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Vorschlag
+      description: Gewünschtes Verhalten, noch keine Implementierungsdetails nötig.
+    validations:
+      required: true
+  - type: input
+    id: requirements
+    attributes:
+      label: Betroffene Anforderungen
+      description: Bekannte ZZ-IDs oder "neu".
+  - type: checkboxes
+    id: interfaces
+    attributes:
+      label: Betroffene Bereiche
+      options:
+        - label: Hardwarevertrag
+        - label: HTTP-API
+        - label: Datenbankschema
+        - label: Zustandsautomat
+        - label: Kiosk- oder Admin-WebUI

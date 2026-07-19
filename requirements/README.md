@@ -6,5 +6,10 @@
 - Prioritaeten: `MUSS`, `SOLL`, `KANN`.
 - Offene Detailwerte werden als konfigurierbar oder vertagt ausgewiesen.
 - Abnahmekriterien beschreiben die spaetere objektive Verifikation.
-- Aenderungen erfolgen per Git-Commit und spaeter vorzugsweise per Review.
+- Aenderungen erfolgen nachvollziehbar auf einem Branch und per Pull Request.
+- Implementierung, Tests und Dokumentation referenzieren betroffene IDs, ohne
+  dadurch eine noch nicht vollstaendig abgenommene Anforderung als erledigt zu
+  markieren.
+- Offene Entscheidungen `OD-*` werden erst nach dokumentierter Entscheidung zu
+  verbindlichem Verhalten.
 

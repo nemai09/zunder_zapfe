@@ -1,0 +1,1102 @@
+{
+  "components": {
+    "schemas": {
+      "BookingSummaryResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "completion": {
+            "title": "Completion",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "measured_volume_ml",
+          "amount_cents",
+          "kind",
+          "completion"
+        ],
+        "title": "BookingSummaryResponse",
+        "type": "object"
+      },
+      "ConsumptionResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "booking_count": {
+            "title": "Booking Count",
+            "type": "integer"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "user_id",
+          "booking_count",
+          "measured_volume_ml",
+          "amount_cents"
+        ],
+        "title": "ConsumptionResponse",
+        "type": "object"
+      },
+      "EmergencyStopStatusResponse": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "simulated": {
+            "title": "Simulated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active",
+          "available",
+          "simulated"
+        ],
+        "title": "EmergencyStopStatusResponse",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "FlowStatusResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "last_pulse_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Pulse At"
+          },
+          "measuring": {
+            "title": "Measuring",
+            "type": "boolean"
+          },
+          "pulse_count": {
+            "title": "Pulse Count",
+            "type": "integer"
+          },
+          "simulated": {
+            "title": "Simulated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pulse_count",
+          "measuring",
+          "available",
+          "simulated"
+        ],
+        "title": "FlowStatusResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HardwareStatusResponse": {
+        "properties": {
+          "emergency_stop": {
+            "$ref": "#/components/schemas/EmergencyStopStatusResponse"
+          },
+          "flow_meter": {
+            "$ref": "#/components/schemas/FlowStatusResponse"
+          },
+          "nfc": {
+            "$ref": "#/components/schemas/NfcStatusResponse"
+          },
+          "valve": {
+            "$ref": "#/components/schemas/ValveStatusResponse"
+          }
+        },
+        "required": [
+          "nfc",
+          "valve",
+          "flow_meter",
+          "emergency_stop"
+        ],
+        "title": "HardwareStatusResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "application": {
+            "title": "Application",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "server_time": {
+            "title": "Server Time",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application",
+          "status",
+          "version",
+          "revision",
+          "server_time"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "KegStatusResponse": {
+        "properties": {
+          "beverage_id": {
+            "title": "Beverage Id",
+            "type": "integer"
+          },
+          "beverage_name": {
+            "title": "Beverage Name",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_name": {
+            "title": "Event Name",
+            "type": "string"
+          },
+          "initial_volume_ml": {
+            "title": "Initial Volume Ml",
+            "type": "integer"
+          },
+          "keg_id": {
+            "title": "Keg Id",
+            "type": "integer"
+          },
+          "price_per_liter_cents": {
+            "title": "Price Per Liter Cents",
+            "type": "integer"
+          },
+          "remaining_volume_ml": {
+            "title": "Remaining Volume Ml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_name",
+          "beverage_id",
+          "beverage_name",
+          "keg_id",
+          "initial_volume_ml",
+          "price_per_liter_cents",
+          "remaining_volume_ml"
+        ],
+        "title": "KegStatusResponse",
+        "type": "object"
+      },
+      "NfcStatusResponse": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "reader": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reader"
+          },
+          "simulated": {
+            "title": "Simulated",
+            "type": "boolean"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uid"
+          }
+        },
+        "required": [
+          "state",
+          "simulated"
+        ],
+        "title": "NfcStatusResponse",
+        "type": "object"
+      },
+      "PortionRequest": {
+        "properties": {
+          "target_volume_ml": {
+            "exclusiveMinimum": 0.0,
+            "title": "Target Volume Ml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "target_volume_ml"
+        ],
+        "title": "PortionRequest",
+        "type": "object"
+      },
+      "PourRecordResponse": {
+        "properties": {
+          "chargeable": {
+            "title": "Chargeable",
+            "type": "boolean"
+          },
+          "completion": {
+            "title": "Completion",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "measured_pulses": {
+            "title": "Measured Pulses",
+            "type": "integer"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "target_pulses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Pulses"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence",
+          "kind",
+          "user_id",
+          "measured_pulses",
+          "target_pulses",
+          "completion",
+          "chargeable"
+        ],
+        "title": "PourRecordResponse",
+        "type": "object"
+      },
+      "SessionStatusResponse": {
+        "properties": {
+          "is_admin": {
+            "title": "Is Admin",
+            "type": "boolean"
+          },
+          "special_portion_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Special Portion Ml"
+          },
+          "user_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Display Name"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_display_name",
+          "is_admin",
+          "special_portion_ml"
+        ],
+        "title": "SessionStatusResponse",
+        "type": "object"
+      },
+      "TapStatusResponse": {
+        "properties": {
+          "is_admin": {
+            "title": "Is Admin",
+            "type": "boolean"
+          },
+          "last_booking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BookingSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "measured_pulses": {
+            "title": "Measured Pulses",
+            "type": "integer"
+          },
+          "persistence_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persistence Error"
+          },
+          "safety_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safety Reason"
+          },
+          "special_portion_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Special Portion Ml"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "target_pulses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Pulses"
+          },
+          "user_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Display Name"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "valve_open": {
+            "title": "Valve Open",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "state",
+          "user_id",
+          "is_admin",
+          "valve_open",
+          "measured_pulses",
+          "target_pulses",
+          "safety_reason",
+          "user_display_name",
+          "special_portion_ml",
+          "persistence_error",
+          "last_booking"
+        ],
+        "title": "TapStatusResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "ValveStatusResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "is_open": {
+            "title": "Is Open",
+            "type": "boolean"
+          },
+          "simulated": {
+            "title": "Simulated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_open",
+          "available",
+          "simulated"
+        ],
+        "title": "ValveStatusResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Local alpha API for NFC authentication, safe tap control and SQLite bookings.",
+    "license": {
+      "identifier": "GPL-3.0-or-later",
+      "name": "GNU General Public License v3.0 or later"
+    },
+    "title": "Zunder Zapfe",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/consumption/current": {
+      "get": {
+        "operationId": "current_consumption_api_consumption_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsumptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Current Consumption"
+      }
+    },
+    "/api/hardware/status": {
+      "get": {
+        "operationId": "hardware_status_api_hardware_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwareStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Hardware Status"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/keg/current": {
+      "get": {
+        "operationId": "current_keg_api_keg_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KegStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Current Keg"
+      }
+    },
+    "/api/nfc/status": {
+      "get": {
+        "operationId": "nfc_status_api_nfc_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NfcStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Nfc Status"
+      }
+    },
+    "/api/session/logout": {
+      "post": {
+        "operationId": "logout_api_session_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Logout"
+      }
+    },
+    "/api/session/status": {
+      "get": {
+        "operationId": "session_status_api_session_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Session Status"
+      }
+    },
+    "/api/tap/heartbeat": {
+      "post": {
+        "operationId": "heartbeat_api_tap_heartbeat_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Heartbeat"
+      }
+    },
+    "/api/tap/maintenance/enter": {
+      "post": {
+        "operationId": "enter_maintenance_api_tap_maintenance_enter_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Enter Maintenance"
+      }
+    },
+    "/api/tap/maintenance/exit": {
+      "post": {
+        "operationId": "exit_maintenance_api_tap_maintenance_exit_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Exit Maintenance"
+      }
+    },
+    "/api/tap/maintenance/start": {
+      "post": {
+        "operationId": "start_maintenance_pour_api_tap_maintenance_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Start Maintenance Pour"
+      }
+    },
+    "/api/tap/maintenance/stop": {
+      "post": {
+        "operationId": "stop_maintenance_pour_api_tap_maintenance_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PourRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Stop Maintenance Pour"
+      }
+    },
+    "/api/tap/poll": {
+      "post": {
+        "operationId": "poll_tap_api_tap_poll_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Poll Tap"
+      }
+    },
+    "/api/tap/portion": {
+      "post": {
+        "operationId": "start_portion_api_tap_portion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Portion"
+      }
+    },
+    "/api/tap/portion/abort": {
+      "post": {
+        "operationId": "abort_portion_api_tap_portion_abort_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PourRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Abort Portion"
+      }
+    },
+    "/api/tap/safety/reset": {
+      "post": {
+        "operationId": "reset_safety_lock_api_tap_safety_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Reset Safety Lock"
+      }
+    },
+    "/api/tap/status": {
+      "get": {
+        "operationId": "tap_status_api_tap_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Tap Status"
+      }
+    },
+    "/api/tap/top-up/start": {
+      "post": {
+        "operationId": "start_top_up_api_tap_top_up_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Start Top Up"
+      }
+    },
+    "/api/tap/top-up/stop": {
+      "post": {
+        "operationId": "stop_top_up_api_tap_top_up_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PourRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Stop Top Up"
+      }
+    }
+  }
+}

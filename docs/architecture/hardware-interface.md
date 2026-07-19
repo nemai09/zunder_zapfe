@@ -10,6 +10,10 @@ Geraeten, GPIO-Bibliotheken und Pinbelegungen. Backend und Weboberflaeche greife
 ausschliesslich auf die stabilen Python-Vertraege unter
 `src/zunder_zapfe/hardware/interfaces.py` zu.
 
+Methoden, Statusfelder, Lifecycle und Aenderungsverfahren sind als gemeinsamer
+Vertrag fuer Software- und Hardwareentwicklung unter
+[`docs/interfaces/hardware.md`](../interfaces/hardware.md) dokumentiert.
+
 Betroffene Anforderungen sind insbesondere `ZZ-HW-001` bis `ZZ-HW-005`,
 `ZZ-SAF-001` bis `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009` und `ZZ-NFR-001`.
 

@@ -33,9 +33,21 @@ if [[ ! -f /etc/zunder-zapfe/web.env ]]; then
   install -m 0644 "${app_dir}/config/web.env.example" /etc/zunder-zapfe/web.env
 fi
 
-python3 -m venv "${app_dir}/.venv"
-"${app_dir}/.venv/bin/python" -m pip install --upgrade pip
-"${app_dir}/.venv/bin/python" -m pip install --editable "${app_dir}[dev,debug]"
+# Repository-local Python files must remain writable by the checkout owner.
+# Older installer versions created the venv and egg-info as root; repair only
+# those generated paths before installing as the service user.
+if [[ -d "${app_dir}/.venv" ]]; then
+  chown -R "${kiosk_user}:${kiosk_user}" "${app_dir}/.venv"
+fi
+if [[ -d "${app_dir}/src/zunder_zapfe.egg-info" ]]; then
+  chown -R "${kiosk_user}:${kiosk_user}" "${app_dir}/src/zunder_zapfe.egg-info"
+fi
+
+runuser -u "${kiosk_user}" -- python3 -m venv "${app_dir}/.venv"
+runuser -u "${kiosk_user}" -- \
+  "${app_dir}/.venv/bin/python" -m pip install --upgrade pip
+runuser -u "${kiosk_user}" -- \
+  "${app_dir}/.venv/bin/python" -m pip install --editable "${app_dir}[dev,debug]"
 
 sed -e "s|@@APP_DIR@@|${app_dir}|g" \
   -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \

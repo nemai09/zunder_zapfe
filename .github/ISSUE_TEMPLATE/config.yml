@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Vertrauliche Sicherheitsmeldung
+    url: https://github.com/nemai09/zunder_zapfe/security/advisories/new
+    about: Bitte keine ausnutzbaren Schwachstellen öffentlich melden.

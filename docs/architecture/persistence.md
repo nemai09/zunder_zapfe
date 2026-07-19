@@ -8,6 +8,9 @@ Die Anwendung speichert ihre fachlichen Daten lokal in SQLite. Sie benoetigt
 zur Laufzeit weder Netzwerk noch externen Datenbankserver. SQLAlchemy 2 bildet
 das Datenmodell ab; Alembic versioniert und installiert Schemaaenderungen.
 
+Der transaktionsgebundene Vertrag zwischen Fachlogik und Repository ist unter
+[`docs/interfaces/persistence.md`](../interfaces/persistence.md) beschrieben.
+
 Betroffen sind insbesondere `ZZ-SYS-003` bis `ZZ-SYS-006`, `ZZ-AUT-001` bis
 `ZZ-AUT-008`, `ZZ-KEG-001` bis `ZZ-KEG-004`, `ZZ-BIL-001` bis `ZZ-BIL-004` und
 `ZZ-DAT-001` bis `ZZ-DAT-007`.

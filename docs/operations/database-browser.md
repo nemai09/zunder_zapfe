@@ -64,12 +64,12 @@ SSH-Tunnel auf Port 8081 vorgesehen; `sqlite-web` selbst bleibt dabei an
 - die Trigger gegen Aendern oder Loeschen von Zapfbuchungen,
 - Fremdschluessel zwischen Benutzern, NFC-Karten, Getraenken, Faessern und
   Buchungen,
-- spaeter die vom Backend erzeugten Datensaetze und berechneten Betraege,
+- die vom Backend erzeugten Datensaetze und berechneten Betraege,
 - die aktuell installierte Migration in `alembic_version`.
 
-Der Browser zeigt an diesem Checkpoint zunaechst vor allem das migrierte Schema.
-Fachliche Beispieldaten entstehen im naechsten Integrationsschritt oder koennen
-ueber gezielte Backend-Tests erzeugt werden.
+Fachliche Demo-Daten koennen mit `zunder-zapfe-seed-demo` ausschliesslich in
+einer leeren Alpha-Datenbank angelegt werden. Der Smoke-Test erzeugt danach
+vollstaendige Zapfbuchungen ueber den regulaeren Backendablauf.
 
 ## Sicherheitsregeln
 

@@ -65,6 +65,40 @@ stateDiagram-v2
     STOPPED --> [*]
 ```
 
+## Übergangstabelle
+
+Die Tabelle ergänzt das Diagramm in einer für Reviews und Entwicklungsagenten
+eindeutigeren Form. `Safety-Fehler` umfasst je nach Zapfart Not-Aus,
+Durchfluss-, Zeit- und Watchdoggrenzen.
+
+| Ausgang | Ereignis/Aktion | Guard | Ziel | Wesentliche Wirkung |
+| --- | --- | --- | --- | --- |
+| `STARTING` | `start` | Not-Aus frei | `IDLE` | Ventil schließen, Hardware bereit |
+| `STARTING` | `start` | Not-Aus aktiv | `EMERGENCY_STOP` | Ventil schließen, Grund speichern |
+| `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
+| `AUTHENTICATED` | `logout` | – | `IDLE` | Sitzung löschen |
+| `AUTHENTICATED` | `start_portion` | Ziel > 0, aktiver Fachkontext | `PORTION_POURING` | Messung nullen, Ventil öffnen |
+| `PORTION_POURING` | Zielimpulse erreicht | – | `TOP_UP_AVAILABLE` | Ventil schließen, Istmenge buchen |
+| `PORTION_POURING` | `abort_portion` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
+| `TOP_UP_AVAILABLE` | `start_top_up` | Zeitfenster aktiv | `TOP_UP_POURING` | neue Messung, Ventil öffnen |
+| `TOP_UP_AVAILABLE` | Zeitfenster abgelaufen | – | `AUTHENTICATED` | Nachfüllen verwerfen |
+| `TOP_UP_AVAILABLE` | `logout` | – | `IDLE` | Sitzung löschen |
+| `TOP_UP_POURING` | `stop_top_up` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
+| `TOP_UP_POURING` | Zeit-/Impulslimit | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
+| `AUTHENTICATED` | `enter_maintenance` | Admin | `MAINTENANCE` | Wartungsmodus aktivieren |
+| `MAINTENANCE` | `start_maintenance_pour` | – | `MAINTENANCE_POURING` | Messung nullen, Ventil öffnen |
+| `MAINTENANCE_POURING` | `stop_maintenance_pour` | – | `MAINTENANCE` | Ventil schließen, kostenfrei buchen |
+| `MAINTENANCE` | `exit_maintenance` | – | `AUTHENTICATED` | Wartungsmodus verlassen |
+| aktiver Zapfzustand | Safety-Fehler | kein aktiver Not-Aus | `FAULT_LOCKED` | Ventil schließen, Fehlerabschluss buchen |
+| beliebiger Betriebszustand | Not-Aus erkannt | – | `EMERGENCY_STOP` | Ventil sofort schließen, verriegeln |
+| `FAULT_LOCKED` | `reset_safety_lock` | aktive Admin-Karte, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
+| `EMERGENCY_STOP` | `reset_safety_lock` | aktive Admin-Karte, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
+| beliebiger Zustand | `shutdown` | – | `STOPPED` | zuerst Ventil schließen; aktiven Vorgang abschließen |
+
+Nicht aufgeführte Aktionen sind ungültig und führen zu `409`, nicht zu einem
+impliziten Zustandswechsel. Eine zweite NFC-Karte verändert einen aktiven
+Zapfvorgang nicht.
+
 ## Sicherheitsinvarianten
 
 Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
