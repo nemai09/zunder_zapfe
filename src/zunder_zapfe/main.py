@@ -107,6 +107,13 @@ def create_app(
     )
     application.mount("/static", StaticFiles(directory=WEB_ROOT), name="static")
 
+    @application.middleware("http")
+    async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
+        response = await call_next(request)
+        if request.url.path == "/" or request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
     @application.exception_handler(TapUnavailable)
     @application.exception_handler(InvalidTransition)
     async def domain_conflict(_request: Request, error: Exception) -> JSONResponse:

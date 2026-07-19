@@ -7,8 +7,8 @@ WEB_ROOT = PROJECT_ROOT / "src" / "zunder_zapfe" / "web"
 def test_zz_ui_001_kiosk_assets_are_offline_and_packaged_locally() -> None:
     html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
 
-    assert 'href="/static/styles.css"' in html
-    assert 'src="/static/app.js"' in html
+    assert 'href="/static/styles.css?v=0.2.0-alpha.1"' in html
+    assert 'src="/static/app.js?v=0.2.0-alpha.1"' in html
     assert "https://" not in html
     assert "http://" not in html
 

@@ -43,9 +43,12 @@ def test_kiosk_page_is_available(client: TestClient) -> None:
     assert response.status_code == 200
     assert "Zunder Zapfe" in response.text
     assert "NFC-Leser" in response.text
-    assert "app.js" in response.text
-    script = client.get("/static/app.js")
+    assert 'href="/static/styles.css?v=0.2.0-alpha.1"' in response.text
+    assert 'src="/static/app.js?v=0.2.0-alpha.1"' in response.text
+    assert response.headers["cache-control"] == "no-store"
+    script = client.get("/static/app.js?v=0.2.0-alpha.1")
     assert script.status_code == 200
+    assert script.headers["cache-control"] == "no-store"
     assert '"use strict"' in script.text
 
 
