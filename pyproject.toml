@@ -9,8 +9,10 @@ description = "Offline web application for the Zunder Zapfe tap system"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "alembic>=1.18,<1.19",
   "fastapi>=0.115,<1",
   "pyscard>=2.2,<3",
+  "SQLAlchemy>=2.0,<2.1",
   "uvicorn>=0.30,<1",
 ]
 

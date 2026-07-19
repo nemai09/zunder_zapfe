@@ -1,0 +1,254 @@
+from __future__ import annotations
+
+from collections.abc import Iterator
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import URL, Engine, inspect, select, text
+from sqlalchemy.exc import IntegrityError
+
+from zunder_zapfe.persistence.database import (
+    create_database_engine,
+    create_session_factory,
+)
+from zunder_zapfe.persistence.models import (
+    AdminAuditEntry,
+    BookingCompletion,
+    BookingKind,
+    Event,
+    ImmutableBookingError,
+    Keg,
+    NfcCard,
+    TapBooking,
+    TechnicalEvent,
+    UserRole,
+)
+from zunder_zapfe.persistence.repository import NewTapBooking, Repository
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def sqlite_url(path: Path) -> str:
+    return URL.create("sqlite", database=str(path)).render_as_string(hide_password=False)
+
+
+def alembic_config(url: str) -> Config:
+    config = Config(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option("sqlalchemy.url", url)
+    return config
+
+
+@pytest.fixture
+def migrated_engine(tmp_path: Path) -> Iterator[Engine]:
+    url = sqlite_url(tmp_path / "zunder-zapfe-test.db")
+    command.upgrade(alembic_config(url), "head")
+    engine = create_database_engine(url)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
+
+
+def seed_booking(engine: Engine) -> tuple[int, int, int, int, int]:
+    sessions = create_session_factory(engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        event = repository.create_event("Zunder 2026", 2026, active=True)
+        user = repository.create_user("Chris")
+        beverage = repository.create_beverage(
+            "Testbier", default_keg_size_ml=50_000, price_per_liter_cents=400
+        )
+        keg = repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=50_000,
+        )
+        booking = repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=user.id,
+                beverage_id=beverage.id,
+                keg_id=keg.id,
+                occurred_at=datetime(2026, 7, 19, 12, 0, tzinfo=UTC),
+                target_volume_ml=500,
+                measured_volume_ml=400,
+                measured_pulses=200,
+                price_per_liter_cents=400,
+                kind=BookingKind.PORTION,
+                completion=BookingCompletion.USER_ABORT,
+                chargeable=True,
+            )
+        )
+        return event.id, user.id, beverage.id, keg.id, booking.id
+
+
+def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> None:
+    tables = set(inspect(migrated_engine).get_table_names())
+
+    assert tables == {
+        "admin_audit_entries",
+        "alembic_version",
+        "beverages",
+        "events",
+        "kegs",
+        "nfc_cards",
+        "settings",
+        "tap_bookings",
+        "technical_events",
+        "users",
+    }
+    command.check(alembic_config(str(migrated_engine.url)))
+
+
+def test_repository_persists_core_domain_and_calculates_amount(
+    migrated_engine: Engine,
+) -> None:
+    event_id, user_id, _beverage_id, keg_id, booking_id = seed_booking(migrated_engine)
+    sessions = create_session_factory(migrated_engine)
+
+    with sessions() as session:
+        repository = Repository(session)
+        bookings = repository.list_user_bookings(event_id=event_id, user_id=user_id)
+
+        assert [booking.id for booking in bookings] == [booking_id]
+        assert bookings[0].measured_volume_ml == 400
+        assert bookings[0].amount_cents == 160
+        assert repository.remaining_keg_volume_ml(keg_id) == 49_600
+
+
+def test_only_one_event_and_keg_remain_active(migrated_engine: Engine) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        first_event = repository.create_event("Zunder 2025", 2025, active=True)
+        second_event = repository.create_event("Zunder 2026", 2026, active=True)
+        beverage = repository.create_beverage(
+            "Testbier", default_keg_size_ml=50_000, price_per_liter_cents=400
+        )
+        first_keg = repository.activate_new_keg(
+            event_id=second_event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=50_000,
+        )
+        second_keg = repository.activate_new_keg(
+            event_id=second_event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=30_000,
+        )
+
+        assert session.get(Event, first_event.id).active is False
+        assert session.get(Event, second_event.id).active is True
+        assert session.get(Keg, first_keg.id).active is False
+        assert session.get(Keg, first_keg.id).closed_at is not None
+        assert session.get(Keg, second_keg.id).active is True
+
+
+def test_nfc_uid_is_canonical_and_blocked_card_does_not_authenticate(
+    migrated_engine: Engine,
+) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        user = repository.create_user("Admin", role=UserRole.ADMIN)
+        card = repository.add_nfc_card(user.id, "04-aa:bb cc")
+
+        assert card.uid == "04AABBCC"
+        assert repository.find_active_user_by_card("04 AA BB CC").id == user.id
+
+        card.active = False
+        session.flush()
+        assert repository.find_active_user_by_card("04AABBCC") is None
+
+
+def test_booking_is_immutable_in_orm_and_database(migrated_engine: Engine) -> None:
+    *_ids, booking_id = seed_booking(migrated_engine)
+    sessions = create_session_factory(migrated_engine)
+
+    with sessions() as session:
+        booking = session.get(TapBooking, booking_id)
+        assert booking is not None
+        booking.amount_cents = 1
+        with pytest.raises(ImmutableBookingError):
+            session.flush()
+        session.rollback()
+
+    with pytest.raises(IntegrityError):
+        with migrated_engine.begin() as connection:
+            connection.execute(
+                text("UPDATE tap_bookings SET amount_cents = 1 WHERE id = :booking_id"),
+                {"booking_id": booking_id},
+            )
+
+
+def test_booking_must_match_keg_event_and_beverage(migrated_engine: Engine) -> None:
+    event_id, user_id, beverage_id, keg_id, _booking_id = seed_booking(migrated_engine)
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        other_event = repository.create_event("Zunder 2027", 2027)
+
+        with pytest.raises(ValueError, match="must match"):
+            repository.add_tap_booking(
+                NewTapBooking(
+                    event_id=other_event.id,
+                    user_id=user_id,
+                    beverage_id=beverage_id,
+                    keg_id=keg_id,
+                    occurred_at=datetime.now(UTC),
+                    target_volume_ml=500,
+                    measured_volume_ml=500,
+                    measured_pulses=250,
+                    price_per_liter_cents=400,
+                    kind=BookingKind.PORTION,
+                    completion=BookingCompletion.TARGET_REACHED,
+                    chargeable=True,
+                )
+            )
+
+
+def test_sqlite_foreign_keys_are_enforced(migrated_engine: Engine) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with pytest.raises(IntegrityError):
+        with sessions.begin() as session:
+            session.add(NfcCard(uid="AABBCCDD", user_id=999, active=True))
+            session.flush()
+
+
+def test_setting_changes_are_admin_only_and_audited(migrated_engine: Engine) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        admin = repository.create_user("Admin", role=UserRole.ADMIN)
+        user = repository.create_user("User")
+
+        with pytest.raises(PermissionError):
+            repository.set_setting("tap.logout_seconds", 30, admin_user_id=user.id)
+
+        repository.set_setting("tap.logout_seconds", 30, admin_user_id=admin.id)
+        repository.set_setting("tap.logout_seconds", 45, admin_user_id=admin.id)
+
+        entries = list(session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)))
+        assert len(entries) == 2
+        assert entries[0].old_values_json is None
+        assert entries[0].new_values_json == "30"
+        assert entries[1].old_values_json == "30"
+        assert entries[1].new_values_json == "45"
+
+
+def test_technical_events_are_persisted(migrated_engine: Engine) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        event = repository.record_technical_event(
+            severity="error",
+            event_type="tap.flow_timeout",
+            message="Kein Durchfluss erkannt",
+            details={"state": "portion_pouring"},
+        )
+
+        stored = session.get(TechnicalEvent, event.id)
+        assert stored is not None
+        assert stored.details_json == '{"state":"portion_pouring"}'
