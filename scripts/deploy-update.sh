@@ -53,9 +53,11 @@ if [[ "${needs_full_install}" == true ]]; then
   echo "System- oder Abhaengigkeitsaenderung erkannt: vollstaendige Installation"
   "${repo_dir}/scripts/install-pi.sh" "${kiosk_user}"
 else
-  echo "Keine Systemabhaengigkeiten geaendert: schneller Dienstneustart"
-  systemctl restart zunder-zapfe-web.service
+  echo "Keine Systemabhaengigkeiten geaendert"
 fi
+
+echo "Starte Webdienst mit dem neuen Stand neu"
+systemctl restart zunder-zapfe-web.service
 "${repo_dir}/scripts/pi-verify.sh"
 
 echo "Deployment erfolgreich. Ein Neustart des Raspberry Pi ist nicht erforderlich."
