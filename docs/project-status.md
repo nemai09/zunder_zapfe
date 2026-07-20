@@ -70,4 +70,11 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   keine Produktionskalibrierung.
 - `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
   konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
+- Der Durchfluss-Watchdog ist für Tests ohne Sensor vorübergehend per
+  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktiviert. Dies ist eine
+  dokumentierte Alpha-Abweichung von `ZZ-SAF-004`; Steuerungs-Watchdog,
+  Not-Aus und Zeitlimit bleiben aktiv. Vor realer Ventilhardware ist der Wert
+  zwingend auf `0` zu setzen.
+- Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
+  nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.

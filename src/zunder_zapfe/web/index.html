@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.2">
-    <script src="/static/app.js?v=0.2.0-alpha.2" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.3">
+    <script src="/static/app.js?v=0.2.0-alpha.3" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -15,9 +15,15 @@
           <span class="brand-mark" aria-hidden="true">Z</span>
           <span>Zunder Zapfe</span>
         </a>
-        <div class="connection" id="connection" role="status">
-          <span class="connection-dot"></span>
-          <span id="connection-label">Verbinde …</span>
+        <div class="status-cluster">
+          <div class="valve-status" id="valve-status" role="status" title="Debuganzeige des angeforderten Ventilzustands">
+            <span class="valve-dot"></span>
+            <span id="valve-label">DEBUG · Ventil AUS</span>
+          </div>
+          <div class="connection" id="connection" role="status">
+            <span class="connection-dot"></span>
+            <span id="connection-label">Verbinde …</span>
+          </div>
         </div>
       </header>
 
@@ -117,7 +123,7 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.2.0_alpha.2_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.2.0_alpha.3_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
     </main>

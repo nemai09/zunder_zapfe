@@ -30,7 +30,9 @@ class ManualClock:
         self.value += seconds
 
 
-def tap_setup() -> tuple[
+def tap_setup(
+    *, flow_watchdog_enabled: bool = True
+) -> tuple[
     TapController,
     HardwareLayer,
     ManualClock,
@@ -54,6 +56,7 @@ def tap_setup() -> tuple[
         top_up_window_seconds=5,
         top_up_maximum_seconds=2,
         top_up_maximum_pulses=3,
+        flow_watchdog_enabled=flow_watchdog_enabled,
     )
     hardware.start()
     controller = TapController(hardware, limits, clock=clock, supervise=False)
@@ -189,6 +192,39 @@ def test_missing_first_pulse_locks_tap() -> None:
 
     assert status.state is TapState.FAULT_LOCKED
     assert status.safety_reason == "Kein Durchfluss erkannt"
+    assert hardware.valve.snapshot().is_open is False
+
+
+def test_debug_mode_disables_only_flow_watchdog() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup(
+        flow_watchdog_enabled=False
+    )
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+
+    clock.advance(3)
+    controller.heartbeat()
+    status = controller.poll()
+
+    assert status.state is TapState.MANUAL_POURING
+    assert hardware.valve.snapshot().is_open is True
+    record = controller.stop_manual_pour()
+    assert record.measured_pulses == 0
+    assert hardware.valve.snapshot().is_open is False
+
+
+def test_debug_flow_mode_keeps_control_watchdog_active() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup(
+        flow_watchdog_enabled=False
+    )
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+
+    clock.advance(2)
+    status = controller.poll()
+
+    assert status.state is TapState.FAULT_LOCKED
+    assert status.safety_reason == "Steuerungs-Watchdog abgelaufen"
     assert hardware.valve.snapshot().is_open is False
 
 

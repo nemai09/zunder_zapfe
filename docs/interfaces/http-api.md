@@ -54,6 +54,9 @@ einspeisen.
 | `persistence_error` | `str | null` | letzter Buchungsfehler |
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
 
+`valve_open` ist ein angeforderter Softwarezustand und keine physische
+Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
+
 ## Sitzung
 
 | Methode und Pfad | Vorbedingung | Ergebnis |
@@ -71,7 +74,7 @@ Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
-| `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit sowie manuelle Entprell- und Zeitgrenzen |
+| `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit, manuelle Grenzen und temporärer Flow-Debugstatus |
 | `POST /api/tap/manual/start` | `authenticated`, aktiver Kontext und Fassbestand | wechselt zu `manual_pouring` |
 | `POST /api/tap/manual/stop` | `manual_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |

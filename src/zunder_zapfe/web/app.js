@@ -30,6 +30,8 @@ const elements = {
   screens: [...document.querySelectorAll("[data-screen]")],
   connection: document.querySelector("#connection"),
   connectionLabel: document.querySelector("#connection-label"),
+  valveStatus: document.querySelector("#valve-status"),
+  valveLabel: document.querySelector("#valve-label"),
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
   buildVersion: document.querySelector("#build-version"),
@@ -103,6 +105,13 @@ function render() {
   setScreen(currentScreen());
   elements.connection.className = `connection ${model.connected ? "is-online" : "is-offline"}`;
   elements.connectionLabel.textContent = model.connected ? "Steuerung bereit" : "Keine Verbindung";
+  const valveOpen = Boolean(model.tap?.valve_open);
+  elements.valveStatus.classList.toggle("is-open", valveOpen);
+  elements.valveStatus.classList.toggle(
+    "flow-debug",
+    Boolean(model.options?.debug_flow_watchdog_disabled),
+  );
+  elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
   if (model.health?.build) elements.buildVersion.textContent = model.health.build;
 
   if (model.nfc) {

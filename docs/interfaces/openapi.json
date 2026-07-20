@@ -453,6 +453,10 @@
       },
       "TapOptionsResponse": {
         "properties": {
+          "debug_flow_watchdog_disabled": {
+            "title": "Debug Flow Watchdog Disabled",
+            "type": "boolean"
+          },
           "manual_maximum_pour_seconds": {
             "title": "Manual Maximum Pour Seconds",
             "type": "integer"
@@ -489,7 +493,8 @@
           "special_portion_ml",
           "session_timeout_seconds",
           "manual_press_debounce_ms",
-          "manual_maximum_pour_seconds"
+          "manual_maximum_pour_seconds",
+          "debug_flow_watchdog_disabled"
         ],
         "title": "TapOptionsResponse",
         "type": "object"
@@ -717,7 +722,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.2.0-alpha.2"
+    "version": "0.2.0-alpha.3"
   },
   "openapi": "3.1.0",
   "paths": {

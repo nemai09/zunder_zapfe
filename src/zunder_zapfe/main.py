@@ -74,6 +74,7 @@ def create_app(
         development_limits(
             session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds,
             manual_maximum_seconds=resolved_kiosk_settings.manual_maximum_pour_seconds,
+            flow_watchdog_enabled=(not resolved_kiosk_settings.debug_disable_flow_watchdog),
         ),
         calibration=FlowCalibration(
             pulses_per_liter=int(os.environ.get("ZUNDER_ZAPFE_PULSES_PER_LITER", "500"))
@@ -168,6 +169,7 @@ def create_app(
             "session_timeout_seconds": resolved_kiosk_settings.session_timeout_seconds,
             "manual_press_debounce_ms": resolved_kiosk_settings.manual_press_debounce_ms,
             "manual_maximum_pour_seconds": (resolved_kiosk_settings.manual_maximum_pour_seconds),
+            "debug_flow_watchdog_disabled": (resolved_kiosk_settings.debug_disable_flow_watchdog),
         }
 
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)

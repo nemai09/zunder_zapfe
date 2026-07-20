@@ -40,5 +40,10 @@ manuelle Öffnungsdauer. Beide sind konfigurierbar und vor realem Betrieb gemä�
 Die WebUI zeigt keine NFC-UID. Ihr Buildstring stammt aus `GET /api/health` und
 folgt [`../versioning.md`](../versioning.md).
 
+Für die hardwarelose Alpha-Phase zeigt die Kopfleiste außerdem dezent den vom
+Backend gemeldeten Sollzustand `valve_open` als `DEBUG · Ventil EIN/AUS`. Dies
+ist keine Rückmeldung eines physischen Ventils und muss zusammen mit dem
+temporären Flow-Debugmodus vor Produktivbetrieb entfernt werden.
+
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
 `ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004` und `ZZ-NFR-005`.

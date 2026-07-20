@@ -67,6 +67,12 @@ button {
   z-index: 10;
 }
 
+.status-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -112,6 +118,40 @@ button {
 
 .connection.is-offline .connection-dot {
   background: var(--danger);
+}
+
+.valve-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #8f8779;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+}
+
+.valve-dot {
+  width: 0.55rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #8f8779;
+}
+
+.valve-status.is-open {
+  border-color: rgb(245 166 35 / 45%);
+  color: var(--amber-light);
+  background: rgb(245 166 35 / 8%);
+}
+
+.valve-status.flow-debug {
+  border-style: dashed;
+}
+
+.valve-status.is-open .valve-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0.8rem rgb(245 166 35 / 70%);
 }
 
 .screen {
@@ -593,6 +633,7 @@ h1 span {
   }
   .glass-stage { display: none; }
   .topbar { align-items: flex-start; }
+  .status-cluster { align-items: flex-end; flex-direction: column-reverse; }
   .session-heading { align-items: flex-start; }
   .progress-ring,
   .hold-button { width: min(56vw, 18rem); }

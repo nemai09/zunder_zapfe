@@ -56,6 +56,7 @@ zu korrigieren.
 - [ACR122U-NFC-Leser](operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
+- [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 
 ## Dokumentationsregeln
 

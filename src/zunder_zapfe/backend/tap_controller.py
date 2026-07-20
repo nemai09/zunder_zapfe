@@ -59,6 +59,7 @@ class TapLimits:
     top_up_maximum_pulses: int
     manual_maximum_seconds: float = 30.0
     session_timeout_seconds: float = 60.0
+    flow_watchdog_enabled: bool = True
 
     def __post_init__(self) -> None:
         numeric_limits = (
@@ -386,16 +387,17 @@ class TapController:
             self._lock_safely(TapState.FAULT_LOCKED, "Steuerungs-Watchdog abgelaufen")
             return
 
-        if reading.pulse_count == 0:
-            if now - active.started_at >= self._limits.first_pulse_timeout_seconds:
-                self._lock_safely(TapState.FAULT_LOCKED, "Kein Durchfluss erkannt")
-            return
+        if self._limits.flow_watchdog_enabled:
+            if reading.pulse_count == 0:
+                if now - active.started_at >= self._limits.first_pulse_timeout_seconds:
+                    self._lock_safely(TapState.FAULT_LOCKED, "Kein Durchfluss erkannt")
+                return
 
-        if reading.last_pulse_at is not None and (
-            now - reading.last_pulse_at >= self._limits.between_pulses_timeout_seconds
-        ):
-            self._lock_safely(TapState.FAULT_LOCKED, "Durchflussimpulse ausgeblieben")
-            return
+            if reading.last_pulse_at is not None and (
+                now - reading.last_pulse_at >= self._limits.between_pulses_timeout_seconds
+            ):
+                self._lock_safely(TapState.FAULT_LOCKED, "Durchflussimpulse ausgeblieben")
+                return
 
         if active.kind is PourKind.MANUAL:
             if now - active.started_at >= self._limits.manual_maximum_seconds:
@@ -490,6 +492,7 @@ def development_limits(
     *,
     session_timeout_seconds: float = 60.0,
     manual_maximum_seconds: float = 30.0,
+    flow_watchdog_enabled: bool = True,
 ) -> TapLimits:
     """Non-production limits used while only simulated tap hardware is present."""
     return TapLimits(
@@ -502,4 +505,5 @@ def development_limits(
         top_up_maximum_pulses=100,
         manual_maximum_seconds=manual_maximum_seconds,
         session_timeout_seconds=session_timeout_seconds,
+        flow_watchdog_enabled=flow_watchdog_enabled,
     )

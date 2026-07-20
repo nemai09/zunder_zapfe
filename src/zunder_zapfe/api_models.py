@@ -106,6 +106,7 @@ class TapOptionsResponse(BaseModel):
     session_timeout_seconds: int
     manual_press_debounce_ms: int
     manual_maximum_pour_seconds: int
+    debug_flow_watchdog_disabled: bool
 
 
 class PourRecordResponse(BaseModel):

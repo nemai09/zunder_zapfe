@@ -10,6 +10,7 @@ def test_kiosk_defaults_use_approved_alpha_portions() -> None:
     assert settings.session_timeout_seconds == 60
     assert settings.manual_press_debounce_ms == 120
     assert settings.manual_maximum_pour_seconds == 30
+    assert settings.debug_disable_flow_watchdog is True
 
 
 def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
@@ -19,6 +20,7 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
             "ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS": "90",
             "ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS": "150",
             "ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS": "45",
+            "ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG": "0",
         }
     )
 
@@ -27,6 +29,7 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
         session_timeout_seconds=90,
         manual_press_debounce_ms=150,
         manual_maximum_pour_seconds=45,
+        debug_disable_flow_watchdog=False,
     )
 
 
@@ -39,6 +42,7 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
         {"ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS": "0"},
         {"ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS": "-1"},
         {"ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS": "0"},
+        {"ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG": "true"},
     ],
 )
 def test_invalid_kiosk_settings_are_rejected(environment: dict[str, str]) -> None:

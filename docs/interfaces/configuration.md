@@ -16,6 +16,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 | `ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS` | `60` | Inaktivitätszeit bis zum automatischen Logout | positive ganze Sekundenzahl; Alpha-Default |
 | `ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS` | `120` | Entprellzeit vor dem Start einer manuellen Touch-Zapfung | nichtnegative ganze Millisekunden; verzögert niemals den Stopp |
 | `ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS` | `30` | maximale Dauer einer manuellen Zapfung | positive ganze Sekundenzahl; Alpha-Wert, vor Realbetrieb kalibrieren |
+| `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG` | `1` | deaktiviert vorübergehend Start- und Folgeimpulsprüfung | nur ohne Durchflusshardware; vor realer Ventilhardware zwingend auf `0` setzen |
 | `ZUNDER_ZAPFE_SIMULATE_NFC` | `0` | ersetzt ACR122U durch NFC-Simulator | nur Entwicklung |
 | `ZUNDER_ZAPFE_ENABLE_SIMULATOR_API` | `0` | aktiviert Simulator-HTTP-Routen | im Normalbetrieb deaktiviert lassen |
 
@@ -27,6 +28,8 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
   Credential aussieht.
 - Safety-relevante Werte werden validiert; ungültige Werte dürfen nicht zu
   einem geöffneten Ventil führen.
+- Der Debugschalter für den Durchfluss-Watchdog akzeptiert ausschließlich `0`
+  oder `1`. Er verändert weder Steuerungs-Watchdog, Not-Aus noch Zeitlimit.
 - Persistente fachliche Einstellungen gehören langfristig in die
   `settings`-Tabelle und benötigen Admin-Audit. Systemstartparameter und
   Geheimnisse bleiben Umgebungsvariablen.
@@ -34,3 +37,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 Standardportionen, Sitzungszeit und manuelle Alpha-Grenzwerte sind bis zur Adminoberfläche als
 Umgebungsvariablen verfügbar. Milestone 7 überführt ihre fachliche Pflege in
 die auditierte Settings-Verwaltung.
+
+Die zeitlich begrenzte Abweichung für Tests ohne Durchflusshardware ist unter
+[`../operations/debug-without-flow-hardware.md`](../operations/debug-without-flow-hardware.md)
+dokumentiert.
