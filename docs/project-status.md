@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-20
+Stand: 2026-07-21
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -32,6 +32,9 @@ Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
 und anschließend im vollständigen Bedienablauf auf dem Zielsystem geprüft.
 Milestone 5 umfasst 84 bestandene automatisierte Tests sowie die erfolgreiche
 Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
+Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
+Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
+Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 
 ## Teilweise umgesetzt
 
@@ -55,11 +58,11 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Milestone 6 auf dem Zielsystem mit realem NFC-Leser prüfen und abschließen.
-2. Weitere Adminbereiche und die Webauthentifizierung ergänzen.
-3. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
+1. Weitere Adminbereiche, den produktiven Initial-Admin-Prozess und die
+   Webauthentifizierung in Milestone 7 ergänzen.
+2. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
-4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
+3. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
    prüfen.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
