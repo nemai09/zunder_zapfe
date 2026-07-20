@@ -13,6 +13,7 @@ stateDiagram-v2
     state "Startphase<br/>STARTING" as STARTING
     state "Bereit, wartet auf Karte<br/>IDLE" as IDLE
     state "Benutzer angemeldet<br/>AUTHENTICATED" as AUTHENTICATED
+    state "Lokale Administration<br/>ADMIN" as ADMIN
     state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
     state "Nachfüllen möglich<br/>TOP_UP_AVAILABLE" as TOP_UP_AVAILABLE
@@ -29,6 +30,9 @@ stateDiagram-v2
 
     IDLE --> AUTHENTICATED: bekannte aktive Karte
     AUTHENTICATED --> IDLE: Logout oder Inaktivität
+    AUTHENTICATED --> ADMIN: Admin öffnet Verwaltung<br/>Ventil bleibt geschlossen
+    ADMIN --> AUTHENTICATED: Zurück zum Zapfen
+    ADMIN --> IDLE: Logout oder Admin-Inaktivität
 
     AUTHENTICATED --> MANUAL_POURING: Zapffläche gehalten<br/>Messung starten, Ventil öffnen
     MANUAL_POURING --> AUTHENTICATED: losgelassen oder Zeitlimit<br/>Ventil schließen, Istmenge buchen
@@ -55,6 +59,7 @@ stateDiagram-v2
 
     IDLE --> EMERGENCY_STOP: Not-Aus
     AUTHENTICATED --> EMERGENCY_STOP: Not-Aus
+    ADMIN --> EMERGENCY_STOP: Not-Aus
     MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     TOP_UP_AVAILABLE --> EMERGENCY_STOP: Not-Aus
@@ -84,6 +89,10 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
 | `AUTHENTICATED` | Touchaktivität | – | `AUTHENTICATED` | Inaktivitätszeit zurücksetzen |
+| `AUTHENTICATED` | `enter_admin_mode` | Admin | `ADMIN` | Ventil schließen, Admin-Timeout starten |
+| `ADMIN` | Touchaktivität | – | `ADMIN` | Admin-Inaktivitätszeit zurücksetzen |
+| `ADMIN` | `exit_admin_mode` | – | `AUTHENTICATED` | normalen Timeout neu starten |
+| `ADMIN` | `logout` oder Admin-Inaktivitätszeit | – | `IDLE` | Sitzung vollständig löschen |
 | `AUTHENTICATED` | `start_manual_pour` | aktiver Fachkontext | `MANUAL_POURING` | Messung nullen, Ventil öffnen |
 | `MANUAL_POURING` | `stop_manual_pour` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
 | `MANUAL_POURING` | maximales Zeitlimit | – | `AUTHENTICATED` | Ventil schließen, Istmenge mit Limitabschluss buchen |
@@ -141,10 +150,11 @@ sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
 Produktentscheidungen `OD-002`, `OD-003` und `OD-012`; reale Ventil- und
 Durchfluss-Hardware sind noch nicht integriert.
 
-Für Milestone 5 gelten `15` Sekunden Inaktivität als konfigurierbarer
-Alpha-Default. Die gesamte verbleibende Zeit zeigt die Kiosk-WebUI als Balken.
-Der Timeout läuft nur im Zustand `AUTHENTICATED`; eine aktive
-Zapfung oder das Nachfüllfenster werden nicht dadurch beendet.
+Für die normale Kiosksitzung gelten `15` Sekunden Inaktivität als
+konfigurierbarer Alpha-Default. Im Zustand `ADMIN` gilt separat ein auditiert
+einstellbarer Default von `30` Sekunden. Die gesamte verbleibende Zeit zeigt
+die WebUI als Balken; Touch setzt den jeweils aktiven Timer zurück. Eine aktive
+Zapfung oder das Nachfüllfenster werden nicht durch den Sitzungstimer beendet.
 
 ## Traceability
 

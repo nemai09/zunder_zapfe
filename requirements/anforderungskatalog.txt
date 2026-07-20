@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.3
+Version: 0.4
 Stand: 2026-07-20
-Status: Arbeitsstand nach CR-002
+Status: Arbeitsstand Milestone 6
 
 1. ZWECK UND FORMAT
 ===================
@@ -87,10 +87,14 @@ Abnahme: Ohne gueltige Anmeldedaten ist kein Zugriff auf Adminfunktionen moeglic
 
 [ZZ-AUT-004] Benutzerverwaltung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Admins muessen Benutzer anlegen, bearbeiten und NFC-Karten zuordnen koennen.
-Die konkrete Oberflaechengestaltung wird spaeter festgelegt.
-Abnahme: Ein Admin kann einen neuen Benutzer mit NFC-Karte funktionsfaehig
-anlegen.
+Admins muessen Benutzer mit verpflichtendem Vornamen, optionalem Nachnamen und
+optionalem Zusatzfeld anlegen und bearbeiten koennen. Weitere Personen- oder
+Adressdaten sind nicht erforderlich. Ein NFC-Armband muss durch kurzes Auflegen
+am Geraet direkt dem ausgewaehlten Benutzer zugeordnet werden koennen; die UID
+darf dabei nicht manuell vom Webclient vorgegeben werden.
+Abnahme: Ein Admin legt einen Benutzer an, startet die Zuordnung, legt ein
+bislang unbekanntes Armband kurz auf und kann den Benutzer danach damit
+anmelden.
 
 [ZZ-AUT-005] Adminvergabe
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -130,6 +134,17 @@ ohne neue Authentifizierung.
 Hinweis: Gemaess CR-002 gilt fuer die Alpha-WebUI ein Default von 15 Sekunden.
 Jede Touchberuehrung und der Abschluss einer Zapfung setzen die Inaktivitaet
 zurueck.
+
+[ZZ-AUT-011] Lokaler Adminmodus
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein Benutzer mit Adminrolle muss sich mit demselben NFC-Armband wie zum Zapfen
+anmelden und aus der normalen Zapfoberflaeche in einen lokalen Adminmodus
+wechseln koennen. Waehrend des Adminmodus darf keine Zapfung gestartet werden.
+Der Adminmodus muss einen separat konfigurierbaren Inaktivitaets-Timeout mit
+einem Alpha-Default von 30 Sekunden besitzen. Touchaktivitaet setzt ihn zurueck.
+Abnahme: Nur ein authentifizierter Admin kann den Modus oeffnen; der sichtbare
+Timer laeuft ueber 30 Sekunden, Touch setzt ihn zurueck und Ablauf fuehrt zum
+vollstaendigen Logout.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -487,6 +502,16 @@ erhalten bleiben.
 Abnahme: Der Balken wird waehrend der gesamten 15 Sekunden sichtbar kuerzer;
 Touch setzt ihn zurueck und 15 Sekunden ohne Aktivitaet beenden die Sitzung.
 
+[ZZ-UI-006] Einstieg und Gliederung der lokalen Administration
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Die normale Zapfoberflaeche muss ausschliesslich fuer Admins links neben dem
+Logout einen blauen Admin-Button anzeigen. Admin- und Logout-Button muessen
+zusammen die Breite der rechten Informationsspalte einnehmen. Die lokale
+Adminoberflaeche muss Verwaltung, Diagnose, Einstellungen und Protokolle als
+klar getrennte Bereiche gruppieren.
+Abnahme: Ein Admin kann zwischen normalem Zapfen und der gruppierten
+Adminoberflaeche wechseln; ein normaler Benutzer sieht keinen Admin-Einstieg.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Das System muss dauerhaft ein lokales WLAN fuer den Zugriff auf die
@@ -637,4 +662,3 @@ manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
 4. Eine ZZ-ID wird niemals umnummeriert oder wiederverwendet.
 5. Inhaltliche Aenderungen erfolgen nachvollziehbar ueber Git.
 6. Vertagte Anforderungen werden vor Aufnahme in einen Release erneut bewertet.
-

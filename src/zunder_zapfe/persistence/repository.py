@@ -95,10 +95,21 @@ class Repository:
         return event
 
     def create_user(
-        self, display_name: str, *, role: UserRole = UserRole.USER, active: bool = True
+        self,
+        first_name: str,
+        *,
+        last_name: str | None = None,
+        note: str | None = None,
+        role: UserRole = UserRole.USER,
+        active: bool = True,
     ) -> User:
+        normalized_first_name = _required_text(first_name, "First name")
+        normalized_last_name = _optional_text(last_name)
         user = User(
-            display_name=_required_text(display_name, "Display name"),
+            display_name=_display_name(normalized_first_name, normalized_last_name),
+            first_name=normalized_first_name,
+            last_name=normalized_last_name,
+            note=_optional_text(note),
             role=role,
             active=active,
         )
@@ -106,11 +117,62 @@ class Repository:
         self.session.flush()
         return user
 
-    def add_nfc_card(self, user_id: int, uid: str) -> NfcCard:
-        if self.session.get(User, user_id) is None:
+    def get_user(self, user_id: int) -> User:
+        user = self.session.get(User, user_id)
+        if user is None:
             raise LookupError(f"User {user_id} does not exist")
+        return user
+
+    def list_users(self) -> list[User]:
+        return list(self.session.scalars(select(User).order_by(User.first_name, User.last_name)))
+
+    def update_user(
+        self,
+        user_id: int,
+        *,
+        first_name: str,
+        last_name: str | None,
+        note: str | None,
+        role: UserRole,
+        active: bool,
+    ) -> User:
+        user = self.get_user(user_id)
+        user.first_name = _required_text(first_name, "First name")
+        user.last_name = _optional_text(last_name)
+        user.note = _optional_text(note)
+        user.display_name = _display_name(user.first_name, user.last_name)
+        user.role = role
+        user.active = active
+        self.session.flush()
+        return user
+
+    def add_nfc_card(self, user_id: int, uid: str) -> NfcCard:
+        self.get_user(user_id)
         card = NfcCard(user_id=user_id, uid=canonicalize_nfc_uid(uid), active=True)
         self.session.add(card)
+        self.session.flush()
+        return card
+
+    def get_nfc_card(self, card_id: int) -> NfcCard:
+        card = self.session.get(NfcCard, card_id)
+        if card is None:
+            raise LookupError(f"NFC card {card_id} does not exist")
+        return card
+
+    def find_nfc_card(self, uid: str) -> NfcCard | None:
+        return self.session.scalar(select(NfcCard).where(NfcCard.uid == canonicalize_nfc_uid(uid)))
+
+    def list_nfc_cards(self, user_id: int) -> list[NfcCard]:
+        self.get_user(user_id)
+        return list(
+            self.session.scalars(
+                select(NfcCard).where(NfcCard.user_id == user_id).order_by(NfcCard.id)
+            )
+        )
+
+    def set_nfc_card_active(self, card_id: int, *, active: bool) -> NfcCard:
+        card = self.get_nfc_card(card_id)
+        card.active = active
         self.session.flush()
         return card
 
@@ -284,6 +346,10 @@ class Repository:
         self.session.flush()
         return setting
 
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        setting = self.session.get(Setting, key)
+        return default if setting is None else json.loads(setting.value_json)
+
     def record_admin_action(
         self,
         *,
@@ -347,3 +413,17 @@ def _required_text(value: str, field: str) -> str:
     if not normalized:
         raise ValueError(f"{field} must not be empty")
     return normalized
+
+
+def _optional_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _display_name(first_name: str, last_name: str | None) -> str:
+    display_name = first_name if last_name is None else f"{first_name} {last_name}"
+    if len(display_name) > 120:
+        raise ValueError("Combined first and last name must not exceed 120 characters")
+    return display_name

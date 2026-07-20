@@ -25,6 +25,13 @@ const model = {
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
   lastActivitySentAt: 0,
+  adminUsers: [],
+  adminCards: [],
+  adminSettings: null,
+  adminSelectedUserId: null,
+  adminLoaded: false,
+  captureActive: false,
+  captureTimer: null,
 };
 
 const elements = {
@@ -39,6 +46,10 @@ const elements = {
   clock: document.querySelector("#clock"),
   userName: document.querySelector("#user-name"),
   logoutButton: document.querySelector("#logout-button"),
+  sessionActions: document.querySelector(".session-actions"),
+  adminButton: document.querySelector("#admin-button"),
+  adminBackButton: document.querySelector("#admin-back-button"),
+  adminLogoutButton: document.querySelector("#admin-logout-button"),
   actionError: document.querySelector("#action-error"),
   beverageName: document.querySelector("#beverage-name"),
   beverageDetail: document.querySelector("#beverage-detail"),
@@ -53,6 +64,30 @@ const elements = {
   legacyState: document.querySelector("#legacy-state"),
   safetyReason: document.querySelector("#safety-reason"),
   resetError: document.querySelector("#reset-error"),
+  adminPanels: [...document.querySelectorAll("[data-admin-panel]")],
+  adminNavButtons: [...document.querySelectorAll("[data-admin-section]")],
+  userList: document.querySelector("#user-list"),
+  userForm: document.querySelector("#user-form"),
+  userId: document.querySelector("#user-id"),
+  firstName: document.querySelector("#first-name"),
+  lastName: document.querySelector("#last-name"),
+  userNote: document.querySelector("#user-note"),
+  userIsAdmin: document.querySelector("#user-is-admin"),
+  userActive: document.querySelector("#user-active"),
+  captureCardButton: document.querySelector("#capture-card-button"),
+  cardList: document.querySelector("#card-list"),
+  userMessage: document.querySelector("#user-message"),
+  captureDialog: document.querySelector("#capture-dialog"),
+  captureInstruction: document.querySelector("#capture-instruction"),
+  adminSettingsForm: document.querySelector("#admin-settings-form"),
+  adminTimeoutInput: document.querySelector("#admin-timeout-input"),
+  settingsMessage: document.querySelector("#settings-message"),
+  adminBackendState: document.querySelector("#admin-backend-state"),
+  adminReaderState: document.querySelector("#admin-reader-state"),
+  adminValveState: document.querySelector("#admin-valve-state"),
+  diagnosticConnection: document.querySelector("#diagnostic-connection"),
+  diagnosticNfc: document.querySelector("#diagnostic-nfc"),
+  diagnosticValve: document.querySelector("#diagnostic-valve"),
 };
 
 async function api(path, options = {}) {
@@ -83,6 +118,7 @@ function currentScreen() {
   if (!model.connected) return "offline";
   const state = model.tap?.state || "starting";
   if (["fault_locked", "emergency_stop"].includes(state)) return "locked";
+  if (state === "admin") return "admin";
   if (["authenticated", "manual_pouring"].includes(state)) return "tap";
   if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring"].includes(state)) {
     return "legacy";
@@ -164,9 +200,20 @@ function render() {
     model.tap?.state,
   );
   elements.logoutButton.disabled = manualPouring;
+  const adminEntryVisible = Boolean(
+    model.tap?.is_admin && model.tap?.state === "authenticated",
+  );
+  elements.adminButton.hidden = !adminEntryVisible;
+  elements.sessionActions.classList.toggle("has-admin", adminEntryVisible);
+  elements.adminButton.disabled = manualPouring;
 
   const sessionRemainingMs = model.tap?.session_remaining_ms;
-  const sessionTimeoutMs = (model.options?.session_timeout_seconds ?? 15) * 1000;
+  const sessionTimeoutSeconds = model.tap?.state === "admin"
+    ? model.adminSettings?.admin_session_timeout_seconds
+      ?? model.options?.admin_session_timeout_seconds
+      ?? 30
+    : model.options?.session_timeout_seconds ?? 15;
+  const sessionTimeoutMs = sessionTimeoutSeconds * 1000;
   const sessionBarActive = Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
   const sessionProgress = sessionBarActive
     ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
@@ -176,6 +223,15 @@ function render() {
 
   elements.legacyState.textContent = model.tap?.state || "unbekannt";
   elements.safetyReason.textContent = model.tap?.safety_reason || "Die Anlage wurde sicher verriegelt.";
+
+  const readerState = model.nfc?.state || "unbekannt";
+  const valveState = valveOpen ? "OFFEN" : "geschlossen";
+  elements.adminBackendState.textContent = model.connected ? "bereit" : "offline";
+  elements.adminReaderState.textContent = readerState;
+  elements.adminValveState.textContent = valveState;
+  elements.diagnosticConnection.textContent = model.connected ? "bereit" : "offline";
+  elements.diagnosticNfc.textContent = readerState;
+  elements.diagnosticValve.textContent = valveState;
 }
 
 async function refreshContext(force = false) {
@@ -223,8 +279,10 @@ async function refresh() {
       if (result?.state && "simulated" in result) model.nfc = result;
     }
     model.connected = true;
+    if (tap.state !== "admin") model.adminLoaded = false;
     const contextChanged = previousUser !== tap.user_id || previousBooking !== tap.last_booking?.id;
     await refreshContext(contextChanged);
+    if (tap.state === "admin" && !model.adminLoaded) await loadAdminData();
   } catch (_error) {
     model.connected = false;
   } finally {
@@ -248,21 +306,278 @@ async function performAction(action, errorElement = elements.actionError) {
 }
 
 function logout() {
+  stopCapture(false);
   return performAction(() => api("/api/session/logout", { method: "POST" }));
 }
 
 function registerActivity() {
-  if (!["authenticated", "manual_pouring"].includes(model.tap?.state)) return;
+  if (!["authenticated", "admin", "manual_pouring"].includes(model.tap?.state)) return;
   const now = Date.now();
   if (now - model.lastActivitySentAt < 500) return;
   model.lastActivitySentAt = now;
   if (Number.isFinite(model.tap?.session_remaining_ms)) {
-    model.tap.session_remaining_ms = (model.options?.session_timeout_seconds ?? 15) * 1000;
+    const timeoutSeconds = model.tap?.state === "admin"
+      ? model.adminSettings?.admin_session_timeout_seconds
+        ?? model.options?.admin_session_timeout_seconds
+        ?? 30
+      : model.options?.session_timeout_seconds ?? 15;
+    model.tap.session_remaining_ms = timeoutSeconds * 1000;
     render();
   }
   api("/api/session/activity", { method: "POST" }).catch(() => {
     // The regular status refresh remains the source of truth.
   });
+}
+
+function showAdminSection(section) {
+  for (const button of elements.adminNavButtons) {
+    button.classList.toggle("is-active", button.dataset.adminSection === section);
+  }
+  for (const panel of elements.adminPanels) {
+    panel.classList.toggle("is-active", panel.dataset.adminPanel === section);
+  }
+}
+
+async function enterAdmin() {
+  if (model.actionPending) return;
+  model.actionPending = true;
+  elements.actionError.textContent = "";
+  try {
+    model.tap = await api("/api/admin/session/enter", { method: "POST" });
+    model.adminLoaded = false;
+    await loadAdminData();
+  } catch (error) {
+    elements.actionError.textContent = error.message;
+  } finally {
+    model.actionPending = false;
+    render();
+  }
+}
+
+async function exitAdmin() {
+  stopCapture(false);
+  await performAction(async () => {
+    model.tap = await api("/api/admin/session/exit", { method: "POST" });
+    model.adminLoaded = false;
+  }, elements.userMessage);
+}
+
+async function loadAdminData() {
+  if (model.tap?.state !== "admin") return;
+  try {
+    [model.adminUsers, model.adminSettings] = await Promise.all([
+      api("/api/admin/users"),
+      api("/api/admin/settings"),
+    ]);
+    elements.adminTimeoutInput.value = String(
+      model.adminSettings.admin_session_timeout_seconds,
+    );
+    if (
+      model.adminSelectedUserId !== null
+      && !model.adminUsers.some((user) => user.id === model.adminSelectedUserId)
+    ) {
+      model.adminSelectedUserId = null;
+    }
+    if (model.adminSelectedUserId === null && model.adminUsers.length) {
+      model.adminSelectedUserId = model.adminUsers[0].id;
+    }
+    renderAdminUsers();
+    await loadAdminCards();
+    model.adminLoaded = true;
+  } catch (error) {
+    elements.userMessage.textContent = error.message;
+  }
+}
+
+function selectedAdminUser() {
+  return model.adminUsers.find((user) => user.id === model.adminSelectedUserId) || null;
+}
+
+function renderAdminUsers() {
+  elements.userList.replaceChildren();
+  for (const user of model.adminUsers) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "user-list-item";
+    button.classList.toggle("is-selected", user.id === model.adminSelectedUserId);
+    button.classList.toggle("is-inactive", !user.active);
+    const name = document.createElement("strong");
+    name.textContent = user.display_name;
+    const meta = document.createElement("span");
+    const role = user.is_admin ? "Admin" : "Benutzer";
+    meta.textContent = `${role} · ${user.active_nfc_card_count} Armband`;
+    button.append(name, meta);
+    button.addEventListener("click", async () => {
+      model.adminSelectedUserId = user.id;
+      fillUserForm(user);
+      renderAdminUsers();
+      await loadAdminCards();
+    });
+    elements.userList.append(button);
+  }
+  const user = selectedAdminUser();
+  if (user) fillUserForm(user);
+}
+
+function fillUserForm(user) {
+  elements.userId.value = String(user.id);
+  elements.firstName.value = user.first_name;
+  elements.lastName.value = user.last_name || "";
+  elements.userNote.value = user.note || "";
+  elements.userIsAdmin.checked = user.is_admin;
+  elements.userActive.checked = user.active;
+  elements.captureCardButton.disabled = false;
+  elements.userMessage.textContent = "";
+}
+
+function newUser() {
+  model.adminSelectedUserId = null;
+  elements.userId.value = "";
+  elements.firstName.value = "";
+  elements.lastName.value = "";
+  elements.userNote.value = "";
+  elements.userIsAdmin.checked = false;
+  elements.userActive.checked = true;
+  elements.captureCardButton.disabled = true;
+  elements.cardList.replaceChildren();
+  elements.userMessage.textContent = "Neuen Benutzer speichern, danach Armband zuweisen.";
+  renderAdminUsers();
+  elements.firstName.focus();
+}
+
+async function saveUser(event) {
+  event.preventDefault();
+  const existingId = Number(elements.userId.value) || null;
+  const payload = {
+    first_name: elements.firstName.value,
+    last_name: elements.lastName.value || null,
+    note: elements.userNote.value || null,
+    is_admin: elements.userIsAdmin.checked,
+  };
+  if (existingId !== null) payload.active = elements.userActive.checked;
+  elements.userMessage.textContent = "";
+  try {
+    const user = await api(
+      existingId === null ? "/api/admin/users" : `/api/admin/users/${existingId}`,
+      {
+        method: existingId === null ? "POST" : "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
+    model.adminSelectedUserId = user.id;
+    elements.userMessage.textContent = "Gespeichert.";
+    await loadAdminData();
+  } catch (error) {
+    elements.userMessage.textContent = error.message;
+  }
+}
+
+async function loadAdminCards() {
+  if (model.adminSelectedUserId === null || model.tap?.state !== "admin") {
+    model.adminCards = [];
+    renderAdminCards();
+    return;
+  }
+  try {
+    model.adminCards = await api(
+      `/api/admin/users/${model.adminSelectedUserId}/nfc-cards`,
+    );
+    renderAdminCards();
+  } catch (error) {
+    elements.userMessage.textContent = error.message;
+  }
+}
+
+function renderAdminCards() {
+  elements.cardList.replaceChildren();
+  for (const card of model.adminCards) {
+    const row = document.createElement("div");
+    row.className = "card-list-item";
+    const label = document.createElement("span");
+    label.textContent = `Armband ${card.uid_hint}`;
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = `card-status ${card.active ? "is-active" : ""}`;
+    toggle.textContent = card.active ? "Aktiv" : "Gesperrt";
+    toggle.addEventListener("click", async () => {
+      try {
+        await api(`/api/admin/nfc-cards/${card.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ active: !card.active }),
+        });
+        await loadAdminData();
+      } catch (error) {
+        elements.userMessage.textContent = error.message;
+      }
+    });
+    row.append(label, toggle);
+    elements.cardList.append(row);
+  }
+}
+
+function beginCapture() {
+  if (model.adminSelectedUserId === null || model.captureActive) return;
+  model.captureActive = true;
+  elements.captureDialog.hidden = false;
+  elements.captureInstruction.textContent = "Admin-Armband vom Leser entfernen.";
+  pollCapture();
+}
+
+async function pollCapture() {
+  if (!model.captureActive || model.adminSelectedUserId === null) return;
+  try {
+    const result = await api(
+      `/api/admin/users/${model.adminSelectedUserId}/nfc-cards/capture`,
+      { method: "POST" },
+    );
+    const instructions = {
+      remove_card: "Admin-Armband vom Leser entfernen.",
+      waiting: "Neues Veranstaltungsarmband kurz auflegen.",
+      reader_unavailable: "NFC-Leser ist momentan nicht verfügbar.",
+      assigned: "Armband wurde erfolgreich zugewiesen.",
+    };
+    elements.captureInstruction.textContent = instructions[result.state] || result.state;
+    if (result.state === "assigned") {
+      model.captureActive = false;
+      await loadAdminData();
+      model.captureTimer = window.setTimeout(() => {
+        elements.captureDialog.hidden = true;
+      }, 650);
+      return;
+    }
+  } catch (error) {
+    elements.captureInstruction.textContent = error.message;
+    model.captureActive = false;
+    return;
+  }
+  model.captureTimer = window.setTimeout(pollCapture, 350);
+}
+
+function stopCapture(notifyBackend = true) {
+  model.captureActive = false;
+  if (model.captureTimer !== null) window.clearTimeout(model.captureTimer);
+  model.captureTimer = null;
+  elements.captureDialog.hidden = true;
+  if (notifyBackend && model.tap?.state === "admin") {
+    api("/api/admin/nfc-capture", { method: "DELETE" }).catch(() => {});
+  }
+}
+
+async function saveAdminSettings(event) {
+  event.preventDefault();
+  elements.settingsMessage.textContent = "";
+  try {
+    model.adminSettings = await api("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify({
+        admin_session_timeout_seconds: Number(elements.adminTimeoutInput.value),
+      }),
+    });
+    elements.settingsMessage.textContent = "Timeout übernommen.";
+    render();
+  } catch (error) {
+    elements.settingsMessage.textContent = error.message;
+  }
 }
 
 async function requestManualStop() {
@@ -329,6 +644,17 @@ function releaseManual() {
 }
 
 elements.logoutButton.addEventListener("click", logout);
+elements.adminButton.addEventListener("click", enterAdmin);
+elements.adminBackButton.addEventListener("click", exitAdmin);
+elements.adminLogoutButton.addEventListener("click", logout);
+document.querySelector("#new-user-button").addEventListener("click", newUser);
+elements.userForm.addEventListener("submit", saveUser);
+elements.captureCardButton.addEventListener("click", beginCapture);
+document.querySelector("#cancel-capture-button").addEventListener("click", () => stopCapture());
+elements.adminSettingsForm.addEventListener("submit", saveAdminSettings);
+for (const button of elements.adminNavButtons) {
+  button.addEventListener("click", () => showAdminSection(button.dataset.adminSection));
+}
 document.addEventListener("pointerdown", registerActivity, { capture: true });
 document.querySelector("#reset-button").addEventListener("click", () =>
   performAction(

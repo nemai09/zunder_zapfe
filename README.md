@@ -24,7 +24,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
-| Admin-WebUI | Noch nicht implementiert |
+| Admin-WebUI | Milestone 6: lokaler Adminmodus sowie Benutzer- und Armbandverwaltung in Arbeit |
 | Reale Zapfhardware | Noch nicht implementiert |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
@@ -102,6 +102,7 @@ parallele Entwicklung sind:
 - [OpenAPI 3.1](docs/interfaces/openapi.json)
 - [Zapfzustandsautomat](docs/architecture/tap-state-machine.md)
 - [Kiosk-WebUI](docs/architecture/kiosk-webui.md)
+- [Admin-WebUI](docs/architecture/admin-webui.md)
 - [Persistenzmodell](docs/architecture/persistence.md)
 - [Entwicklungsmeilensteine](docs/milestones.md)
 - [Versionierung](docs/versioning.md)

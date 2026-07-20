@@ -18,7 +18,9 @@ Betroffen sind insbesondere `ZZ-SYS-003` bis `ZZ-SYS-006`, `ZZ-AUT-001` bis
 ## Tabellen
 
 - `events` trennt Buchungen verschiedener Veranstaltungen und Jahre.
-- `users` speichert Benutzerstatus, Rolle und individuelle Portionsgroesse.
+- `users` speichert verpflichtenden Vornamen, optionalen Nachnamen und
+  Zusatztext sowie abgeleiteten Anzeigenamen, Status, Rolle und individuelle
+  Portionsgroesse.
 - `nfc_cards` ordnet normalisierte Karten-UIDs aktiven Benutzern zu.
 - `beverages` speichert Sorte, Standard-Fassgroesse und Preis pro Liter.
 - `kegs` bildet einzelne angestochene Faesser und deren Startmenge ab.
@@ -49,6 +51,9 @@ Buchungen deshalb nicht.
 - Kostenfreie Buchungen besitzen den Betrag null.
 - Wartungsbuchungen sind nicht kostenpflichtig.
 - Abgeschlossene Zapfbuchungen koennen weder geaendert noch geloescht werden.
+- Schreibende Benutzer-, Armband- und Einstellungsaktionen erzeugen im selben
+  fachlichen Ablauf einen `admin_audit_entries`-Datensatz. NFC-UIDs werden nicht
+  in die Audit-JSON-Werte kopiert.
 
 Die Unveraenderlichkeit wird doppelt durch SQLAlchemy-Ereignisse und durch
 SQLite-Trigger abgesichert. Spaetere Korrekturen muessen als neue, separat

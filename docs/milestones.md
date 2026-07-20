@@ -12,7 +12,7 @@ bestanden sind.
 | 3 / PR 3 | NFC-, Zapf- und Persistenzintegration mit Smoke-Test | abgeschlossen |
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
-| 6 / PR 6 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | geplant |
+| 6 / PR 6 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | in Arbeit |
 | 7 / PR 7 | Weitere Admin-WebUI, Webauthentifizierung, Getränke, Fässer und Parameter | geplant |
 | 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
@@ -35,3 +35,24 @@ PC/SC-Unterbrechungen ohne Neustart des Webdienstes.
 Traceability: `ZZ-AUT-002`, `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`,
 `ZZ-TAP-014`, `ZZ-HW-001`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`,
 `ZZ-UI-005` und `ZZ-NFR-005`.
+
+## Milestone 6: Admin-Grundlage und Benutzerverwaltung
+
+Der nächste vertikale Checkpoint ergänzt den lokalen Adminmodus auf Basis der
+bereits per NFC authentifizierten Adminrolle. Admins behalten denselben
+Benutzer- und Zapfablauf; nur ihnen wird zusätzlich der Einstieg in die
+Administration angeboten. Der Adminmodus sperrt Zapfaktionen und besitzt einen
+separat konfigurierbaren Inaktivitäts-Timeout mit `30 s` Alpha-Default.
+
+Der erste vollständig abnehmbare Verwaltungsablauf umfasst schlanke
+Benutzerdaten, Rollen- und Aktivstatus, Sperren bestehender Armbänder sowie die
+Live-Zuordnung eines kurz aufgelegten Veranstaltungsarmbands. Die UID stammt
+dabei ausschließlich vom Hardwareadapter. Alle schreibenden Adminaktionen
+werden mit ausführendem Admin und alten beziehungsweise neuen Werten auditiert.
+
+Weitere Bereiche werden im Admin-Grundgerüst sichtbar gruppiert, aber erst in
+Milestone 7 vollständig ausgebaut. Passwortgeschützter Zugriff aus dem späteren
+Admin-WLAN bleibt von der lokalen NFC-Adminsitzung getrennt.
+
+Traceability: `ZZ-AUT-001`, `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-011`,
+`ZZ-DAT-003`, `ZZ-UI-001` und `ZZ-UI-006`.

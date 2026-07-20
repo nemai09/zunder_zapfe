@@ -17,6 +17,7 @@ class TapState(StrEnum):
     STARTING = "starting"
     IDLE = "idle"
     AUTHENTICATED = "authenticated"
+    ADMIN = "admin"
     MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
     TOP_UP_AVAILABLE = "top_up_available"
@@ -59,6 +60,7 @@ class TapLimits:
     top_up_maximum_pulses: int
     manual_maximum_seconds: float = 30.0
     session_timeout_seconds: float = 15.0
+    admin_session_timeout_seconds: float = 30.0
     flow_watchdog_enabled: bool = True
 
     def __post_init__(self) -> None:
@@ -71,6 +73,7 @@ class TapLimits:
             self.top_up_maximum_seconds,
             self.manual_maximum_seconds,
             self.session_timeout_seconds,
+            self.admin_session_timeout_seconds,
         )
         if any(value <= 0 for value in numeric_limits):
             raise ValueError("All time limits must be greater than zero")
@@ -141,6 +144,7 @@ class TapController:
             raise ValueError("Supervisor interval must be greater than zero")
         self._hardware = hardware
         self._limits = limits
+        self._admin_session_timeout_seconds = limits.admin_session_timeout_seconds
         self._clock = clock
         self._record_sink = record_sink
         self._supervise = supervise
@@ -207,11 +211,34 @@ class TapController:
 
     def logout(self) -> None:
         with self._mutex:
-            self._require_state(TapState.AUTHENTICATED, TapState.TOP_UP_AVAILABLE)
+            self._require_state(TapState.AUTHENTICATED, TapState.ADMIN, TapState.TOP_UP_AVAILABLE)
             self._session = None
             self._session_last_active_at = None
             self._top_up_deadline = None
             self._state = TapState.IDLE
+
+    def enter_admin_mode(self, *, timeout_seconds: float | None = None) -> None:
+        with self._mutex:
+            self._require_state(TapState.AUTHENTICATED)
+            if self._session is None or not self._session.is_admin:
+                raise InvalidTransition("Admin mode requires an admin session")
+            if timeout_seconds is not None:
+                self._set_admin_session_timeout(timeout_seconds)
+            self._hardware.valve.close()
+            self._session_last_active_at = self._clock()
+            self._state = TapState.ADMIN
+
+    def exit_admin_mode(self) -> None:
+        with self._mutex:
+            self._require_state(TapState.ADMIN)
+            self._session_last_active_at = self._clock()
+            self._state = TapState.AUTHENTICATED
+
+    def set_admin_session_timeout(self, timeout_seconds: float) -> None:
+        with self._mutex:
+            self._set_admin_session_timeout(timeout_seconds)
+            if self._state is TapState.ADMIN:
+                self._session_last_active_at = self._clock()
 
     def start_portion(self, target_pulses: int) -> None:
         if target_pulses <= 0:
@@ -282,7 +309,7 @@ class TapController:
     def register_activity(self) -> None:
         """Refresh the authenticated session after an intentional UI interaction."""
         with self._mutex:
-            self._require_state(TapState.AUTHENTICATED, TapState.MANUAL_POURING)
+            self._require_state(TapState.AUTHENTICATED, TapState.ADMIN, TapState.MANUAL_POURING)
             self._session_last_active_at = self._clock()
 
     def poll(self) -> TapStatus:
@@ -298,9 +325,9 @@ class TapController:
                     self._state = TapState.AUTHENTICATED
 
             if (
-                self._state is TapState.AUTHENTICATED
+                self._state in {TapState.AUTHENTICATED, TapState.ADMIN}
                 and self._session_last_active_at is not None
-                and now - self._session_last_active_at >= self._limits.session_timeout_seconds
+                and now - self._session_last_active_at >= self._session_timeout_seconds()
             ):
                 self._session = None
                 self._session_last_active_at = None
@@ -466,10 +493,11 @@ class TapController:
             top_up_remaining_ms = max(0, ceil((self._top_up_deadline - self._clock()) * 1000))
         session_remaining_ms = None
         if self._session is not None and self._session_last_active_at is not None:
+            session_timeout_seconds = self._session_timeout_seconds()
             if self._state in ACTIVE_POUR_STATES:
-                session_remaining_ms = ceil(self._limits.session_timeout_seconds * 1000)
+                session_remaining_ms = ceil(session_timeout_seconds * 1000)
             else:
-                remaining_seconds = self._limits.session_timeout_seconds - (
+                remaining_seconds = session_timeout_seconds - (
                     self._clock() - self._session_last_active_at
                 )
                 session_remaining_ms = max(0, ceil(remaining_seconds * 1000))
@@ -484,6 +512,18 @@ class TapController:
             session_remaining_ms=session_remaining_ms,
             safety_reason=self._safety_reason,
         )
+
+    def _session_timeout_seconds(self) -> float:
+        return (
+            self._admin_session_timeout_seconds
+            if self._state is TapState.ADMIN
+            else self._limits.session_timeout_seconds
+        )
+
+    def _set_admin_session_timeout(self, timeout_seconds: float) -> None:
+        if timeout_seconds <= 0:
+            raise ValueError("Admin session timeout must be greater than zero")
+        self._admin_session_timeout_seconds = timeout_seconds
 
     def _require_state(self, *allowed: TapState) -> None:
         self._synchronize_emergency_stop()
@@ -508,6 +548,7 @@ class TapController:
 def development_limits(
     *,
     session_timeout_seconds: float = 15.0,
+    admin_session_timeout_seconds: float = 30.0,
     manual_maximum_seconds: float = 30.0,
     flow_watchdog_enabled: bool = True,
 ) -> TapLimits:
@@ -522,5 +563,6 @@ def development_limits(
         top_up_maximum_pulses=100,
         manual_maximum_seconds=manual_maximum_seconds,
         session_timeout_seconds=session_timeout_seconds,
+        admin_session_timeout_seconds=admin_session_timeout_seconds,
         flow_watchdog_enabled=flow_watchdog_enabled,
     )

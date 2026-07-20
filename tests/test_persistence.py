@@ -117,7 +117,53 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
     command.upgrade(config, "665c808f8308")
     engine = create_database_engine(url)
     try:
-        _event_id, _user_id, _beverage_id, _keg_id, booking_id = seed_booking(engine)
+        timestamp = "2026-07-19 12:00:00"
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO events "
+                    "(id, name, year, active, created_at) "
+                    "VALUES (1, 'Zunder 2026', 2026, 1, :timestamp)"
+                ),
+                {"timestamp": timestamp},
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO users "
+                    "(id, display_name, role, active, created_at, updated_at) "
+                    "VALUES (1, 'Chris', 'user', 1, :timestamp, :timestamp)"
+                ),
+                {"timestamp": timestamp},
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO beverages "
+                    "(id, name, default_keg_size_ml, price_per_liter_cents, active, "
+                    "created_at, updated_at) VALUES "
+                    "(1, 'Testbier', 50000, 400, 1, :timestamp, :timestamp)"
+                ),
+                {"timestamp": timestamp},
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO kegs "
+                    "(id, event_id, beverage_id, initial_volume_ml, active, opened_at) "
+                    "VALUES (1, 1, 1, 50000, 1, :timestamp)"
+                ),
+                {"timestamp": timestamp},
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO tap_bookings "
+                    "(id, event_id, user_id, beverage_id, keg_id, occurred_at, "
+                    "target_volume_ml, measured_volume_ml, measured_pulses, "
+                    "price_per_liter_cents, amount_cents, kind, completion, chargeable) "
+                    "VALUES (1, 1, 1, 1, 1, :timestamp, 500, 400, 200, 400, 160, "
+                    "'portion', 'user_abort', 1)"
+                ),
+                {"timestamp": timestamp},
+            )
+        booking_id = 1
     finally:
         engine.dispose()
 
@@ -129,6 +175,37 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
             booking = session.get(TapBooking, booking_id)
             assert booking is not None
             assert booking.kind is BookingKind.PORTION
+    finally:
+        migrated.dispose()
+
+
+def test_user_profile_migration_backfills_existing_display_name(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path / "upgrade-user-profile.db")
+    config = alembic_config(url)
+    command.upgrade(config, "830d216e8ba1")
+    engine = create_database_engine(url)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO users "
+                    "(id, display_name, role, active, created_at, updated_at) "
+                    "VALUES (1, 'Legacy Name', 'user', 1, :timestamp, :timestamp)"
+                ),
+                {"timestamp": "2026-07-19 12:00:00"},
+            )
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, "head")
+    migrated = create_database_engine(url)
+    try:
+        row = (
+            migrated.connect()
+            .execute(text("SELECT first_name, last_name, note FROM users WHERE id = 1"))
+            .one()
+        )
+        assert row == ("Legacy Name", None, None)
     finally:
         migrated.dispose()
 

@@ -195,6 +195,34 @@ class TapService:
         with self._mutex:
             self._authenticated_user = None
 
+    def enter_admin_mode(self, timeout_seconds: float) -> dict[str, Any]:
+        user = self._require_authenticated_user()
+        if not user.is_admin:
+            raise PermissionError("Admin mode requires an active admin session")
+        self._controller.enter_admin_mode(timeout_seconds=timeout_seconds)
+        return self.status_dict()
+
+    def exit_admin_mode(self) -> dict[str, Any]:
+        self._controller.exit_admin_mode()
+        return self.status_dict()
+
+    def set_admin_session_timeout(self, timeout_seconds: float) -> None:
+        self.require_admin_user_id()
+        self._controller.set_admin_session_timeout(timeout_seconds)
+
+    def require_admin_user_id(self) -> int:
+        status = self._controller.snapshot()
+        with self._mutex:
+            user = self._authenticated_user
+            if (
+                status.state is not TapState.ADMIN
+                or user is None
+                or status.user_id != str(user.id)
+                or not user.is_admin
+            ):
+                raise PermissionError("An active admin mode session is required")
+            return user.id
+
     def start_portion(self, target_volume_ml: int) -> dict[str, Any]:
         if target_volume_ml <= 0:
             raise ValueError("Target volume must be greater than zero")
