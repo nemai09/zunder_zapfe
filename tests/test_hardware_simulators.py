@@ -1,3 +1,9 @@
+import pytest
+
+from zunder_zapfe.hardware.adapters.acr122u import (
+    DEFAULT_POLL_INTERVAL_SECONDS,
+    Acr122uNfcReader,
+)
 from zunder_zapfe.hardware.layer import HardwareLayer, create_default_hardware
 from zunder_zapfe.hardware.simulators import (
     SimulatedEmergencyStop,
@@ -17,6 +23,18 @@ def test_simulated_nfc_reader_can_present_and_remove_card() -> None:
     reader.remove_card()
     assert reader.snapshot().uid is None
     assert reader.snapshot().state == "ready"
+
+
+def test_acr122u_default_polling_supports_brief_card_presentation() -> None:
+    reader = Acr122uNfcReader()
+
+    assert DEFAULT_POLL_INTERVAL_SECONDS == 0.05
+    assert reader._poll_interval == DEFAULT_POLL_INTERVAL_SECONDS
+
+
+def test_acr122u_rejects_nonpositive_poll_interval() -> None:
+    with pytest.raises(ValueError, match="greater than zero"):
+        Acr122uNfcReader(poll_interval=0)
 
 
 def test_simulated_flow_meter_only_counts_during_measurement() -> None:

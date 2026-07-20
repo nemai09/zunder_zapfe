@@ -11,11 +11,15 @@ try:
 except ImportError:  # The application must remain diagnosable without PC/SC.
     readers = None
 
+DEFAULT_POLL_INTERVAL_SECONDS = 0.05
+
 
 class Acr122uNfcReader:
     """Poll PC/SC without blocking backend request handling."""
 
-    def __init__(self, poll_interval: float = 0.5) -> None:
+    def __init__(self, poll_interval: float = DEFAULT_POLL_INTERVAL_SECONDS) -> None:
+        if poll_interval <= 0:
+            raise ValueError("NFC poll interval must be greater than zero")
         self._poll_interval = poll_interval
         self._status = NfcStatus(state="starting", detail="NFC-Dienst wird gestartet")
         self._lock = threading.Lock()

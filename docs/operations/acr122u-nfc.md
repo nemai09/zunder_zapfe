@@ -102,8 +102,13 @@ curl http://127.0.0.1:8000/api/nfc/status
 Ohne aufgelegte Karte wird `state` als `ready`, mit aufgelegter Karte als
 `card` inklusive UID erwartet.
 
-Die Kioskseite zeigt den erkannten Leser und die UID einer aufgelegten Karte an.
-Der maschinenlesbare Status ist lokal unter
+Das Armband wird nur kurz zur Anmeldung aufgelegt und kann nach dem Piepton
+wieder entfernt werden. Die Sitzung bleibt danach bis zum manuellen oder
+automatischen Logout aktiv. Der Adapter fragt PC/SC standardmaessig alle
+`50 ms` ab, damit auch diese kurze Kartenpraesenz zuverlaessig verarbeitet wird.
+
+Die Kioskseite zeigt den Zustand des erkannten Lesers, aber keine NFC-UID an.
+Der maschinenlesbare Status inklusive einer aktuell erfassten UID ist lokal unter
 `http://127.0.0.1:8000/api/nfc/status` erreichbar. `scripts/pi-verify.sh`
 verlangt fuer eine erfolgreiche Zielsystempruefung einen angeschlossenen und
 betriebsbereiten ACR122U.

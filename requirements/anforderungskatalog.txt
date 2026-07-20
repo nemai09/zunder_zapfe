@@ -75,7 +75,9 @@ Abnahme: Berechtigungen werden fuer beide Rollen wie spezifiziert durchgesetzt.
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Benutzer und Admins muessen sich am Zapfgeraet mittels zugeordneter NFC-Karte
 authentifizieren koennen.
-Abnahme: Eine bekannte aktive Karte meldet den zugeordneten Benutzer an.
+Abnahme: Eine bekannte aktive Karte meldet den zugeordneten Benutzer nach
+kurzem Auflegen an. Die Karte muss fuer die anschliessende Sitzung nicht auf
+dem Leser verbleiben.
 
 [ZZ-AUT-003] Web-Authentifizierung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
