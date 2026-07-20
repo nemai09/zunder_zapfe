@@ -13,9 +13,16 @@ zulässig ist.
 | `idle` | NFC-Aufforderung und Leserstatus | Karte auflegen |
 | `authenticated` | Benutzer, Verbrauch, Getränk und große Zapffläche | gedrückt halten |
 | `manual_pouring` | laufende Istmenge auf der Zapffläche | loslassen |
+| `admin` | lokale, gruppierte Verwaltungsoberfläche | Benutzer und Armbänder verwalten |
 | kompatibler Portions-/Wartungszustand | neutraler Statushinweis | über auslösenden Client abschließen |
 | `fault_locked`, `emergency_stop` | Sperrgrund und Admin-Hinweis | sicher zurücksetzen |
 | Backend nicht erreichbar | Verbindungsfehler | automatisch erneut verbinden |
+
+Im Idle-Zustand unterscheidet die Anzeige eine unbekannte Karte (`Karte nicht
+erkannt`) von einer gesperrten Karte beziehungsweise einem gesperrten Benutzer
+(`Karte gesperrt`). Das Backend hält diese Rückmeldung kurzzeitig vor, damit
+sie auch sichtbar bleibt, wenn das Armband direkt nach dem Leserton entfernt
+wird. Weder UID noch Benutzerinformationen werden dabei angezeigt.
 
 Die Kioskoberfläche bietet gemäß
 [`CR-001`](../../requirements/changes/CR-001-manual-push-to-fill.md) keine
@@ -24,11 +31,14 @@ bleiben als Kompatibilitätsfunktionen vorhanden.
 
 Im Landscape-Kiosk steht die Zapffläche links und erstreckt sich über die Höhe
 der beiden Informationsreihen rechts. Dort bleibt das aktive Getränk oben;
-persönlicher Verbrauch und Betrag stehen darunter nebeneinander. Der manuelle
-Logout bleibt rechts im Kopfbereich sichtbar. Ein schmaler Balken am unteren
-Bildschirmrand zeigt gemäß CR-002 während der gesamten Sitzung die verbleibende
-Zeit des 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität
-an das Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
+persönlicher Verbrauch und Betrag stehen darunter nebeneinander. Für
+angemeldete Admins erscheint links neben dem Logout der blaue Einstieg in die
+Administration; beide Aktionen belegen zusammen die Breite der rechten
+Informationsspalte. Der manuelle Logout bleibt rechts im Kopfbereich sichtbar.
+Ein schmaler Balken am unteren
+Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
+15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das
+Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
 
 ## Touch- und Sicherheitsverhalten
 

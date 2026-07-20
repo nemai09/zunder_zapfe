@@ -47,6 +47,7 @@ zu korrigieren.
 - [Zapfzustandsautomat](architecture/tap-state-machine.md)
 - [Backend-Core-Integration](architecture/backend-core-integration.md)
 - [Kiosk-WebUI](architecture/kiosk-webui.md)
+- [Lokale Admin-WebUI](architecture/admin-webui.md)
 - [Persistenz und Datenmodell](architecture/persistence.md)
 - [ADR 0001: GPL-3.0-or-later](decisions/0001-gpl-3-or-later.md)
 

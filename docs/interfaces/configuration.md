@@ -14,6 +14,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 | `ZUNDER_ZAPFE_PULSES_PER_LITER` | `500` | ganzzahlige Impulskalibrierung | Demonstratorwert, vor Realbetrieb kalibrieren |
 | `ZUNDER_ZAPFE_STANDARD_PORTIONS_ML` | `300,500` | kommaseparierte Standardportionen des Kiosks | mindestens zwei eindeutige positive Ganzzahlen |
 | `ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS` | `15` | Inaktivitätszeit bis zum automatischen Logout | positive ganze Sekundenzahl; Alpha-Default |
+| `ZUNDER_ZAPFE_ADMIN_SESSION_TIMEOUT_SECONDS` | `30` | Fallback für den lokalen Adminmodus | 10 bis 3600 ganze Sekunden; persistente Admin-Einstellung hat Vorrang |
 | `ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS` | `120` | Entprellzeit vor dem Start einer manuellen Touch-Zapfung | nichtnegative ganze Millisekunden; verzögert niemals den Stopp |
 | `ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS` | `30` | maximale Dauer einer manuellen Zapfung | positive ganze Sekundenzahl; Alpha-Wert, vor Realbetrieb kalibrieren |
 | `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG` | `1` | deaktiviert vorübergehend Start- und Folgeimpulsprüfung | nur ohne Durchflusshardware; vor realer Ventilhardware zwingend auf `0` setzen |
@@ -34,9 +35,10 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
   `settings`-Tabelle und benötigen Admin-Audit. Systemstartparameter und
   Geheimnisse bleiben Umgebungsvariablen.
 
-Standardportionen, Sitzungszeit und manuelle Alpha-Grenzwerte sind bis zur Adminoberfläche als
-Umgebungsvariablen verfügbar. Milestone 7 überführt ihre fachliche Pflege in
-die auditierte Settings-Verwaltung.
+Der Admin-Timeout ist bereits über die Admin-WebUI auditiert in
+`settings["session.admin_timeout_seconds"]` pflegbar; der Umgebungswert ist der
+Fallback für eine noch nicht gesetzte Datenbank. Standardportionen, normale
+Sitzungszeit und manuelle Alpha-Grenzwerte folgen in Milestone 7.
 
 Die zeitlich begrenzte Abweichung für Tests ohne Durchflusshardware ist unter
 [`../operations/debug-without-flow-hardware.md`](../operations/debug-without-flow-hardware.md)

@@ -16,6 +16,8 @@ Laufzeit kein Netzwerk. Die Alpha-API besitzt noch keinen Versionspräfix;
 
 - `200`: Aktion oder Abfrage erfolgreich, JSON-Antwort.
 - `204`: Aktion erfolgreich, kein Antwortkörper.
+- `403`: keine aktive, serverseitig bestätigte Adminsitzung.
+- `404`: angeforderte Verwaltungsentität existiert nicht.
 - `409`: fachliche Vorbedingung oder Zustandsübergang nicht erfüllt;
   `{"detail":"..."}`.
 - `422`: Request-JSON verletzt das Schema.
@@ -54,6 +56,7 @@ einspeisen.
 | `special_portion_ml` | `int | null` | individuelle Portion |
 | `persistence_error` | `str | null` | letzter Buchungsfehler |
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
+| `nfc_feedback` | `"unknown" | "blocked" | null` | kurzlebige Ablehnungsursache für die Idle-WebUI |
 
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
@@ -63,8 +66,8 @@ Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
 | Methode und Pfad | Vorbedingung | Ergebnis |
 | --- | --- | --- |
 | `GET /api/session/status` | keine | aktuelle NFC-Sitzung |
-| `POST /api/session/activity` | `authenticated` oder `manual_pouring` | `204`, setzt Inaktivität zurück |
-| `POST /api/session/logout` | `authenticated` oder `top_up_available` | `204`, danach `idle` |
+| `POST /api/session/activity` | `authenticated`, `admin` oder `manual_pouring` | `204`, setzt Inaktivität zurück |
+| `POST /api/session/logout` | `authenticated`, `admin` oder `top_up_available` | `204`, danach `idle` |
 
 Anmeldung geschieht ereignisgesteuert durch Auflegen einer bekannten, aktiven
 Karte. Eine liegen gebliebene Karte meldet sich nach Logout nicht sofort erneut
@@ -98,6 +101,36 @@ Standardportion oder die Sonderportion des angemeldeten Benutzers.
 Ein manueller Vorgang besitzt keine Zielmenge. Er endet beim ersten Stoppsignal
 oder nach der konfigurierten Maximaldauer. In beiden Fällen wird genau die
 gemessene Istmenge als Buchungsart `manual` gespeichert.
+
+## Lokale Administration
+
+Alle folgenden Routen erfordern nach dem Einstieg den Zustand `admin`. Die
+Autorisierung wird bei jedem Aufruf serverseitig aus der NFC-Sitzung und dem
+aktuellen Datenbankkonto abgeleitet. Der Client übergibt weder Admin-Flag noch
+ausführende Benutzer-ID.
+
+| Methode und Pfad | Request/Ergebnis | Wirkung |
+| --- | --- | --- |
+| `POST /api/admin/session/enter` | `TapStatusResponse` | authentifizierter Admin wechselt bei geschlossenem Ventil zu `admin` |
+| `POST /api/admin/session/exit` | `TapStatusResponse` | zurück zu `authenticated` und normalem Timeout |
+| `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
+| `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
+| `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
+| `GET /api/admin/users/{id}/nfc-cards` | `AdminNfcCardResponse[]` | zugeordnete Armbänder mit maskiertem `uid_hint` |
+| `POST /api/admin/users/{id}/nfc-cards/capture` | `AdminNfcCaptureResponse` | `remove_card`, `waiting`, `reader_unavailable` oder `assigned` |
+| `DELETE /api/admin/nfc-capture` | `204` | laufende Live-Zuordnung abbrechen |
+| `PATCH /api/admin/nfc-cards/{id}` | `{"active":false}` | Armband sperren oder reaktivieren und auditieren |
+| `DELETE /api/admin/nfc-cards/{id}` | `204` | Zuordnung nach Bestätigung entfernen und auditieren |
+| `GET /api/admin/settings` | `AdminSettingsResponse` | wirksamen Admin-Timeout lesen |
+| `PATCH /api/admin/settings` | `{"admin_session_timeout_seconds":45}` | Timeout 10 bis 3600 Sekunden persistent und auditiert ändern |
+
+Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
+muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste
+kurz aufgelegte Armband übernommen wird. So kann ein noch aufliegendes
+Admin-Armband nicht versehentlich zugeordnet werden. Vollständige UIDs werden
+weder in Adminantworten noch in Admin-Auditwerten ausgegeben.
+Eine entfernte UID darf danach neu zugeordnet werden. Das letzte aktive
+Armband eines aktiven Admins kann weder gesperrt noch entfernt werden.
 
 ## Wartung und Sicherheit
 

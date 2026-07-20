@@ -26,6 +26,8 @@ from zunder_zapfe.persistence.repository import (
     canonicalize_nfc_uid,
 )
 
+NFC_FEEDBACK_SECONDS = 2.5
+
 
 class TapUnavailable(RuntimeError):
     """Raised when the persistent tap context does not permit a pour."""
@@ -95,6 +97,7 @@ class TapService:
         if len(normalized_portions) < 2 or any(value <= 0 for value in normalized_portions):
             raise ValueError("At least two positive standard portions are required")
         self._standard_portions_ml = normalized_portions
+        self._monotonic_clock = monotonic_clock
         self._timestamp_clock = timestamp_clock
         self._run_background = run_background
         self._background_interval_seconds = background_interval_seconds
@@ -104,6 +107,8 @@ class TapService:
         self._authenticated_user: AuthenticatedUser | None = None
         self._pending_booking: _PendingBooking | None = None
         self._last_presented_uid: str | None = None
+        self._nfc_feedback: str | None = None
+        self._nfc_feedback_until: float | None = None
         self._last_state = TapState.STARTING
         self._last_background_error: str | None = None
         self._persistence_error: str | None = None
@@ -147,8 +152,14 @@ class TapService:
     def authenticate_card(self, uid: str) -> bool:
         canonical_uid = canonicalize_nfc_uid(uid)
         with self._sessions() as session:
-            user = Repository(session).find_active_user_by_card(canonical_uid)
-            if user is None:
+            repository = Repository(session)
+            card = repository.find_nfc_card(canonical_uid)
+            if card is None:
+                self._set_nfc_feedback("unknown")
+                return False
+            user = repository.get_user(card.user_id)
+            if not card.active or not user.active:
+                self._set_nfc_feedback("blocked")
                 return False
             authenticated = AuthenticatedUser(
                 id=user.id,
@@ -161,6 +172,7 @@ class TapService:
             str(authenticated.id), is_admin=authenticated.is_admin
         )
         with self._mutex:
+            self._clear_nfc_feedback()
             if accepted:
                 self._authenticated_user = authenticated
                 self._persistence_error = None
@@ -176,11 +188,12 @@ class TapService:
         try:
             uid = canonicalize_nfc_uid(nfc.uid)
         except ValueError as error:
+            self._set_nfc_feedback("unknown")
             self._record_technical_event(
                 severity="warning",
                 event_type="nfc.invalid_uid",
                 message=str(error),
-                details={"uid": nfc.uid},
+                details={"uid_length": len(nfc.uid)},
             )
             return False
 
@@ -194,6 +207,34 @@ class TapService:
         self._controller.logout()
         with self._mutex:
             self._authenticated_user = None
+
+    def enter_admin_mode(self, timeout_seconds: float) -> dict[str, Any]:
+        user = self._require_authenticated_user()
+        if not user.is_admin:
+            raise PermissionError("Admin mode requires an active admin session")
+        self._controller.enter_admin_mode(timeout_seconds=timeout_seconds)
+        return self.status_dict()
+
+    def exit_admin_mode(self) -> dict[str, Any]:
+        self._controller.exit_admin_mode()
+        return self.status_dict()
+
+    def set_admin_session_timeout(self, timeout_seconds: float) -> None:
+        self.require_admin_user_id()
+        self._controller.set_admin_session_timeout(timeout_seconds)
+
+    def require_admin_user_id(self) -> int:
+        status = self._controller.snapshot()
+        with self._mutex:
+            user = self._authenticated_user
+            if (
+                status.state is not TapState.ADMIN
+                or user is None
+                or status.user_id != str(user.id)
+                or not user.is_admin
+            ):
+                raise PermissionError("An active admin mode session is required")
+            return user.id
 
     def start_portion(self, target_volume_ml: int) -> dict[str, Any]:
         if target_volume_ml <= 0:
@@ -313,12 +354,14 @@ class TapService:
         with self._mutex:
             user = self._authenticated_user
             pending = self._pending_booking
+            nfc_feedback = self._active_nfc_feedback()
             status.update(
                 {
                     "user_display_name": user.display_name if user else None,
                     "special_portion_ml": user.special_portion_ml if user else None,
                     "persistence_error": self._persistence_error,
                     "last_booking": self._last_booking,
+                    "nfc_feedback": nfc_feedback,
                     "measured_volume_ml": self._calibration.measured_volume_ml(
                         int(status["measured_pulses"])
                     ),
@@ -326,6 +369,23 @@ class TapService:
                 }
             )
         return status
+
+    def _set_nfc_feedback(self, feedback: str) -> None:
+        with self._mutex:
+            self._nfc_feedback = feedback
+            self._nfc_feedback_until = self._monotonic_clock() + NFC_FEEDBACK_SECONDS
+
+    def _clear_nfc_feedback(self) -> None:
+        self._nfc_feedback = None
+        self._nfc_feedback_until = None
+
+    def _active_nfc_feedback(self) -> str | None:
+        if (
+            self._nfc_feedback_until is not None
+            and self._monotonic_clock() >= self._nfc_feedback_until
+        ):
+            self._clear_nfc_feedback()
+        return self._nfc_feedback
 
     def portion_options(self) -> dict[str, Any]:
         status = self._controller.snapshot()

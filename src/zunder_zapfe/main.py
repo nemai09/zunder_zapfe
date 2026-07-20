@@ -6,6 +6,7 @@ import os
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,14 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe import __version__
 from zunder_zapfe.api_models import (
+    AdminNfcCaptureResponse,
+    AdminNfcCardResponse,
+    AdminNfcCardStatusRequest,
+    AdminSettingsResponse,
+    AdminSettingsUpdateRequest,
+    AdminUserCreateRequest,
+    AdminUserResponse,
+    AdminUserUpdateRequest,
     ConsumptionResponse,
     ErrorResponse,
     HardwareStatusResponse,
@@ -31,6 +40,7 @@ from zunder_zapfe.api_models import (
     TapOptionsResponse,
     TapStatusResponse,
 )
+from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.build_info import current_build_info
@@ -73,6 +83,7 @@ def create_app(
         sessions,
         development_limits(
             session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds,
+            admin_session_timeout_seconds=(resolved_kiosk_settings.admin_session_timeout_seconds),
             manual_maximum_seconds=resolved_kiosk_settings.manual_maximum_pour_seconds,
             flow_watchdog_enabled=(not resolved_kiosk_settings.debug_disable_flow_watchdog),
         ),
@@ -81,6 +92,12 @@ def create_app(
         ),
         standard_portions_ml=resolved_kiosk_settings.standard_portions_ml,
         run_background=run_background,
+    )
+    admin_service = AdminService(
+        hardware_layer,
+        sessions,
+        tap_service,
+        default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
     )
 
     @asynccontextmanager
@@ -113,6 +130,11 @@ def create_app(
 
     @application.middleware("http")
     async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
+        if request.url.path.startswith("/api/admin/") and not _is_loopback_request(request):
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Local admin API is only available over loopback"},
+            )
         response = await call_next(request)
         if request.url.path == "/" or request.url.path.startswith("/static/"):
             response.headers["Cache-Control"] = "no-store"
@@ -120,8 +142,21 @@ def create_app(
 
     @application.exception_handler(TapUnavailable)
     @application.exception_handler(InvalidTransition)
+    @application.exception_handler(AdminConflict)
     async def domain_conflict(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @application.exception_handler(PermissionError)
+    async def admin_forbidden(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=403, content={"detail": str(error)})
+
+    @application.exception_handler(LookupError)
+    async def entity_not_found(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"detail": str(error)})
+
+    @application.exception_handler(ValueError)
+    async def invalid_domain_value(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=422, content={"detail": str(error)})
 
     @application.get("/", include_in_schema=False)
     async def index() -> FileResponse:
@@ -170,7 +205,123 @@ def create_app(
             "manual_press_debounce_ms": resolved_kiosk_settings.manual_press_debounce_ms,
             "manual_maximum_pour_seconds": (resolved_kiosk_settings.manual_maximum_pour_seconds),
             "debug_flow_watchdog_disabled": (resolved_kiosk_settings.debug_disable_flow_watchdog),
+            "admin_session_timeout_seconds": (
+                resolved_kiosk_settings.admin_session_timeout_seconds
+            ),
         }
+
+    admin_responses = {
+        403: {"model": ErrorResponse, "description": "Active admin mode required"},
+        409: {"model": ErrorResponse, "description": "Domain conflict"},
+        422: {"model": ErrorResponse, "description": "Invalid value"},
+    }
+
+    @application.post(
+        "/api/admin/session/enter",
+        response_model=TapStatusResponse,
+        responses=admin_responses,
+    )
+    async def enter_admin_session() -> dict[str, Any]:
+        return admin_service.enter()
+
+    @application.post(
+        "/api/admin/session/exit",
+        response_model=TapStatusResponse,
+        responses=admin_responses,
+    )
+    async def exit_admin_session() -> dict[str, Any]:
+        return admin_service.exit()
+
+    @application.get(
+        "/api/admin/settings",
+        response_model=AdminSettingsResponse,
+        responses=admin_responses,
+    )
+    async def admin_settings() -> dict[str, int]:
+        return admin_service.settings()
+
+    @application.patch(
+        "/api/admin/settings",
+        response_model=AdminSettingsResponse,
+        responses=admin_responses,
+    )
+    async def update_admin_settings(request: AdminSettingsUpdateRequest) -> dict[str, int]:
+        return admin_service.update_settings(
+            admin_session_timeout_seconds=request.admin_session_timeout_seconds
+        )
+
+    @application.get(
+        "/api/admin/users",
+        response_model=list[AdminUserResponse],
+        responses=admin_responses,
+    )
+    async def list_admin_users() -> list[dict[str, Any]]:
+        return admin_service.list_users()
+
+    @application.post(
+        "/api/admin/users",
+        response_model=AdminUserResponse,
+        status_code=201,
+        responses=admin_responses,
+    )
+    async def create_admin_user(request: AdminUserCreateRequest) -> dict[str, Any]:
+        return admin_service.create_user(**request.model_dump())
+
+    @application.patch(
+        "/api/admin/users/{user_id}",
+        response_model=AdminUserResponse,
+        responses=admin_responses,
+    )
+    async def update_admin_user(
+        user_id: int,
+        request: AdminUserUpdateRequest,
+    ) -> dict[str, Any]:
+        return admin_service.update_user(user_id, **request.model_dump())
+
+    @application.get(
+        "/api/admin/users/{user_id}/nfc-cards",
+        response_model=list[AdminNfcCardResponse],
+        responses=admin_responses,
+    )
+    async def list_admin_user_nfc_cards(user_id: int) -> list[dict[str, Any]]:
+        return admin_service.list_nfc_cards(user_id)
+
+    @application.post(
+        "/api/admin/users/{user_id}/nfc-cards/capture",
+        response_model=AdminNfcCaptureResponse,
+        responses=admin_responses,
+    )
+    async def capture_admin_user_nfc_card(user_id: int) -> dict[str, Any]:
+        return admin_service.capture_nfc_card(user_id)
+
+    @application.delete(
+        "/api/admin/nfc-capture",
+        status_code=204,
+        responses=admin_responses,
+    )
+    async def cancel_admin_nfc_capture() -> Response:
+        admin_service.cancel_nfc_capture()
+        return Response(status_code=204)
+
+    @application.patch(
+        "/api/admin/nfc-cards/{card_id}",
+        response_model=AdminNfcCardResponse,
+        responses=admin_responses,
+    )
+    async def update_admin_nfc_card(
+        card_id: int,
+        request: AdminNfcCardStatusRequest,
+    ) -> dict[str, Any]:
+        return admin_service.set_nfc_card_active(card_id, active=request.active)
+
+    @application.delete(
+        "/api/admin/nfc-cards/{card_id}",
+        status_code=204,
+        responses=admin_responses,
+    )
+    async def remove_admin_nfc_card(card_id: int) -> Response:
+        admin_service.remove_nfc_card(card_id)
+        return Response(status_code=204)
 
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)
     async def logout() -> Response:
@@ -322,6 +473,15 @@ def create_app(
             return tap_service.poll()
 
     return application
+
+
+def _is_loopback_request(request: Request) -> bool:
+    if request.client is None:
+        return False
+    try:
+        return ip_address(request.client.host).is_loopback
+    except ValueError:
+        return False
 
 
 app = create_app()

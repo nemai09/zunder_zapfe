@@ -32,10 +32,11 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     connectable = create_database_engine(config.get_main_option("sqlalchemy.url"))
     with connectable.connect() as connection:
-        if connection.dialect.name == "sqlite":
-            connection.exec_driver_sql("PRAGMA foreign_keys=ON")
-            # PRAGMA starts SQLAlchemy's implicit transaction. Commit it so
-            # Alembic owns and commits the following migration transaction.
+        is_sqlite = connection.dialect.name == "sqlite"
+        if is_sqlite:
+            # SQLite cannot rebuild a referenced table while foreign-key enforcement
+            # is active. Alembic batch migrations use such a rebuild for ALTER TABLE.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
             connection.commit()
         context.configure(
             connection=connection,
@@ -45,6 +46,12 @@ def run_migrations_online() -> None:
         )
         with context.begin_transaction():
             context.run_migrations()
+        if is_sqlite:
+            violations = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise RuntimeError(f"Migration introduced foreign-key violations: {violations}")
+            connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+            connection.commit()
 
 
 if context.is_offline_mode():

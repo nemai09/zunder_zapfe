@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.4">
-    <script src="/static/app.js?v=0.2.0-alpha.4" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.3.0-alpha.2">
+    <script src="/static/app.js?v=0.3.0-alpha.2" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -54,7 +54,10 @@
             <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
             <p class="lead compact">Zapfknopf gedrückt halten. Loslassen stoppt sofort.</p>
           </div>
-          <button class="button button-logout" id="logout-button" type="button">Abmelden</button>
+          <div class="session-actions">
+            <button class="button button-admin" id="admin-button" type="button" hidden>Admin</button>
+            <button class="button button-logout" id="logout-button" type="button">Abmelden</button>
+          </div>
         </div>
 
         <div class="dashboard-row">
@@ -84,6 +87,133 @@
               </div>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section class="screen screen-admin" data-screen="admin" aria-labelledby="admin-title">
+        <div class="admin-heading">
+          <div>
+            <p class="eyebrow">Lokale Verwaltung</p>
+            <h1 class="admin-title" id="admin-title">Administration</h1>
+          </div>
+          <div class="admin-heading-actions">
+            <button class="button button-admin-back" id="admin-back-button" type="button">
+              Zurück zum Zapfen
+            </button>
+            <button class="button button-logout admin-logout" id="admin-logout-button" type="button">
+              Abmelden
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-workspace">
+          <nav class="admin-nav" aria-label="Adminbereiche">
+            <button class="admin-nav-button is-active" data-admin-section="users" type="button">
+              Benutzer &amp; Armbänder
+            </button>
+            <button class="admin-nav-button" data-admin-section="overview" type="button">Übersicht</button>
+            <button class="admin-nav-button" data-admin-section="event" type="button">Veranstaltung &amp; Fass</button>
+            <button class="admin-nav-button" data-admin-section="diagnostics" type="button">Diagnose</button>
+            <button class="admin-nav-button" data-admin-section="settings" type="button">Einstellungen</button>
+          </nav>
+
+          <div class="admin-content">
+            <section class="admin-panel is-active" data-admin-panel="users" aria-labelledby="admin-users-title">
+              <div class="admin-panel-heading">
+                <div>
+                  <p class="section-label">Benutzerverwaltung</p>
+                  <h2 id="admin-users-title">Benutzer &amp; Armbänder</h2>
+                </div>
+                <button class="button button-primary compact-button" id="new-user-button" type="button">
+                  + Neuer Benutzer
+                </button>
+              </div>
+              <div class="user-workspace">
+                <div class="user-browser">
+                  <div class="user-tools">
+                    <input id="user-search" type="search" placeholder="Name suchen" aria-label="Benutzer suchen">
+                    <select id="user-filter" aria-label="Benutzer filtern">
+                      <option value="all">Alle</option>
+                      <option value="active">Aktiv</option>
+                      <option value="blocked">Gesperrt</option>
+                      <option value="admin">Admins</option>
+                    </select>
+                    <span id="user-result-count">0 Benutzer</span>
+                  </div>
+                  <div class="user-list" id="user-list" aria-label="Benutzerliste"></div>
+                </div>
+                <form class="user-editor" id="user-form">
+                  <input id="user-id" type="hidden">
+                  <div class="field-row">
+                    <label>Vorname <input id="first-name" maxlength="80" required></label>
+                    <label>Nachname <input id="last-name" maxlength="80"></label>
+                  </div>
+                  <label>Zusatzfeld <input id="user-note" maxlength="500" placeholder="optional"></label>
+                  <div class="toggle-row">
+                    <label><input id="user-is-admin" type="checkbox"> Admin</label>
+                    <label><input id="user-active" type="checkbox" checked> Aktiv</label>
+                  </div>
+                  <div class="editor-actions">
+                    <button class="button button-primary compact-button" type="submit">Speichern</button>
+                    <button class="button button-armband compact-button" id="capture-card-button" type="button">
+                      Armband zuweisen
+                    </button>
+                  </div>
+                  <div class="card-list" id="card-list"></div>
+                  <p class="admin-message" id="user-message" role="status"></p>
+                </form>
+              </div>
+            </section>
+
+            <section class="admin-panel" data-admin-panel="overview">
+              <p class="section-label">Übersicht</p>
+              <h2>System auf einen Blick</h2>
+              <div class="overview-grid">
+                <div class="admin-info-card"><span>Backend</span><strong id="admin-backend-state">bereit</strong></div>
+                <div class="admin-info-card"><span>NFC-Leser</span><strong id="admin-reader-state">–</strong></div>
+                <div class="admin-info-card"><span>Ventil</span><strong id="admin-valve-state">geschlossen</strong></div>
+              </div>
+            </section>
+
+            <section class="admin-panel" data-admin-panel="event">
+              <p class="section-label">Veranstaltung &amp; Fass</p>
+              <h2>Folgt in Milestone 7</h2>
+              <p class="admin-placeholder">Getränke, Veranstaltungen und Fasswechsel werden im nächsten Checkpoint ergänzt.</p>
+            </section>
+
+            <section class="admin-panel" data-admin-panel="diagnostics">
+              <p class="section-label">Diagnose &amp; Wartung</p>
+              <h2>Lokaler Anlagenstatus</h2>
+              <div class="overview-grid">
+                <div class="admin-info-card"><span>Verbindung</span><strong id="diagnostic-connection">bereit</strong></div>
+                <div class="admin-info-card"><span>NFC</span><strong id="diagnostic-nfc">–</strong></div>
+                <div class="admin-info-card"><span>Ventil</span><strong id="diagnostic-valve">geschlossen</strong></div>
+              </div>
+            </section>
+
+            <section class="admin-panel" data-admin-panel="settings">
+              <p class="section-label">Einstellungen</p>
+              <h2>Admin-Sitzung</h2>
+              <form class="settings-form" id="admin-settings-form">
+                <label>Timeout in Sekunden
+                  <input id="admin-timeout-input" type="number" min="10" max="3600" required>
+                </label>
+                <button class="button button-primary compact-button" type="submit">Übernehmen</button>
+              </form>
+              <p class="admin-placeholder">Weitere Betriebsparameter folgen in Milestone 7.</p>
+              <p class="admin-message" id="settings-message" role="status"></p>
+            </section>
+          </div>
+        </div>
+
+        <div class="capture-dialog" id="capture-dialog" hidden>
+          <div class="capture-dialog-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
+            <p class="section-label">Live-Zuordnung</p>
+            <h2 id="capture-title">Armband zuweisen</h2>
+            <p id="capture-instruction">Admin-Armband entfernen.</p>
+            <div class="capture-pulse" aria-hidden="true"></div>
+            <button class="button button-quiet compact-button" id="cancel-capture-button" type="button">Abbrechen</button>
+          </div>
         </div>
       </section>
 
@@ -123,7 +253,7 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.2.0_alpha.4_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.3.0_alpha.1_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
       <div class="session-timeout" id="session-timeout" aria-hidden="true">

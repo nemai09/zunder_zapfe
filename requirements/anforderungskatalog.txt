@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.3
+Version: 0.4
 Stand: 2026-07-20
-Status: Arbeitsstand nach CR-002
+Status: Arbeitsstand Milestone 6
 
 1. ZWECK UND FORMAT
 ===================
@@ -87,10 +87,17 @@ Abnahme: Ohne gueltige Anmeldedaten ist kein Zugriff auf Adminfunktionen moeglic
 
 [ZZ-AUT-004] Benutzerverwaltung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Admins muessen Benutzer anlegen, bearbeiten und NFC-Karten zuordnen koennen.
-Die konkrete Oberflaechengestaltung wird spaeter festgelegt.
-Abnahme: Ein Admin kann einen neuen Benutzer mit NFC-Karte funktionsfaehig
-anlegen.
+Admins muessen Benutzer mit verpflichtendem Vornamen, optionalem Nachnamen und
+optionalem Zusatzfeld anlegen und bearbeiten koennen. Weitere Personen- oder
+Adressdaten sind nicht erforderlich. Ein NFC-Armband muss durch kurzes Auflegen
+am Geraet direkt dem ausgewaehlten Benutzer zugeordnet werden koennen; die UID
+darf dabei nicht manuell vom Webclient vorgegeben werden.
+Admins muessen eine bestehende Armbandzuordnung bewusst entfernen koennen,
+damit das Armband anschliessend einem anderen Benutzer zugewiesen werden kann.
+Abnahme: Ein Admin legt einen Benutzer an, startet die Zuordnung, legt ein
+bislang unbekanntes Armband kurz auf und kann den Benutzer danach damit
+anmelden. Nach bestaetigtem Entfernen der Zuordnung kann dasselbe Armband neu
+zugewiesen werden.
 
 [ZZ-AUT-005] Adminvergabe
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -106,14 +113,19 @@ Abnahme: Nach einer Neuinstallation kann die Administration gestartet werden.
 
 [ZZ-AUT-007] Kartensperre
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Admins muessen verlorene NFC-Karten sperren koennen.
-Abnahme: Eine gesperrte Karte ermoeglicht keine Anmeldung oder Zapfung.
+Admins muessen verlorene NFC-Karten sperren koennen. Beim Auflegen einer
+gesperrten Karte oder der Karte eines gesperrten Benutzers muss die
+Kioskoberflaeche kurz "Karte gesperrt" anzeigen.
+Abnahme: Eine gesperrte Karte ermoeglicht keine Anmeldung oder Zapfung und wird
+fuer den Bediener eindeutig als gesperrt gemeldet.
 
 [ZZ-AUT-008] Unbekannte NFC-Karten
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Unbekannte NFC-Karten muessen ohne Zustandsaenderung ignoriert werden.
-Abnahme: Das Vorhalten einer unbekannten Karte oeffnet kein Ventil und meldet
-keinen Benutzer an.
+Unbekannte NFC-Karten muessen ohne Zustandsaenderung abgewiesen werden. Die
+Kioskoberflaeche muss kurz "Karte nicht erkannt" anzeigen; die Meldung bleibt
+auch bei sofortigem Entfernen lange genug sichtbar.
+Abnahme: Das Vorhalten einer unbekannten Karte oeffnet kein Ventil, meldet
+keinen Benutzer an und zeigt die eindeutige Rueckmeldung.
 
 [ZZ-AUT-009] NFC waehrend des Zapfens
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -127,9 +139,19 @@ Die Benutzeroberflaeche muss einen Logout-Button anbieten und nach einer durch
 Admins konfigurierbaren Inaktivitaetszeit automatisch abmelden.
 Abnahme: Beide Wege beenden die Sitzung und verhindern anschliessendes Zapfen
 ohne neue Authentifizierung.
-Hinweis: Gemaess CR-002 gilt fuer die Alpha-WebUI ein Default von 15 Sekunden.
-Jede Touchberuehrung und der Abschluss einer Zapfung setzen die Inaktivitaet
-zurueck.
+Fuer die Alpha-WebUI gilt ein Default von 15 Sekunden. Jede Touchberuehrung und
+der Abschluss einer Zapfung setzen die Inaktivitaet zurueck.
+
+[ZZ-AUT-011] Lokaler Adminmodus
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein Benutzer mit Adminrolle muss sich mit demselben NFC-Armband wie zum Zapfen
+anmelden und aus der normalen Zapfoberflaeche in einen lokalen Adminmodus
+wechseln koennen. Waehrend des Adminmodus darf keine Zapfung gestartet werden.
+Der Adminmodus muss einen separat konfigurierbaren Inaktivitaets-Timeout mit
+einem Alpha-Default von 30 Sekunden besitzen. Touchaktivitaet setzt ihn zurueck.
+Abnahme: Nur ein authentifizierter Admin kann den Modus oeffnen; der sichtbare
+Timer laeuft ueber 30 Sekunden, Touch setzt ihn zurueck und Ablauf fuehrt zum
+vollstaendigen Logout.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -487,6 +509,19 @@ erhalten bleiben.
 Abnahme: Der Balken wird waehrend der gesamten 15 Sekunden sichtbar kuerzer;
 Touch setzt ihn zurueck und 15 Sekunden ohne Aktivitaet beenden die Sitzung.
 
+[ZZ-UI-006] Einstieg und Gliederung der lokalen Administration
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Die normale Zapfoberflaeche muss ausschliesslich fuer Admins links neben dem
+Logout einen blauen Admin-Button anzeigen. Admin- und Logout-Button muessen
+zusammen die Breite der rechten Informationsspalte einnehmen. Die lokale
+Adminoberflaeche muss Verwaltung, Diagnose, Einstellungen und Protokolle als
+klar getrennte Bereiche gruppieren. Eine Benutzerliste mit mindestens 30
+Eintraegen muss durch kompakte Darstellung, Suche, Filter und Scrollen
+bedienbar bleiben.
+Abnahme: Ein Admin kann zwischen normalem Zapfen und der gruppierten
+Adminoberflaeche wechseln, einen Benutzer in einer Liste mit 30 Eintraegen
+gezielt finden; ein normaler Benutzer sieht keinen Admin-Einstieg.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Das System muss dauerhaft ein lokales WLAN fuer den Zugriff auf die
@@ -613,8 +648,9 @@ Zapfung; eine Beruehrung unterhalb der Entprellzeit oeffnet das Ventil nicht.
 =========================
 
 OD-001: Konkrete Standard-Portionsgroessen.
-OD-002: Der Alpha-Default fuer automatischen Logout ist durch CR-002 auf 15
-Sekunden festgelegt. Das kompatible Nachfuellfenster bleibt spaeter zu bewerten.
+OD-002: Der Alpha-Default fuer automatischen Logout ist auf 15 Sekunden
+festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
+spaeter zu bewerten.
 OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
 OD-004: Detailregeln der Happy Hour.
 OD-005: Format und Inhalt der Einzelabrechnung.
@@ -637,4 +673,3 @@ manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
 4. Eine ZZ-ID wird niemals umnummeriert oder wiederverwendet.
 5. Inhaltliche Aenderungen erfolgen nachvollziehbar ueber Git.
 6. Vertagte Anforderungen werden vor Aufnahme in einen Release erneut bewertet.
-

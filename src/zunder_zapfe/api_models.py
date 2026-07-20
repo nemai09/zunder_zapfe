@@ -92,6 +92,7 @@ class TapStatusResponse(BaseModel):
     special_portion_ml: int | None
     persistence_error: str | None
     last_booking: BookingSummaryResponse | None
+    nfc_feedback: str | None
 
 
 class SessionStatusResponse(BaseModel):
@@ -108,6 +109,54 @@ class TapOptionsResponse(BaseModel):
     manual_press_debounce_ms: int
     manual_maximum_pour_seconds: int
     debug_flow_watchdog_disabled: bool
+    admin_session_timeout_seconds: int
+
+
+class AdminUserCreateRequest(BaseModel):
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str | None = Field(default=None, max_length=80)
+    note: str | None = Field(default=None, max_length=500)
+    is_admin: bool = False
+
+
+class AdminUserUpdateRequest(AdminUserCreateRequest):
+    active: bool = True
+
+
+class AdminUserResponse(BaseModel):
+    id: int
+    display_name: str
+    first_name: str
+    last_name: str | None
+    note: str | None
+    is_admin: bool
+    active: bool
+    nfc_card_count: int
+    active_nfc_card_count: int
+
+
+class AdminNfcCardResponse(BaseModel):
+    id: int
+    user_id: int
+    uid_hint: str
+    active: bool
+
+
+class AdminNfcCaptureResponse(BaseModel):
+    state: str
+    card: AdminNfcCardResponse | None
+
+
+class AdminNfcCardStatusRequest(BaseModel):
+    active: bool
+
+
+class AdminSettingsResponse(BaseModel):
+    admin_session_timeout_seconds: int
+
+
+class AdminSettingsUpdateRequest(BaseModel):
+    admin_session_timeout_seconds: int = Field(ge=10, le=3600)
 
 
 class PourRecordResponse(BaseModel):

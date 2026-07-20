@@ -334,6 +334,46 @@ def test_zz_aut_010_ui_activity_resets_session_timeout() -> None:
     assert controller.poll().state is TapState.AUTHENTICATED
 
 
+def test_zz_aut_011_admin_mode_requires_admin_and_keeps_valve_closed() -> None:
+    controller, hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    with pytest.raises(InvalidTransition, match="admin session"):
+        controller.enter_admin_mode()
+
+    controller.logout()
+    controller.present_authenticated_card("admin-1", is_admin=True)
+    controller.enter_admin_mode()
+
+    status = controller.snapshot()
+    assert status.state is TapState.ADMIN
+    assert status.session_remaining_ms == 30_000
+    assert hardware.valve.snapshot().is_open is False
+    with pytest.raises(InvalidTransition):
+        controller.start_manual_pour()
+
+
+def test_zz_aut_011_admin_activity_timeout_and_return_to_tap() -> None:
+    controller, _hardware, clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("admin-1", is_admin=True)
+    controller.enter_admin_mode(timeout_seconds=30)
+
+    clock.advance(20)
+    assert controller.snapshot().session_remaining_ms == 10_000
+    controller.register_activity()
+    assert controller.snapshot().session_remaining_ms == 30_000
+
+    controller.exit_admin_mode()
+    assert controller.snapshot().state is TapState.AUTHENTICATED
+    assert controller.snapshot().session_remaining_ms == 15_000
+
+    controller.enter_admin_mode(timeout_seconds=12)
+    clock.advance(12)
+    status = controller.poll()
+    assert status.state is TapState.IDLE
+    assert status.user_id is None
+
+
 def test_missing_followup_pulses_lock_tap() -> None:
     controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")

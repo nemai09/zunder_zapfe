@@ -37,9 +37,9 @@ def seed_demo_data(
     repository = Repository(session)
     event_year = year or datetime.now(UTC).year
     event = repository.create_event("Zunder Demo", event_year, active=True)
-    user = repository.create_user("Demo User")
+    user = repository.create_user("Demo", last_name="User")
     user_card = repository.add_nfc_card(user.id, user_card_uid)
-    admin = repository.create_user("Demo Admin", role=UserRole.ADMIN)
+    admin = repository.create_user("Demo", last_name="Admin", role=UserRole.ADMIN)
     admin_card = repository.add_nfc_card(admin.id, admin_card_uid)
     beverage = repository.create_beverage(
         "Demo Pils",

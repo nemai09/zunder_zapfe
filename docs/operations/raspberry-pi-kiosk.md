@@ -175,8 +175,8 @@ Dieser Abschnitt gilt erst, nachdem die oben beschriebene Erstinstallation und
 das initiale `git clone` abgeschlossen wurden.
 
 Die lokale Datei `/etc/zunder-zapfe/web.env` wird bei Updates nicht
-ueberschrieben. Fuer CR-002 muessen bestehende Installationen deshalb einmalig
-folgende Werte eintragen beziehungsweise anpassen:
+ueberschrieben. Fuer den Alpha-Sitzungstimeout muessen bestehende Installationen
+deshalb einmalig folgende Werte eintragen beziehungsweise anpassen:
 
 ```text
 ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS=15

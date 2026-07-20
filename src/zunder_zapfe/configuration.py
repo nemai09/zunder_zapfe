@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 DEFAULT_STANDARD_PORTIONS_ML = (300, 500)
 DEFAULT_SESSION_TIMEOUT_SECONDS = 15
+DEFAULT_ADMIN_SESSION_TIMEOUT_SECONDS = 30
 DEFAULT_MANUAL_PRESS_DEBOUNCE_MS = 120
 DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS = 30
 DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG = True
@@ -17,6 +18,7 @@ DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG = True
 class KioskSettings:
     standard_portions_ml: tuple[int, ...] = DEFAULT_STANDARD_PORTIONS_ML
     session_timeout_seconds: int = DEFAULT_SESSION_TIMEOUT_SECONDS
+    admin_session_timeout_seconds: int = DEFAULT_ADMIN_SESSION_TIMEOUT_SECONDS
     manual_press_debounce_ms: int = DEFAULT_MANUAL_PRESS_DEBOUNCE_MS
     manual_maximum_pour_seconds: int = DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS
     debug_disable_flow_watchdog: bool = DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG
@@ -30,6 +32,8 @@ class KioskSettings:
             raise ValueError("Standard portions must be unique")
         if self.session_timeout_seconds <= 0:
             raise ValueError("Session timeout must be greater than zero")
+        if not 10 <= self.admin_session_timeout_seconds <= 3600:
+            raise ValueError("Admin session timeout must be between 10 and 3600 seconds")
         if self.manual_press_debounce_ms < 0:
             raise ValueError("Manual press debounce must not be negative")
         if self.manual_maximum_pour_seconds <= 0:
@@ -48,6 +52,12 @@ def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSe
             values.get(
                 "ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS",
                 str(DEFAULT_SESSION_TIMEOUT_SECONDS),
+            )
+        )
+        admin_timeout = int(
+            values.get(
+                "ZUNDER_ZAPFE_ADMIN_SESSION_TIMEOUT_SECONDS",
+                str(DEFAULT_ADMIN_SESSION_TIMEOUT_SECONDS),
             )
         )
         manual_press_debounce_ms = int(
@@ -73,6 +83,7 @@ def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSe
     return KioskSettings(
         standard_portions_ml=portions,
         session_timeout_seconds=timeout,
+        admin_session_timeout_seconds=admin_timeout,
         manual_press_debounce_ms=manual_press_debounce_ms,
         manual_maximum_pour_seconds=manual_maximum_pour_seconds,
         debug_disable_flow_watchdog=raw_debug_disable_flow_watchdog == "1",

@@ -19,6 +19,11 @@ Phase: Alpha-Entwicklung
 - schreibgeschützter SQLite-Datenbankbrowser für Diagnose
 - zustandsbasierte Ein-Knopf-Touch-WebUI für Idle, manuelles Zapfen und Sperren
 - sichtbarer, durch Touch zurückgesetzter Inaktivitäts-Timeout mit manuellem Logout
+- ventilgesperrter lokaler Adminmodus mit eigenem, auditiert einstellbarem Timeout
+- geschützte Verwaltungs-API für schlanke Benutzerdaten, Rollen und Aktivstatus
+- Live-Zuordnung, Sperre und Entfernen von NFC-Armbändern ohne UID-Eingabe im Webclient
+- eindeutige Lockscreen-Rückmeldung für unbekannte und gesperrte Armbänder
+- kompakte, durchsuch- und filterbare Benutzerliste für typische Veranstaltungen
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -32,14 +37,14 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, Persistenz und Sicherheitsreset | Verwaltungsoberfläche und Webauthentifizierung |
+| Adminfunktionen | Rolle, lokaler Adminmodus, Benutzer-/Armbandverwaltung und Sicherheitsreset | weitere Fachbereiche und Webauthentifizierung |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
 
 ## Nicht implementiert
 
-- produktive Adminoberfläche
+- vollständige Adminoberfläche für Veranstaltung, Getränke, Fässer und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
@@ -50,12 +55,11 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Lokalen Adminmodus und geschützte Verwaltungsendpunkte ergänzen.
-2. Benutzerverwaltung und Live-Zuordnung von NFC-Armbändern implementieren.
-3. Weitere Adminbereiche und die Webauthentifizierung ergänzen.
-4. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
+1. Milestone 6 auf dem Zielsystem mit realem NFC-Leser prüfen und abschließen.
+2. Weitere Adminbereiche und die Webauthentifizierung ergänzen.
+3. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
-5. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
+4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
    prüfen.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
