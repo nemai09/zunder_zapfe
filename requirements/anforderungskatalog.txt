@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.1
-Stand: 2026-07-18
-Status: Arbeitsstand fuer Stakeholder-Review
+Version: 0.2
+Stand: 2026-07-20
+Status: Arbeitsstand nach CR-001
 
 1. ZWECK UND FORMAT
 ===================
@@ -168,48 +168,56 @@ Fuellstandsschnittstelle.
 ===============================
 
 [ZZ-TAP-001] Standardgroessen
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Das System muss mehrere vorkonfigurierte Standard-Portionsgroessen am
 Touchdisplay zur Auswahl anzeigen.
 Abnahme: Alle konfigurierten Standardgroessen sind fuer einen angemeldeten
 Benutzer auswaehlbar.
+Hinweis: Durch CR-001 nicht mehr Bestandteil der Kioskbedienung; die vorhandene
+Backendfunktion bleibt als Kompatibilitaetsfunktion erhalten.
 
 [ZZ-TAP-002] Individuelle Sondergroesse
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Ein Admin muss fuer jeden Benutzer hoechstens eine individuelle Sondergroesse
 hinterlegen koennen.
 Abnahme: Die Sondergroesse erscheint nur beim zugeordneten Benutzer.
+Hinweis: Durch CR-001 nicht mehr Bestandteil der Kioskbedienung; Datenmodell und
+Backendfunktion bleiben erhalten.
 
 [ZZ-TAP-003] Sondergroessen-Grenzen
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Minimal- und Maximalwert fuer Sondergroessen muessen administrativ
 konfigurierbar sein. Eine Sondergroesse darf einer Standardgroesse entsprechen.
 Abnahme: Werte ausserhalb der Grenzen werden abgelehnt; gleiche Werte sind
 zulaessig.
 
 [ZZ-TAP-004] Protokollierung der Sondergroesse
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Aenderungen einer Sondergroesse muessen mit altem Wert, neuem Wert, Zeitpunkt
 und ausfuehrendem Admin protokolliert werden.
 Abnahme: Nach einer Aenderung ist ein entsprechender Protokolleintrag vorhanden.
 
 [ZZ-TAP-005] Start durch Groessenauswahl
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: TEST
 Die Auswahl einer Portionsgroesse muss den Zapfvorgang unmittelbar starten; ein
 separater Startknopf ist nicht vorzusehen.
 Abnahme: Eine gueltige Auswahl oeffnet das Ventil ohne weitere Bestaetigung.
+Hinweis: Durch ZZ-TAP-013 gemaess CR-001 ersetzt.
 
 [ZZ-TAP-006] Automatisches Fuellen
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Das System muss das Ventil oeffnen, Sensorimpulse zaehlen und bei Erreichen der
 gewaehlten Zielmenge schliessen.
 Abnahme: Der Vorgang endet selbststaendig aufgrund des gemessenen Volumens.
+Hinweis: Durch CR-001 nicht mehr Bestandteil der Kioskbedienung; die vorhandene
+Backendfunktion bleibt als Kompatibilitaetsfunktion erhalten.
 
 [ZZ-TAP-007] Manueller Abbruch
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: TEST
 Ein laufender Zapfvorgang muss ueber einen Touchscreen-Button abgebrochen werden
 koennen.
 Abnahme: Die Betaetigung schliesst das Ventil und beendet die Messung.
+Hinweis: Durch das Loslassen gemaess ZZ-TAP-013 ersetzt.
 
 [ZZ-TAP-008] Abrechnung der Istmenge
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -218,30 +226,53 @@ verbucht werden.
 Abnahme: Die Buchungsmenge entspricht dem Zaehlergebnis und nicht der Zielmenge.
 
 [ZZ-TAP-009] Nachfuellfunktion
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: TEST
 Nach einer automatischen Portion muss fuer ein konfigurierbares kurzes Zeitfenster
 ein Nachfuellbutton angeboten werden, der das Ventil nur solange oeffnet, wie er
 gedrueckt gehalten wird.
 Abnahme: Druecken oeffnet, Loslassen schliesst und die gemessene Nachfuellmenge
 wird dem angemeldeten Benutzer zugerechnet.
+Hinweis: Durch den allgemeinen manuellen Zapfvorgang gemaess ZZ-TAP-013 ersetzt.
 
 [ZZ-TAP-010] Begrenzung der Nachfuellfunktion
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: TEST
 Das Nachfuellfenster sowie maximale Menge und Oeffnungszeit muessen ueber die
 Adminoberflaeche konfigurierbar sein.
 Abnahme: Das Ventil schliesst bei Loslassen oder Erreichen eines Grenzwerts.
+Hinweis: Durch ZZ-TAP-014 ersetzt.
 
 [ZZ-TAP-011] Freies Zapfen fuer Admins
-Prioritaet: SOLL | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: SOLL | Status: VERWORFEN | Pruefung: TEST
 Admins sollen ausserhalb des Wartungsmodus eine freie Zapffunktion verwenden
 koennen. Dabei muss jede gemessene Menge dem Admin berechnet werden.
 Abnahme: Eine freie Adminzapfung erzeugt eine kostenpflichtige Mengenbuchung.
+Hinweis: Durch den rollenunabhaengigen manuellen Zapfvorgang gemaess ZZ-TAP-013
+ersetzt.
 
 [ZZ-TAP-012] Glasentfernung
 Prioritaet: KANN | Status: VERWORFEN | Pruefung: INSPEKTION
 Eine Erkennung, ob ein Glas waehrend des Zapfens entfernt wird, ist nicht
 Bestandteil des Systems.
 Abnahme: Keine Implementierung erforderlich.
+
+[ZZ-TAP-013] Manuelles Zapfen durch Gedrueckthalten
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Nach der NFC-Authentifizierung muss ein Benutzer das Ventil durch dauerhaftes
+Gedrueckthalten einer Touchflaeche oeffnen koennen. Das erste Loslassen oder
+Abbruchereignis muss das Ventil ohne kuenstliche Verzoegerung schliessen. Die
+tatsaechlich gemessene Menge muss genau einmal dem authentifizierten Benutzer
+zugerechnet werden.
+Abnahme: Eine simulierte gedrueckt gehaltene Bedienung oeffnet das Ventil;
+Loslassen schliesst es und erzeugt genau eine kostenpflichtige Istmengenbuchung.
+
+[ZZ-TAP-014] Begrenzung des manuellen Zapfens
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Die maximale Oeffnungsdauer eines manuellen Zapfvorgangs muss ohne
+Quellcodeaenderung konfigurierbar sein. Beim Erreichen der Grenze muss das
+Ventil automatisch schliessen und die bis dahin gemessene Menge speichern.
+Der konkrete Produktivwert wird nach Kalibrierung festgelegt.
+Abnahme: Eine simulierte Zeitueberschreitung beendet die Zapfung mit der
+konfigurierten Grenze und erzeugt genau eine Istmengenbuchung.
 
 
 6. DURCHFLUSSMESSUNG UND HARDWAREANSTEUERUNG
@@ -425,11 +456,20 @@ Abnahme: Nach dem Systemstart erscheint die Zapfoberflaeche ohne allgemeine
 Browserbedienung.
 
 [ZZ-UI-003] Anzeige laufender Zapfung
-Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: DEMONSTRATION
 Die Oberflaeche soll waehrend einer Zapfung mindestens Zielmenge, gemessene Menge
 und eine Abbruchmoeglichkeit anzeigen.
 Abnahme: Die drei Informationen beziehungsweise Aktionen sind waehrend des
 Vorgangs sichtbar.
+Hinweis: Durch ZZ-UI-004 gemaess CR-001 ersetzt.
+
+[ZZ-UI-004] Ein-Knopf-Kioskbedienung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Die Kioskoberflaeche muss einem authentifizierten Benutzer genau eine grosse
+Zapfflaeche anbieten. Sie muss waehrend des Gedrueckthaltens die gemessene
+Istmenge anzeigen und darf keine Portionswahl oder Nachfuellaktion anbieten.
+Abnahme: Der vollstaendige Benutzerablauf kann mit NFC, einer Zapfflaeche,
+Loslassen und Logout am Touchdisplay ausgefuehrt werden.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
@@ -457,7 +497,8 @@ Abnahme: Daten bleiben nach einem Neustart erhalten.
 [ZZ-DAT-002] Zapfdatensatz
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Eine Zapfbuchung muss mindestens Veranstaltung, Benutzer, Getraenk, Fass,
-Zeitpunkt, gewaehlte Zielgroesse, gemessene Menge, gueltigen Preis, Betrag,
+Zeitpunkt, eine bei zielgesteuerten Vorgaengen gewaehlte Zielgroesse, gemessene
+Menge, gueltigen Preis, Betrag,
 Vorgangsart und Abschlussstatus enthalten.
 Abnahme: Ein Testvorgang erzeugt einen vollstaendigen Datensatz.
 
@@ -529,17 +570,27 @@ Abnahme: Tests und spaetere technische Entscheidungen referenzieren die jeweils
 betroffenen ZZ-IDs.
 
 [ZZ-NFR-003] Bedienung am Touchdisplay
-Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
+Prioritaet: MUSS | Status: VERWORFEN | Pruefung: DEMONSTRATION
 Die Kernbedienung muss mit dem vorgesehenen Touchdisplay ohne Tastatur und Maus
 moeglich sein.
 Abnahme: Authentifizierung, Portionswahl, Abbruch, Nachfuellen und Logout koennen
 am Zielgeraet ausgefuehrt werden.
+Hinweis: Durch ZZ-NFR-005 gemaess CR-001 ersetzt.
 
 [ZZ-NFR-004] Messgenauigkeitsgarantie
 Prioritaet: KANN | Status: VERWORFEN | Pruefung: INSPEKTION
 Eine ueber die verwendete Sensorik und Konfiguration hinausgehende garantierte
 Messgenauigkeit ist nicht gefordert.
 Abnahme: Keine zusaetzliche Genauigkeitszusage erforderlich.
+
+[ZZ-NFR-005] Robuste Touchfreigabe
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Kurze unbeabsichtigte Beruehrungen duerfen durch eine konfigurierbare
+Aktivierungsentprellung unterdrueckt werden. Loslassen, Pointer-Abbruch,
+Fokusverlust und Ausblenden der Kioskseite muessen dagegen unverzueglich einen
+Stopp ausloesen. Der Backend-Watchdog bleibt eine unabhaengige Rueckfallebene.
+Abnahme: Die definierten Touch- und Browserereignisse schliessen eine laufende
+Zapfung; eine Beruehrung unterhalb der Entprellzeit oeffnet das Ventil nicht.
 
 
 14. OFFENE ENTSCHEIDUNGEN
@@ -556,6 +607,8 @@ OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
 OD-009: Sicherheitskonzept fuer dauerhaftes Admin-WLAN und Webzugriff.
 OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
 OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
+OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des
+manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
 
 
 15. TRACEABILITY-REGELN
