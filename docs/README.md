@@ -26,6 +26,7 @@ zu korrigieren.
 - [Projektstatus](project-status.md)
 - [Entwicklungsmeilensteine](milestones.md)
 - [Versionierung](versioning.md)
+- [Commit-Konvention](commit-konvention.md)
 - [Projektorganisation](organization.md)
 - [Beiträge](../CONTRIBUTING.md)
 - [Agentenleitfaden](../AGENTS.md)

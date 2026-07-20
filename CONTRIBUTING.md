@@ -32,8 +32,10 @@ Unter Linux beziehungsweise auf dem Raspberry Pi dieselben Befehle mit
 - Pro Änderung einen kurzen, thematisch begrenzten Branch verwenden.
 - Beispiele: `feature/kiosk-ui`, `fix/nfc-reconnect`, `docs/http-contract`.
 - Keine fremden oder lokalen Änderungen verwerfen oder überschreiben.
-- Commits beschreiben das Ergebnis und nennen eine Anforderungs-ID, wenn sie
-  eindeutig betroffen ist.
+- Commit-Betreff und -Text folgen verbindlich der
+  [Commit-Konvention](docs/commit-konvention.md). Meilenstein, Arbeitspaket und
+  Änderungstyp werden dadurch einheitlich und unabhängig von GitHubs
+  PR-Nummer erkennbar.
 
 Das verwendete Git-Programm ist frei wählbar. Unter Windows eignet sich
 SourceTree; Kommandobeispiele in der Dokumentation dienen vor allem dem
