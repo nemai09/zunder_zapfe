@@ -117,7 +117,7 @@ Softwarevertrags.
 
 | Komponente | Standardbetrieb | Testbetrieb |
 | --- | --- | --- |
-| NFC | `Acr122uNfcReader` über PC/SC | `SimulatedNfcReader` |
+| NFC | ereignisgesteuerter `Acr122uNfcReader` über PC/SC | `SimulatedNfcReader` |
 | Ventil | `SimulatedValve` | `SimulatedValve` |
 | Durchfluss | `SimulatedFlowMeter` | `SimulatedFlowMeter` |
 | Not-Aus | `SimulatedEmergencyStop` | `SimulatedEmergencyStop` |

@@ -104,8 +104,16 @@ Ohne aufgelegte Karte wird `state` als `ready`, mit aufgelegter Karte als
 
 Das Armband wird nur kurz zur Anmeldung aufgelegt und kann nach dem Piepton
 wieder entfernt werden. Die Sitzung bleibt danach bis zum manuellen oder
-automatischen Logout aktiv. Der Adapter fragt PC/SC standardmaessig alle
-`50 ms` ab, damit auch diese kurze Kartenpraesenz zuverlaessig verarbeitet wird.
+automatischen Logout aktiv. Der Adapter wartet blockierend auf
+PC/SC-Kartenereignisse und liest die UID genau einmal pro erkannter
+Kartenpraesenz. Dadurch wird auch kurzes Auflegen unmittelbar verarbeitet, ohne
+den Leser in einem schnellen Intervall abzufragen.
+
+Das Entfernen und erneute Anschliessen des USB-Lesers wird ebenfalls erkannt.
+Nach einem Leser- oder `pcscd`-Fehler verwirft der Adapter den bisherigen
+PC/SC-Kontext und versucht die Anmeldung kontrolliert im Abstand von einer
+Sekunde erneut. Die Kioskseite wechselt dabei zwischen `disconnected`, `error`
+und `ready`, ohne dass der Webdienst neu gestartet werden muss.
 
 Die Kioskseite zeigt den Zustand des erkannten Lesers, aber keine NFC-UID an.
 Der maschinenlesbare Status inklusive einer aktuell erfassten UID ist lokal unter
