@@ -24,7 +24,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
-| Admin-WebUI | Milestone 6: lokaler Adminmodus sowie Benutzer- und Armbandverwaltung in Arbeit |
+| Admin-WebUI | Milestone 6: lokaler Adminmodus sowie Benutzer- und Armbandverwaltung auf dem Raspberry Pi geprüft |
 | Reale Zapfhardware | Noch nicht implementiert |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter

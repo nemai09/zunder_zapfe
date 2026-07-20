@@ -12,10 +12,15 @@ bestanden sind.
 | 3 / PR 3 | NFC-, Zapf- und Persistenzintegration mit Smoke-Test | abgeschlossen |
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
-| 6 / PR 6 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | in Arbeit |
+| 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
 | 7 / PR 7 | Weitere Admin-WebUI, Webauthentifizierung, Getränke, Fässer und Parameter | geplant |
 | 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
+
+`PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
+PR 6. Er erzeugt keinen neuen Meilenstein und verändert weder Produktversion
+noch die folgenden logischen PR-Bezeichnungen. Die fortlaufende Nummer, die
+GitHub dem Nachtrags-PR technisch zuweist, kann davon abweichen.
 
 ## Milestone 5: Kiosk-WebUI Alpha
 
@@ -39,7 +44,7 @@ Traceability: `ZZ-AUT-002`, `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`,
 
 ## Milestone 6: Admin-Grundlage und Benutzerverwaltung
 
-Der nächste vertikale Checkpoint ergänzt den lokalen Adminmodus auf Basis der
+Dieser vertikale Checkpoint ergänzt den lokalen Adminmodus auf Basis der
 bereits per NFC authentifizierten Adminrolle. Admins behalten denselben
 Benutzer- und Zapfablauf; nur ihnen wird zusätzlich der Einstieg in die
 Administration angeboten. Der Adminmodus sperrt Zapfaktionen und besitzt einen
@@ -58,7 +63,8 @@ Admin-WLAN bleibt von der lokalen NFC-Adminsitzung getrennt.
 
 Die Benutzerliste bleibt durch Suche, Statusfilter und Scrollen auch bei 20 bis
 30 Einträgen bedienbar. Der Lockscreen unterscheidet unbekannte und gesperrte
-Armbänder. Milestone 6 bleibt bis zur Zielsystemprüfung in Arbeit.
+Armbänder. Die automatisierten Prüfungen sowie die Bedienprüfung mit realem
+ACR122U auf dem Raspberry Pi wurden erfolgreich abgeschlossen.
 
 Traceability: `ZZ-AUT-001`, `ZZ-AUT-002`, `ZZ-AUT-004`, `ZZ-AUT-005`,
 `ZZ-AUT-007`, `ZZ-AUT-008`, `ZZ-AUT-011`, `ZZ-DAT-003`, `ZZ-UI-001` und

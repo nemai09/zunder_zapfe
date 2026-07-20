@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
 Version: 0.4
-Stand: 2026-07-20
-Status: Arbeitsstand Milestone 6
+Stand: 2026-07-21
+Status: Milestone 6 abgeschlossen
 
 1. ZWECK UND FORMAT
 ===================

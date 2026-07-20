@@ -1,6 +1,6 @@
 # Lokale Admin-WebUI
 
-Status: Milestone-6-Implementierung, Zielsystemprüfung ausstehend
+Status: Milestone 6 abgeschlossen und auf dem Zielsystem geprüft
 
 Die lokale Administration ist ein zusätzlicher Modus derselben Kiosk-WebUI.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines
