@@ -32,8 +32,8 @@ def test_health_endpoint_reports_ready(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "ready"
     assert response.json()["application"] == "zunder-zapfe"
-    assert response.json()["version"] == "0.2.0-alpha.3"
-    assert response.json()["build"].startswith("zzapfe_v0.2.0_alpha.3_")
+    assert response.json()["version"] == "0.2.0-alpha.4"
+    assert response.json()["build"].startswith("zzapfe_v0.2.0_alpha.4_")
     assert response.json()["build"].endswith(response.json()["revision"])
 
 
@@ -43,10 +43,10 @@ def test_kiosk_page_is_available(client: TestClient) -> None:
     assert response.status_code == 200
     assert "Zunder Zapfe" in response.text
     assert "NFC-Leser" in response.text
-    assert 'href="/static/styles.css?v=0.2.0-alpha.3"' in response.text
-    assert 'src="/static/app.js?v=0.2.0-alpha.3"' in response.text
+    assert 'href="/static/styles.css?v=0.2.0-alpha.4"' in response.text
+    assert 'src="/static/app.js?v=0.2.0-alpha.4"' in response.text
     assert response.headers["cache-control"] == "no-store"
-    script = client.get("/static/app.js?v=0.2.0-alpha.3")
+    script = client.get("/static/app.js?v=0.2.0-alpha.4")
     assert script.status_code == 200
     assert script.headers["cache-control"] == "no-store"
     assert '"use strict"' in script.text
@@ -61,7 +61,7 @@ def test_kiosk_options_preserve_portions_and_expose_manual_alpha_limits(
     assert response.json() == {
         "standard_portions_ml": [300, 500],
         "special_portion_ml": None,
-        "session_timeout_seconds": 60,
+        "session_timeout_seconds": 15,
         "manual_press_debounce_ms": 120,
         "manual_maximum_pour_seconds": 30,
         "debug_flow_watchdog_disabled": True,

@@ -344,7 +344,9 @@ def test_zz_tap_013_manual_api_exercises_start_and_release(
         )
     ) as client:
         assert client.post("/api/tap/manual/start").status_code == 409
+        assert client.post("/api/session/activity").status_code == 409
         client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})
+        assert client.post("/api/session/activity").status_code == 204
 
         started = client.post("/api/tap/manual/start")
         pulsed = client.post("/api/simulator/flow/pulses", json={"count": 8})

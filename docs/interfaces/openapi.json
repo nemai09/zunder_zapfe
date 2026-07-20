@@ -545,6 +545,17 @@
             ],
             "title": "Safety Reason"
           },
+          "session_remaining_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Remaining Ms"
+          },
           "special_portion_ml": {
             "anyOf": [
               {
@@ -630,6 +641,7 @@
           "measured_volume_ml",
           "target_volume_ml",
           "top_up_remaining_ms",
+          "session_remaining_ms",
           "safety_reason",
           "user_display_name",
           "special_portion_ml",
@@ -722,7 +734,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.2.0-alpha.3"
+    "version": "0.2.0-alpha.4"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -834,6 +846,27 @@
           }
         },
         "summary": "Nfc Status"
+      }
+    },
+    "/api/session/activity": {
+      "post": {
+        "operationId": "register_session_activity_api_session_activity_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Register Session Activity"
       }
     },
     "/api/session/logout": {

@@ -48,6 +48,7 @@ einspeisen.
 | `measured_volume_ml` | `int` | backendseitig aus Impulsen berechnete Istmenge |
 | `target_volume_ml` | `int | null` | gewählte Zielmenge während einer Portion |
 | `top_up_remaining_ms` | `int | null` | verbleibendes Nachfüllfenster in Millisekunden |
+| `session_remaining_ms` | `int | null` | verbleibende Inaktivitätszeit der aktuellen Sitzung |
 | `safety_reason` | `str | null` | Ursache einer Verriegelung |
 | `user_display_name` | `str | null` | Anzeigename |
 | `special_portion_ml` | `int | null` | individuelle Portion |
@@ -62,12 +63,15 @@ Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
 | Methode und Pfad | Vorbedingung | Ergebnis |
 | --- | --- | --- |
 | `GET /api/session/status` | keine | aktuelle NFC-Sitzung |
+| `POST /api/session/activity` | `authenticated` oder `manual_pouring` | `204`, setzt Inaktivität zurück |
 | `POST /api/session/logout` | `authenticated` oder `top_up_available` | `204`, danach `idle` |
 
 Anmeldung geschieht ereignisgesteuert durch Auflegen einer bekannten, aktiven
 Karte. Eine liegen gebliebene Karte meldet sich nach Logout nicht sofort erneut
 an; sie muss entfernt und neu aufgelegt werden.
-Eine Sitzung endet außerdem nach der konfigurierten Inaktivitätszeit. Aktive
+Eine Sitzung endet außerdem nach der konfigurierten Inaktivitätszeit. Eine
+bewusste Touchinteraktion wird über `POST /api/session/activity` serverseitig
+registriert. Aktive
 Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 
 ## Zapfen

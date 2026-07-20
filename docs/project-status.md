@@ -18,6 +18,7 @@ Phase: Alpha-Entwicklung
 - automatisierter lokaler Smoke-Test mit realem NFC oder NFC-Simulator
 - schreibgeschützter SQLite-Datenbankbrowser für Diagnose
 - zustandsbasierte Ein-Knopf-Touch-WebUI für Idle, manuelles Zapfen und Sperren
+- sichtbarer, durch Touch zurückgesetzter Inaktivitäts-Timeout mit manuellem Logout
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine

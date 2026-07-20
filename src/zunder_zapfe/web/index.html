@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.3">
-    <script src="/static/app.js?v=0.2.0-alpha.3" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.4">
+    <script src="/static/app.js?v=0.2.0-alpha.4" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -48,43 +48,43 @@
       </section>
 
       <section class="screen screen-manual" data-screen="tap" aria-labelledby="welcome-title">
-        <div class="manual-main">
-          <div class="session-heading">
-            <div>
-              <p class="eyebrow">Hallo</p>
-              <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
-              <p class="lead compact">Zapfknopf gedrückt halten. Loslassen stoppt sofort.</p>
-            </div>
-            <button class="button button-quiet" id="logout-button" type="button">Abmelden</button>
+        <div class="session-heading">
+          <div>
+            <p class="eyebrow">Hallo</p>
+            <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
+            <p class="lead compact">Zapfknopf gedrückt halten. Loslassen stoppt sofort.</p>
           </div>
+          <button class="button button-logout" id="logout-button" type="button">Abmelden</button>
+        </div>
 
-          <div class="hold-area manual-hold-area">
-            <button class="hold-button manual-button" id="manual-button" type="button" aria-pressed="false">
+        <div class="dashboard-row">
+          <div class="tap-card">
+            <button class="tap-button" id="manual-button" type="button" aria-pressed="false">
               <span class="hold-countdown" id="manual-volume">0</span>
               <strong id="manual-label">Gedrückt halten</strong>
               <small id="manual-hint">zum Zapfen</small>
             </button>
             <p class="action-error" id="action-error" role="alert"></p>
           </div>
-        </div>
 
-        <aside class="info-panel">
-          <div class="beverage-card">
-            <p class="section-label">Aktiv am Hahn</p>
-            <p class="beverage-name" id="beverage-name">–</p>
-            <p class="beverage-detail" id="beverage-detail">Fassdaten werden geladen …</p>
-          </div>
-          <div class="stat-row">
-            <div class="stat">
-              <span>Dein Verbrauch</span>
-              <strong id="consumption-volume">–</strong>
+          <aside class="info-panel dashboard-info">
+            <div class="beverage-card">
+              <p class="section-label">Aktiv am Hahn</p>
+              <p class="beverage-name" id="beverage-name">–</p>
+              <p class="beverage-detail" id="beverage-detail">Fassdaten werden geladen …</p>
             </div>
-            <div class="stat">
-              <span>Dein Betrag</span>
-              <strong id="consumption-amount">–</strong>
+            <div class="stat-row">
+              <div class="stat">
+                <span>Dein Verbrauch</span>
+                <strong id="consumption-volume">–</strong>
+              </div>
+              <div class="stat">
+                <span>Dein Betrag</span>
+                <strong id="consumption-amount">–</strong>
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        </div>
       </section>
 
       <section class="screen screen-alert" data-screen="legacy" aria-labelledby="legacy-title">
@@ -123,9 +123,12 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.2.0_alpha.3_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.2.0_alpha.4_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
+      <div class="session-timeout" id="session-timeout" aria-hidden="true">
+        <div class="session-timeout-fill" id="session-timeout-fill"></div>
+      </div>
     </main>
   </body>
 </html>

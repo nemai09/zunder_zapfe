@@ -7,7 +7,7 @@ def test_kiosk_defaults_use_approved_alpha_portions() -> None:
     settings = load_kiosk_settings({})
 
     assert settings.standard_portions_ml == (300, 500)
-    assert settings.session_timeout_seconds == 60
+    assert settings.session_timeout_seconds == 15
     assert settings.manual_press_debounce_ms == 120
     assert settings.manual_maximum_pour_seconds == 30
     assert settings.debug_disable_flow_watchdog is True

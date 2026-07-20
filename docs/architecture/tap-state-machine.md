@@ -83,6 +83,7 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `STARTING` | `start` | Not-Aus aktiv | `EMERGENCY_STOP` | Ventil schließen, Grund speichern |
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
+| `AUTHENTICATED` | Touchaktivität | – | `AUTHENTICATED` | Inaktivitätszeit zurücksetzen |
 | `AUTHENTICATED` | `start_manual_pour` | aktiver Fachkontext | `MANUAL_POURING` | Messung nullen, Ventil öffnen |
 | `MANUAL_POURING` | `stop_manual_pour` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
 | `MANUAL_POURING` | maximales Zeitlimit | – | `AUTHENTICATED` | Ventil schließen, Istmenge mit Limitabschluss buchen |
@@ -140,8 +141,9 @@ sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
 Produktentscheidungen `OD-002`, `OD-003` und `OD-012`; reale Ventil- und
 Durchfluss-Hardware sind noch nicht integriert.
 
-Für Milestone 5 gelten `60` Sekunden Inaktivität als konfigurierbarer
-Alpha-Default. Der Timeout läuft nur im Zustand `AUTHENTICATED`; eine aktive
+Für Milestone 5 gelten `15` Sekunden Inaktivität als konfigurierbarer
+Alpha-Default. Die gesamte verbleibende Zeit zeigt die Kiosk-WebUI als Balken.
+Der Timeout läuft nur im Zustand `AUTHENTICATED`; eine aktive
 Zapfung oder das Nachfüllfenster werden nicht dadurch beendet.
 
 ## Traceability

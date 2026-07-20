@@ -13,7 +13,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 | `ZUNDER_ZAPFE_DATABASE_URL` | SQLite unter `/var/lib/zunder-zapfe` | SQLAlchemy-Datenbankziel | Datenbank nicht ins Repository legen |
 | `ZUNDER_ZAPFE_PULSES_PER_LITER` | `500` | ganzzahlige Impulskalibrierung | Demonstratorwert, vor Realbetrieb kalibrieren |
 | `ZUNDER_ZAPFE_STANDARD_PORTIONS_ML` | `300,500` | kommaseparierte Standardportionen des Kiosks | mindestens zwei eindeutige positive Ganzzahlen |
-| `ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS` | `60` | Inaktivitätszeit bis zum automatischen Logout | positive ganze Sekundenzahl; Alpha-Default |
+| `ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS` | `15` | Inaktivitätszeit bis zum automatischen Logout | positive ganze Sekundenzahl; Alpha-Default |
 | `ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS` | `120` | Entprellzeit vor dem Start einer manuellen Touch-Zapfung | nichtnegative ganze Millisekunden; verzögert niemals den Stopp |
 | `ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS` | `30` | maximale Dauer einer manuellen Zapfung | positive ganze Sekundenzahl; Alpha-Wert, vor Realbetrieb kalibrieren |
 | `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG` | `1` | deaktiviert vorübergehend Start- und Folgeimpulsprüfung | nur ohne Durchflusshardware; vor realer Ventilhardware zwingend auf `0` setzen |

@@ -58,7 +58,7 @@ class TapLimits:
     top_up_maximum_seconds: float
     top_up_maximum_pulses: int
     manual_maximum_seconds: float = 30.0
-    session_timeout_seconds: float = 60.0
+    session_timeout_seconds: float = 15.0
     flow_watchdog_enabled: bool = True
 
     def __post_init__(self) -> None:
@@ -104,6 +104,7 @@ class TapStatus:
     measured_pulses: int
     target_pulses: int | None
     top_up_remaining_ms: int | None
+    session_remaining_ms: int | None
     safety_reason: str | None
 
 
@@ -277,6 +278,12 @@ class TapController:
         with self._mutex:
             if self._state in ACTIVE_POUR_STATES:
                 self._last_heartbeat = self._clock()
+
+    def register_activity(self) -> None:
+        """Refresh the authenticated session after an intentional UI interaction."""
+        with self._mutex:
+            self._require_state(TapState.AUTHENTICATED, TapState.MANUAL_POURING)
+            self._session_last_active_at = self._clock()
 
     def poll(self) -> TapStatus:
         """Apply sensor, target, timeout and watchdog transitions."""
@@ -457,6 +464,15 @@ class TapController:
         top_up_remaining_ms = None
         if self._state is TapState.TOP_UP_AVAILABLE and self._top_up_deadline is not None:
             top_up_remaining_ms = max(0, ceil((self._top_up_deadline - self._clock()) * 1000))
+        session_remaining_ms = None
+        if self._session is not None and self._session_last_active_at is not None:
+            if self._state in ACTIVE_POUR_STATES:
+                session_remaining_ms = ceil(self._limits.session_timeout_seconds * 1000)
+            else:
+                remaining_seconds = self._limits.session_timeout_seconds - (
+                    self._clock() - self._session_last_active_at
+                )
+                session_remaining_ms = max(0, ceil(remaining_seconds * 1000))
         return TapStatus(
             state=self._state,
             user_id=self._session.user_id if self._session else None,
@@ -465,6 +481,7 @@ class TapController:
             measured_pulses=reading.pulse_count if self._active_pour else 0,
             target_pulses=self._active_pour.target_pulses if self._active_pour else None,
             top_up_remaining_ms=top_up_remaining_ms,
+            session_remaining_ms=session_remaining_ms,
             safety_reason=self._safety_reason,
         )
 
@@ -490,7 +507,7 @@ class TapController:
 
 def development_limits(
     *,
-    session_timeout_seconds: float = 60.0,
+    session_timeout_seconds: float = 15.0,
     manual_maximum_seconds: float = 30.0,
     flow_watchdog_enabled: bool = True,
 ) -> TapLimits:

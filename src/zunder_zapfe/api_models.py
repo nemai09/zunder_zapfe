@@ -86,6 +86,7 @@ class TapStatusResponse(BaseModel):
     measured_volume_ml: int
     target_volume_ml: int | None
     top_up_remaining_ms: int | None
+    session_remaining_ms: int | None
     safety_reason: str | None
     user_display_name: str | None
     special_portion_ml: int | None

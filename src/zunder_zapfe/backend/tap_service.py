@@ -264,6 +264,9 @@ class TapService:
     def heartbeat(self) -> None:
         self._controller.heartbeat()
 
+    def register_activity(self) -> None:
+        self._controller.register_activity()
+
     def reset_safety_lock(self) -> dict[str, Any]:
         """Reset a latched safety state while an active admin card is present."""
         nfc = self._hardware.nfc.snapshot()

@@ -24,6 +24,7 @@ const model = {
   refreshRunning: false,
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
+  lastActivitySentAt: 0,
 };
 
 const elements = {
@@ -37,6 +38,7 @@ const elements = {
   buildVersion: document.querySelector("#build-version"),
   clock: document.querySelector("#clock"),
   userName: document.querySelector("#user-name"),
+  logoutButton: document.querySelector("#logout-button"),
   actionError: document.querySelector("#action-error"),
   beverageName: document.querySelector("#beverage-name"),
   beverageDetail: document.querySelector("#beverage-detail"),
@@ -46,6 +48,8 @@ const elements = {
   manualVolume: document.querySelector("#manual-volume"),
   manualLabel: document.querySelector("#manual-label"),
   manualHint: document.querySelector("#manual-hint"),
+  sessionTimeout: document.querySelector("#session-timeout"),
+  sessionTimeoutFill: document.querySelector("#session-timeout-fill"),
   legacyState: document.querySelector("#legacy-state"),
   safetyReason: document.querySelector("#safety-reason"),
   resetError: document.querySelector("#reset-error"),
@@ -152,13 +156,23 @@ function render() {
   elements.manualHint.textContent = limitReachedWhileHeld
     ? "Loslassen und erneut drücken"
     : manualPouring
-      ? "Loslassen stoppt sofort"
+      ? "ml · Loslassen stoppt sofort"
       : "zum Zapfen";
   elements.manualButton.classList.toggle("is-holding", holding);
   elements.manualButton.setAttribute("aria-pressed", String(holding));
   elements.manualButton.disabled = !["authenticated", "manual_pouring"].includes(
     model.tap?.state,
   );
+  elements.logoutButton.disabled = manualPouring;
+
+  const sessionRemainingMs = model.tap?.session_remaining_ms;
+  const sessionTimeoutMs = (model.options?.session_timeout_seconds ?? 15) * 1000;
+  const sessionBarActive = Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
+  const sessionProgress = sessionBarActive
+    ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
+    : 0;
+  elements.sessionTimeout.classList.toggle("is-active", sessionBarActive);
+  elements.sessionTimeoutFill.style.width = `${sessionProgress * 100}%`;
 
   elements.legacyState.textContent = model.tap?.state || "unbekannt";
   elements.safetyReason.textContent = model.tap?.safety_reason || "Die Anlage wurde sicher verriegelt.";
@@ -237,6 +251,20 @@ function logout() {
   return performAction(() => api("/api/session/logout", { method: "POST" }));
 }
 
+function registerActivity() {
+  if (!["authenticated", "manual_pouring"].includes(model.tap?.state)) return;
+  const now = Date.now();
+  if (now - model.lastActivitySentAt < 500) return;
+  model.lastActivitySentAt = now;
+  if (Number.isFinite(model.tap?.session_remaining_ms)) {
+    model.tap.session_remaining_ms = (model.options?.session_timeout_seconds ?? 15) * 1000;
+    render();
+  }
+  api("/api/session/activity", { method: "POST" }).catch(() => {
+    // The regular status refresh remains the source of truth.
+  });
+}
+
 async function requestManualStop() {
   if (model.manualStopPending) return;
   if (model.manualStartPending) {
@@ -300,7 +328,8 @@ function releaseManual() {
   }
 }
 
-document.querySelector("#logout-button").addEventListener("click", logout);
+elements.logoutButton.addEventListener("click", logout);
+document.addEventListener("pointerdown", registerActivity, { capture: true });
 document.querySelector("#reset-button").addEventListener("click", () =>
   performAction(
     () => api("/api/tap/safety/reset", { method: "POST" }),

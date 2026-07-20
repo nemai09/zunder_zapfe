@@ -304,7 +304,8 @@ h1 span {
 }
 
 .screen-manual {
-  grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.65fr);
+  grid-template-columns: 1fr;
+  align-content: center;
 }
 
 .manual-main {
@@ -321,6 +322,62 @@ h1 span {
   width: min(48vh, 38vw);
   min-width: 16rem;
   max-width: 27rem;
+}
+
+.dashboard-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  align-items: stretch;
+}
+
+.tap-card {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tap-button {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(1rem, 2vw, 1.6rem);
+  place-content: center;
+  border: 0.35rem solid rgb(245 166 35 / 24%);
+  border-radius: 1.4rem;
+  background: var(--amber);
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 25%);
+  color: #251707;
+  cursor: pointer;
+  touch-action: none;
+  transition: transform 100ms ease, background 100ms ease, box-shadow 100ms ease;
+}
+
+.tap-button.is-holding {
+  background: var(--cream);
+  box-shadow: 0 0 2.5rem rgb(245 166 35 / 25%);
+}
+
+.tap-button:active {
+  transform: scale(0.985);
+}
+
+.tap-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.tap-button strong {
+  margin-top: 0.5rem;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+}
+
+.tap-button small {
+  margin-top: 0.15rem;
+  font-weight: 650;
 }
 
 .tap-layout {
@@ -403,6 +460,19 @@ h1 span {
   gap: 1rem;
 }
 
+.dashboard-info {
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dashboard-info .beverage-card,
+.dashboard-info .stat {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+}
+
 .beverage-card,
 .stat {
   padding: clamp(1rem, 2.2vw, 1.6rem);
@@ -454,6 +524,20 @@ h1 span {
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--cream);
+}
+
+.button-logout {
+  margin-left: auto;
+  min-height: 4rem;
+  padding: 0.95rem 1.55rem;
+  border: 1px solid rgb(220 112 104 / 45%);
+  background: rgb(132 55 51 / 48%);
+  color: #ffd7d3;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+}
+
+.button-logout:active {
+  background: rgb(163 67 61 / 65%);
 }
 
 .button-danger {
@@ -612,11 +696,44 @@ h1 span {
   color: var(--cream);
 }
 
+.tap-card .action-error {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.5rem;
+  left: 0.75rem;
+  margin: 0;
+  text-align: center;
+}
+
 .footer {
   gap: 1rem;
   color: #8f8574;
   font-family: ui-monospace, "Cascadia Mono", monospace;
   font-size: clamp(0.65rem, 1.15vw, 0.85rem);
+}
+
+.session-timeout {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.35rem;
+  overflow: hidden;
+  background: rgb(255 255 255 / 7%);
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.session-timeout.is-active {
+  opacity: 1;
+}
+
+.session-timeout-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--amber);
+  transition: width 220ms linear, background 160ms ease;
 }
 
 @media (max-width: 720px), (max-height: 500px) and (orientation: portrait) {
@@ -638,7 +755,7 @@ h1 span {
   .progress-ring,
   .hold-button { width: min(56vw, 18rem); }
   .screen-manual { grid-template-columns: 1fr; }
-  .screen-manual .info-panel { display: none; }
+  .dashboard-row { grid-template-columns: 1fr; }
   .screen-pour,
   .screen-top-up { grid-template-columns: 1fr 1fr; }
 }
@@ -734,6 +851,12 @@ h1 span {
     padding: 0.55rem 1rem;
   }
 
+  .button-logout {
+    min-height: 3.5rem;
+    padding: 0.8rem 1.4rem;
+    font-size: 1.05rem;
+  }
+
   .button-large {
     min-height: 3.5rem;
     margin-top: 1rem;
@@ -762,6 +885,7 @@ h1 span {
   .portion-grid,
   .stat-row { grid-template-columns: 1fr; }
   .footer { align-items: flex-start; flex-direction: column; }
+  .dashboard-row { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -177,6 +177,11 @@ def create_app(
         tap_service.logout()
         return Response(status_code=204)
 
+    @application.post("/api/session/activity", status_code=204, responses=conflict_response)
+    async def register_session_activity() -> Response:
+        tap_service.register_activity()
+        return Response(status_code=204)
+
     @application.post(
         "/api/tap/portion", response_model=TapStatusResponse, responses=conflict_response
     )

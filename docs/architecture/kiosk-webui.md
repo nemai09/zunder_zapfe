@@ -22,6 +22,14 @@ Die Kioskoberfläche bietet gemäß
 Portionswahl und kein Nachfüllen mehr an. Die entsprechenden Backendaktionen
 bleiben als Kompatibilitätsfunktionen vorhanden.
 
+Im Landscape-Kiosk steht die Zapffläche links und erstreckt sich über die Höhe
+der beiden Informationsreihen rechts. Dort bleibt das aktive Getränk oben;
+persönlicher Verbrauch und Betrag stehen darunter nebeneinander. Der manuelle
+Logout bleibt rechts im Kopfbereich sichtbar. Ein schmaler Balken am unteren
+Bildschirmrand zeigt gemäß CR-002 während der gesamten Sitzung die verbleibende
+Zeit des 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität
+an das Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
+
 ## Touch- und Sicherheitsverhalten
 
 Eine konfigurierbare Aktivierungsentprellung unterdrückt sehr kurze
@@ -46,4 +54,5 @@ ist keine Rückmeldung eines physischen Ventils und muss zusammen mit dem
 temporären Flow-Debugmodus vor Produktivbetrieb entfernt werden.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
-`ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004` und `ZZ-NFR-005`.
+`ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und
+`ZZ-NFR-005`.

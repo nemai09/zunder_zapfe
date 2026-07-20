@@ -476,13 +476,14 @@ Loslassen und Logout am Touchdisplay ausgefuehrt werden.
 
 [ZZ-UI-005] Sichtbarer Inaktivitaets-Timeout
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Die Kioskoberflaeche muss die letzten zehn Sekunden vor dem automatischen
-Logout als unaufdringlichen Balken am unteren Bildschirmrand darstellen. Eine
-Touchberuehrung muss die Inaktivitaetszeit serverseitig zuruecksetzen. Nach
-insgesamt 15 Sekunden ohne Aktivitaet muss die NFC-Aufforderung erscheinen.
-Der manuelle Logout-Button muss unabhaengig davon erhalten bleiben.
-Abnahme: Der Balken wird in den letzten zehn Sekunden sichtbar kuerzer; Touch
-setzt ihn zurueck und 15 Sekunden ohne Aktivitaet beenden die Sitzung.
+Die Kioskoberflaeche muss die gesamte verbleibende Inaktivitaetszeit vor dem
+automatischen Logout als unaufdringlichen Balken am unteren Bildschirmrand
+darstellen. Eine Touchberuehrung muss die Inaktivitaetszeit serverseitig
+zuruecksetzen. Nach insgesamt 15 Sekunden ohne Aktivitaet muss die
+NFC-Aufforderung erscheinen. Der manuelle Logout-Button muss unabhaengig davon
+erhalten bleiben.
+Abnahme: Der Balken wird waehrend der gesamten 15 Sekunden sichtbar kuerzer;
+Touch setzt ihn zurueck und 15 Sekunden ohne Aktivitaet beenden die Sitzung.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION

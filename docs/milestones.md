@@ -22,7 +22,8 @@ bestanden sind.
 Der Kiosk bildet den Backend-Zustandsautomaten als lokale Touchoberfläche ab.
 Er umfasst NFC-Aufforderung, Benutzer- und Verbrauchsanzeige, genau eine große
 gedrückt gehaltene Zapffläche, Istmenge, Logout sowie Sicherheits- und
-Verbindungsfehler. Standard- und Sonderportionen bleiben gemäß CR-001 im
+Verbindungsfehler. CR-002 ergänzt die zweispaltige Kartenanordnung und den
+sichtbaren Inaktivitäts-Timeout. Standard- und Sonderportionen bleiben gemäß CR-001 im
 Backend erhalten, werden im Kiosk aber nicht mehr angeboten.
 
 Die Bedienoberfläche kommuniziert ausschließlich über die dokumentierte
@@ -31,4 +32,4 @@ ein visueller Review-Checkpoint und darf innerhalb des Milestones nach
 Bedienfeedback weiterentwickelt werden.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
-`ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004` und `ZZ-NFR-005`.
+`ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und `ZZ-NFR-005`.

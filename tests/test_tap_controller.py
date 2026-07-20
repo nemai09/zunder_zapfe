@@ -310,7 +310,7 @@ def test_zz_aut_010_inactive_session_logs_out_automatically() -> None:
     controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")
 
-    clock.advance(59)
+    clock.advance(14)
     assert controller.poll().state is TapState.AUTHENTICATED
     clock.advance(1)
     status = controller.poll()
@@ -318,6 +318,20 @@ def test_zz_aut_010_inactive_session_logs_out_automatically() -> None:
     assert status.state is TapState.IDLE
     assert status.user_id is None
     assert hardware.valve.snapshot().is_open is False
+
+
+def test_zz_aut_010_ui_activity_resets_session_timeout() -> None:
+    controller, _hardware, clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    assert controller.snapshot().session_remaining_ms == 15_000
+    clock.advance(5)
+    assert controller.snapshot().session_remaining_ms == 10_000
+
+    controller.register_activity()
+    assert controller.snapshot().session_remaining_ms == 15_000
+    clock.advance(14)
+    assert controller.poll().state is TapState.AUTHENTICATED
 
 
 def test_missing_followup_pulses_lock_tap() -> None:
