@@ -60,5 +60,8 @@ Die Benutzerliste bleibt durch Suche, Statusfilter und Scrollen auch bei 20 bis
 30 Einträgen bedienbar. Der Lockscreen unterscheidet unbekannte und gesperrte
 Armbänder. Milestone 6 bleibt bis zur Zielsystemprüfung in Arbeit.
 
-Traceability: `ZZ-AUT-001`, `ZZ-AUT-003` bis `ZZ-AUT-008`, `ZZ-AUT-011`,
-`ZZ-DAT-003`, `ZZ-UI-001` und `ZZ-UI-006`.
+Traceability: `ZZ-AUT-001`, `ZZ-AUT-002`, `ZZ-AUT-004`, `ZZ-AUT-005`,
+`ZZ-AUT-007`, `ZZ-AUT-008`, `ZZ-AUT-011`, `ZZ-DAT-003`, `ZZ-UI-001` und
+`ZZ-UI-006`. Passwort-Webauthentifizierung (`ZZ-AUT-003`) und der produktive
+Initial-Admin-Prozess (`ZZ-AUT-006`) bleiben ausdrücklich außerhalb dieses
+Milestones.
