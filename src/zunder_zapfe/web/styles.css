@@ -528,12 +528,12 @@ h1 span {
 
 .button-logout {
   margin-left: auto;
-  min-height: 4rem;
-  padding: 0.95rem 1.55rem;
+  min-height: 4.5rem;
+  padding: 1.05rem 1.9rem;
   border: 1px solid rgb(220 112 104 / 45%);
   background: rgb(132 55 51 / 48%);
   color: #ffd7d3;
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-size: clamp(1.05rem, 1.9vw, 1.3rem);
 }
 
 .button-logout:active {
@@ -852,9 +852,9 @@ h1 span {
   }
 
   .button-logout {
-    min-height: 3.5rem;
-    padding: 0.8rem 1.4rem;
-    font-size: 1.05rem;
+    min-height: 4rem;
+    padding: 0.9rem 1.65rem;
+    font-size: 1.15rem;
   }
 
   .button-large {
