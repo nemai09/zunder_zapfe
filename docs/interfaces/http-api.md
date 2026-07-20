@@ -29,7 +29,7 @@ einspeisen.
 
 | Methode und Pfad | Erfolg | Beschreibung |
 | --- | --- | --- |
-| `GET /api/health` | `200 HealthResponse` | Prozess-, Versions- und Revisionsstatus |
+| `GET /api/health` | `200 HealthResponse` | Prozess-, Release-, Build- und Revisionsstatus |
 | `GET /api/nfc/status` | `200 NfcStatusResponse` | NFC-Leser und aktuell aufgelegte Karte |
 | `GET /api/hardware/status` | `200 HardwareStatusResponse` | Status aller Hardwarekomponenten |
 | `GET /api/tap/status` | `200 TapStatusResponse` | vollständiger Zapfzustand |
@@ -45,27 +45,42 @@ einspeisen.
 | `valve_open` | `bool` | angeforderter Ventilzustand |
 | `measured_pulses` | `int` | Impulse des aktiven Vorgangs |
 | `target_pulses` | `int | null` | Ziel einer Portion |
+| `measured_volume_ml` | `int` | backendseitig aus Impulsen berechnete Istmenge |
+| `target_volume_ml` | `int | null` | gewählte Zielmenge während einer Portion |
+| `top_up_remaining_ms` | `int | null` | verbleibendes Nachfüllfenster in Millisekunden |
+| `session_remaining_ms` | `int | null` | verbleibende Inaktivitätszeit der aktuellen Sitzung |
 | `safety_reason` | `str | null` | Ursache einer Verriegelung |
 | `user_display_name` | `str | null` | Anzeigename |
 | `special_portion_ml` | `int | null` | individuelle Portion |
 | `persistence_error` | `str | null` | letzter Buchungsfehler |
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
 
+`valve_open` ist ein angeforderter Softwarezustand und keine physische
+Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
+
 ## Sitzung
 
 | Methode und Pfad | Vorbedingung | Ergebnis |
 | --- | --- | --- |
 | `GET /api/session/status` | keine | aktuelle NFC-Sitzung |
+| `POST /api/session/activity` | `authenticated` oder `manual_pouring` | `204`, setzt Inaktivität zurück |
 | `POST /api/session/logout` | `authenticated` oder `top_up_available` | `204`, danach `idle` |
 
 Anmeldung geschieht ereignisgesteuert durch Auflegen einer bekannten, aktiven
 Karte. Eine liegen gebliebene Karte meldet sich nach Logout nicht sofort erneut
 an; sie muss entfernt und neu aufgelegt werden.
+Eine Sitzung endet außerdem nach der konfigurierten Inaktivitätszeit. Eine
+bewusste Touchinteraktion wird über `POST /api/session/activity` serverseitig
+registriert. Aktive
+Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 
 ## Zapfen
 
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
+| `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit, manuelle Grenzen und temporärer Flow-Debugstatus |
+| `POST /api/tap/manual/start` | `authenticated`, aktiver Kontext und Fassbestand | wechselt zu `manual_pouring` |
+| `POST /api/tap/manual/stop` | `manual_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
 | `POST /api/tap/portion/abort` | `portion_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/top-up/start` | `top_up_available` innerhalb Zeitfenster | wechselt zu `top_up_pouring` |
@@ -75,6 +90,14 @@ an; sie muss entfernt und neu aufgelegt werden.
 Eine vollständig erreichte Portion endet in `top_up_available`. Der aktuelle
 Alpha-Grenzwert hält diesen Zustand acht Sekunden; erst danach ist eine neue
 Portion möglich.
+Die Kiosk-WebUI verwendet ausschließlich die manuellen Start-/Stop-Aktionen.
+Die Portions- und Nachfüllaktionen bleiben nach CR-001 für kompatible Clients
+erhalten. `POST /api/tap/portion` akzeptiert ausschließlich eine konfigurierte
+Standardportion oder die Sonderportion des angemeldeten Benutzers.
+
+Ein manueller Vorgang besitzt keine Zielmenge. Er endet beim ersten Stoppsignal
+oder nach der konfigurierten Maximaldauer. In beiden Fällen wird genau die
+gemessene Istmenge als Buchungsart `manual` gespeichert.
 
 ## Wartung und Sicherheit
 

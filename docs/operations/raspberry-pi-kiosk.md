@@ -174,6 +174,14 @@ sudo systemctl restart zunder-zapfe-web.service
 Dieser Abschnitt gilt erst, nachdem die oben beschriebene Erstinstallation und
 das initiale `git clone` abgeschlossen wurden.
 
+Die lokale Datei `/etc/zunder-zapfe/web.env` wird bei Updates nicht
+ueberschrieben. Fuer CR-002 muessen bestehende Installationen deshalb einmalig
+folgende Werte eintragen beziehungsweise anpassen:
+
+```text
+ZUNDER_ZAPFE_SESSION_TIMEOUT_SECONDS=15
+```
+
 ```bash
 cd ~/sw/zunder_zapfe
 sudo ./scripts/deploy-update.sh

@@ -80,6 +80,7 @@ class TapService:
         limits: TapLimits,
         *,
         calibration: FlowCalibration | None = None,
+        standard_portions_ml: tuple[int, ...] = (300, 500),
         monotonic_clock: Callable[[], float] = time.monotonic,
         timestamp_clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         run_background: bool = True,
@@ -90,6 +91,10 @@ class TapService:
         self._hardware = hardware
         self._sessions = sessions
         self._calibration = calibration or FlowCalibration()
+        normalized_portions = tuple(dict.fromkeys(standard_portions_ml))
+        if len(normalized_portions) < 2 or any(value <= 0 for value in normalized_portions):
+            raise ValueError("At least two positive standard portions are required")
+        self._standard_portions_ml = normalized_portions
         self._timestamp_clock = timestamp_clock
         self._run_background = run_background
         self._background_interval_seconds = background_interval_seconds
@@ -193,6 +198,12 @@ class TapService:
     def start_portion(self, target_volume_ml: int) -> dict[str, Any]:
         if target_volume_ml <= 0:
             raise ValueError("Target volume must be greater than zero")
+        user = self._require_authenticated_user()
+        allowed = set(self._standard_portions_ml)
+        if user.special_portion_ml is not None:
+            allowed.add(user.special_portion_ml)
+        if target_volume_ml not in allowed:
+            raise TapUnavailable("Selected portion is not available for this user")
         self._prepare_booking(target_volume_ml)
         try:
             self._controller.start_portion(self._calibration.target_pulses(target_volume_ml))
@@ -204,6 +215,19 @@ class TapService:
 
     def abort_portion(self) -> PourRecord:
         return self._controller.abort_portion()
+
+    def start_manual_pour(self) -> dict[str, Any]:
+        self._prepare_booking(None)
+        try:
+            self._controller.start_manual_pour()
+        except Exception:
+            with self._mutex:
+                self._pending_booking = None
+            raise
+        return self.status_dict()
+
+    def stop_manual_pour(self) -> PourRecord:
+        return self._controller.stop_manual_pour()
 
     def start_top_up(self) -> dict[str, Any]:
         self._prepare_booking(None)
@@ -239,6 +263,9 @@ class TapService:
 
     def heartbeat(self) -> None:
         self._controller.heartbeat()
+
+    def register_activity(self) -> None:
+        self._controller.register_activity()
 
     def reset_safety_lock(self) -> dict[str, Any]:
         """Reset a latched safety state while an active admin card is present."""
@@ -285,15 +312,34 @@ class TapService:
         status = self._controller.snapshot_dict()
         with self._mutex:
             user = self._authenticated_user
+            pending = self._pending_booking
             status.update(
                 {
                     "user_display_name": user.display_name if user else None,
                     "special_portion_ml": user.special_portion_ml if user else None,
                     "persistence_error": self._persistence_error,
                     "last_booking": self._last_booking,
+                    "measured_volume_ml": self._calibration.measured_volume_ml(
+                        int(status["measured_pulses"])
+                    ),
+                    "target_volume_ml": pending.target_volume_ml if pending else None,
                 }
             )
         return status
+
+    def portion_options(self) -> dict[str, Any]:
+        status = self._controller.snapshot()
+        with self._mutex:
+            user = self._authenticated_user
+            special = (
+                user.special_portion_ml
+                if user is not None and status.user_id == str(user.id)
+                else None
+            )
+        return {
+            "standard_portions_ml": list(self._standard_portions_ml),
+            "special_portion_ml": special,
+        }
 
     def current_consumption(self) -> dict[str, int]:
         user = self._require_authenticated_user()

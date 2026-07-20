@@ -9,6 +9,7 @@ unbemerkt auseinanderlaufen.
 | Thema | Verbindliche Quelle | Erläuterung |
 | --- | --- | --- |
 | Produktverhalten | [`requirements/anforderungskatalog.txt`](../requirements/anforderungskatalog.txt) | Nummerierte Anforderungen und Abnahmekriterien |
+| Anforderungsänderungen | [`requirements/changes/`](../requirements/changes/README.md) | Annahme, Auswirkungen und Nachverfolgung wesentlicher Change Requests |
 | Hardwaremethoden und Statusobjekte | [`src/zunder_zapfe/hardware`](../src/zunder_zapfe/hardware) | Ausführbare Python-Verträge |
 | HTTP-Pfade und JSON-Schemata | [`interfaces/openapi.json`](interfaces/openapi.json) | Aus FastAPI generierter, geprüfter Snapshot |
 | Zapfübergänge | [`tap_controller.py`](../src/zunder_zapfe/backend/tap_controller.py) | Ausführbarer Zustandsautomat |
@@ -23,6 +24,8 @@ zu korrigieren.
 ## Projekt und Zusammenarbeit
 
 - [Projektstatus](project-status.md)
+- [Entwicklungsmeilensteine](milestones.md)
+- [Versionierung](versioning.md)
 - [Projektorganisation](organization.md)
 - [Beiträge](../CONTRIBUTING.md)
 - [Agentenleitfaden](../AGENTS.md)
@@ -43,6 +46,7 @@ zu korrigieren.
 - [Hardware-Zwischenlayer](architecture/hardware-interface.md)
 - [Zapfzustandsautomat](architecture/tap-state-machine.md)
 - [Backend-Core-Integration](architecture/backend-core-integration.md)
+- [Kiosk-WebUI](architecture/kiosk-webui.md)
 - [Persistenz und Datenmodell](architecture/persistence.md)
 - [ADR 0001: GPL-3.0-or-later](decisions/0001-gpl-3-or-later.md)
 
@@ -52,6 +56,7 @@ zu korrigieren.
 - [ACR122U-NFC-Leser](operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
+- [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 
 ## Dokumentationsregeln
 

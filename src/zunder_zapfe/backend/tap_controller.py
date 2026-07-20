@@ -7,6 +7,7 @@ import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from math import ceil
 from typing import Any
 
 from zunder_zapfe.hardware import HardwareLayer
@@ -16,6 +17,7 @@ class TapState(StrEnum):
     STARTING = "starting"
     IDLE = "idle"
     AUTHENTICATED = "authenticated"
+    MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
     TOP_UP_AVAILABLE = "top_up_available"
     TOP_UP_POURING = "top_up_pouring"
@@ -27,6 +29,7 @@ class TapState(StrEnum):
 
 
 class PourKind(StrEnum):
+    MANUAL = "manual"
     PORTION = "portion"
     TOP_UP = "top_up"
     MAINTENANCE = "maintenance"
@@ -54,6 +57,9 @@ class TapLimits:
     top_up_window_seconds: float
     top_up_maximum_seconds: float
     top_up_maximum_pulses: int
+    manual_maximum_seconds: float = 30.0
+    session_timeout_seconds: float = 15.0
+    flow_watchdog_enabled: bool = True
 
     def __post_init__(self) -> None:
         numeric_limits = (
@@ -63,6 +69,8 @@ class TapLimits:
             self.watchdog_timeout_seconds,
             self.top_up_window_seconds,
             self.top_up_maximum_seconds,
+            self.manual_maximum_seconds,
+            self.session_timeout_seconds,
         )
         if any(value <= 0 for value in numeric_limits):
             raise ValueError("All time limits must be greater than zero")
@@ -95,6 +103,8 @@ class TapStatus:
     valve_open: bool
     measured_pulses: int
     target_pulses: int | None
+    top_up_remaining_ms: int | None
+    session_remaining_ms: int | None
     safety_reason: str | None
 
 
@@ -107,6 +117,7 @@ class _ActivePour:
 
 
 ACTIVE_POUR_STATES = {
+    TapState.MANUAL_POURING,
     TapState.PORTION_POURING,
     TapState.TOP_UP_POURING,
     TapState.MAINTENANCE_POURING,
@@ -141,6 +152,7 @@ class TapController:
         self._session: UserSession | None = None
         self._active_pour: _ActivePour | None = None
         self._top_up_deadline: float | None = None
+        self._session_last_active_at: float | None = None
         self._last_heartbeat: float | None = None
         self._safety_reason: str | None = None
         self._records: list[PourRecord] = []
@@ -175,6 +187,7 @@ class TapController:
             else:
                 self._hardware.valve.close()
             self._session = None
+            self._session_last_active_at = None
             self._state = TapState.STOPPED
 
     def present_authenticated_card(self, user_id: str, *, is_admin: bool = False) -> bool:
@@ -188,6 +201,7 @@ class TapController:
             if self._state is not TapState.IDLE:
                 return False
             self._session = UserSession(user_id=user_id, is_admin=is_admin)
+            self._session_last_active_at = self._clock()
             self._state = TapState.AUTHENTICATED
             return True
 
@@ -195,6 +209,7 @@ class TapController:
         with self._mutex:
             self._require_state(TapState.AUTHENTICATED, TapState.TOP_UP_AVAILABLE)
             self._session = None
+            self._session_last_active_at = None
             self._top_up_deadline = None
             self._state = TapState.IDLE
 
@@ -204,6 +219,16 @@ class TapController:
         with self._mutex:
             self._require_state(TapState.AUTHENTICATED)
             self._begin_pour(PourKind.PORTION, target_pulses, TapState.PORTION_POURING)
+
+    def start_manual_pour(self) -> None:
+        with self._mutex:
+            self._require_state(TapState.AUTHENTICATED)
+            self._begin_pour(PourKind.MANUAL, None, TapState.MANUAL_POURING)
+
+    def stop_manual_pour(self) -> PourRecord:
+        with self._mutex:
+            self._require_state(TapState.MANUAL_POURING)
+            return self._finish_active_pour(PourCompletion.RELEASED, TapState.AUTHENTICATED)
 
     def abort_portion(self) -> PourRecord:
         with self._mutex:
@@ -230,6 +255,7 @@ class TapController:
             self._require_state(TapState.AUTHENTICATED)
             if self._session is None or not self._session.is_admin:
                 raise InvalidTransition("Maintenance mode requires an admin session")
+            self._session_last_active_at = self._clock()
             self._state = TapState.MAINTENANCE
 
     def start_maintenance_pour(self) -> None:
@@ -245,12 +271,19 @@ class TapController:
     def exit_maintenance(self) -> None:
         with self._mutex:
             self._require_state(TapState.MAINTENANCE)
+            self._session_last_active_at = self._clock()
             self._state = TapState.AUTHENTICATED
 
     def heartbeat(self) -> None:
         with self._mutex:
             if self._state in ACTIVE_POUR_STATES:
                 self._last_heartbeat = self._clock()
+
+    def register_activity(self) -> None:
+        """Refresh the authenticated session after an intentional UI interaction."""
+        with self._mutex:
+            self._require_state(TapState.AUTHENTICATED, TapState.MANUAL_POURING)
+            self._session_last_active_at = self._clock()
 
     def poll(self) -> TapStatus:
         """Apply sensor, target, timeout and watchdog transitions."""
@@ -261,7 +294,17 @@ class TapController:
             if self._state is TapState.TOP_UP_AVAILABLE:
                 if self._top_up_deadline is not None and now >= self._top_up_deadline:
                     self._top_up_deadline = None
+                    self._session_last_active_at = now
                     self._state = TapState.AUTHENTICATED
+
+            if (
+                self._state is TapState.AUTHENTICATED
+                and self._session_last_active_at is not None
+                and now - self._session_last_active_at >= self._limits.session_timeout_seconds
+            ):
+                self._session = None
+                self._session_last_active_at = None
+                self._state = TapState.IDLE
 
             if self._state in ACTIVE_POUR_STATES:
                 self._poll_active_pour(now)
@@ -283,6 +326,7 @@ class TapController:
                 raise InvalidTransition("Emergency stop is still active")
             self._hardware.valve.close()
             self._session = None
+            self._session_last_active_at = None
             self._safety_reason = None
             self._state = TapState.IDLE
 
@@ -350,15 +394,21 @@ class TapController:
             self._lock_safely(TapState.FAULT_LOCKED, "Steuerungs-Watchdog abgelaufen")
             return
 
-        if reading.pulse_count == 0:
-            if now - active.started_at >= self._limits.first_pulse_timeout_seconds:
-                self._lock_safely(TapState.FAULT_LOCKED, "Kein Durchfluss erkannt")
-            return
+        if self._limits.flow_watchdog_enabled:
+            if reading.pulse_count == 0:
+                if now - active.started_at >= self._limits.first_pulse_timeout_seconds:
+                    self._lock_safely(TapState.FAULT_LOCKED, "Kein Durchfluss erkannt")
+                return
 
-        if reading.last_pulse_at is not None and (
-            now - reading.last_pulse_at >= self._limits.between_pulses_timeout_seconds
-        ):
-            self._lock_safely(TapState.FAULT_LOCKED, "Durchflussimpulse ausgeblieben")
+            if reading.last_pulse_at is not None and (
+                now - reading.last_pulse_at >= self._limits.between_pulses_timeout_seconds
+            ):
+                self._lock_safely(TapState.FAULT_LOCKED, "Durchflussimpulse ausgeblieben")
+                return
+
+        if active.kind is PourKind.MANUAL:
+            if now - active.started_at >= self._limits.manual_maximum_seconds:
+                self._finish_active_pour(PourCompletion.LIMIT_REACHED, TapState.AUTHENTICATED)
             return
 
         if now - active.started_at >= self._limits.maximum_pour_seconds:
@@ -375,6 +425,7 @@ class TapController:
             self._hardware.valve.close()
             self._state = state
         self._session = None
+        self._session_last_active_at = None
         self._top_up_deadline = None
         self._safety_reason = reason
 
@@ -401,6 +452,8 @@ class TapController:
         self._active_pour = None
         self._last_heartbeat = None
         self._state = next_state
+        if next_state in {TapState.AUTHENTICATED, TapState.MAINTENANCE}:
+            self._session_last_active_at = self._clock()
         if self._record_sink is not None:
             self._record_sink(record)
         return record
@@ -408,6 +461,18 @@ class TapController:
     def _status_unlocked(self) -> TapStatus:
         reading = self._hardware.flow_meter.snapshot()
         valve = self._hardware.valve.snapshot()
+        top_up_remaining_ms = None
+        if self._state is TapState.TOP_UP_AVAILABLE and self._top_up_deadline is not None:
+            top_up_remaining_ms = max(0, ceil((self._top_up_deadline - self._clock()) * 1000))
+        session_remaining_ms = None
+        if self._session is not None and self._session_last_active_at is not None:
+            if self._state in ACTIVE_POUR_STATES:
+                session_remaining_ms = ceil(self._limits.session_timeout_seconds * 1000)
+            else:
+                remaining_seconds = self._limits.session_timeout_seconds - (
+                    self._clock() - self._session_last_active_at
+                )
+                session_remaining_ms = max(0, ceil(remaining_seconds * 1000))
         return TapStatus(
             state=self._state,
             user_id=self._session.user_id if self._session else None,
@@ -415,6 +480,8 @@ class TapController:
             valve_open=valve.is_open,
             measured_pulses=reading.pulse_count if self._active_pour else 0,
             target_pulses=self._active_pour.target_pulses if self._active_pour else None,
+            top_up_remaining_ms=top_up_remaining_ms,
+            session_remaining_ms=session_remaining_ms,
             safety_reason=self._safety_reason,
         )
 
@@ -438,7 +505,12 @@ class TapController:
                     )
 
 
-def development_limits() -> TapLimits:
+def development_limits(
+    *,
+    session_timeout_seconds: float = 15.0,
+    manual_maximum_seconds: float = 30.0,
+    flow_watchdog_enabled: bool = True,
+) -> TapLimits:
     """Non-production limits used while only simulated tap hardware is present."""
     return TapLimits(
         first_pulse_timeout_seconds=2.0,
@@ -448,4 +520,7 @@ def development_limits() -> TapLimits:
         top_up_window_seconds=8.0,
         top_up_maximum_seconds=3.0,
         top_up_maximum_pulses=100,
+        manual_maximum_seconds=manual_maximum_seconds,
+        session_timeout_seconds=session_timeout_seconds,
+        flow_watchdog_enabled=flow_watchdog_enabled,
     )

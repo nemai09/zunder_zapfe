@@ -30,7 +30,9 @@ class ManualClock:
         self.value += seconds
 
 
-def tap_setup() -> tuple[
+def tap_setup(
+    *, flow_watchdog_enabled: bool = True
+) -> tuple[
     TapController,
     HardwareLayer,
     ManualClock,
@@ -54,6 +56,7 @@ def tap_setup() -> tuple[
         top_up_window_seconds=5,
         top_up_maximum_seconds=2,
         top_up_maximum_pulses=3,
+        flow_watchdog_enabled=flow_watchdog_enabled,
     )
     hardware.start()
     controller = TapController(hardware, limits, clock=clock, supervise=False)
@@ -106,6 +109,45 @@ def test_manual_abort_records_only_measured_pulses() -> None:
     assert controller.snapshot().state is TapState.AUTHENTICATED
 
 
+def test_zz_tap_013_manual_pour_stops_on_release_and_records_actual_pulses() -> None:
+    controller, hardware, _clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    controller.start_manual_pour()
+    flow_meter.add_pulses(7)
+    record = controller.stop_manual_pour()
+
+    assert record.kind is PourKind.MANUAL
+    assert record.measured_pulses == 7
+    assert record.target_pulses is None
+    assert record.completion is PourCompletion.RELEASED
+    assert record.chargeable is True
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.snapshot().state is TapState.AUTHENTICATED
+
+    with pytest.raises(InvalidTransition):
+        controller.stop_manual_pour()
+    assert len(controller.records) == 1
+
+
+def test_zz_tap_014_manual_pour_stops_at_configured_time_limit() -> None:
+    controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+    flow_meter.add_pulses(3)
+    clock.advance(29.5)
+    flow_meter.add_pulses(1)
+    clock.advance(0.5)
+    controller.heartbeat()
+    status = controller.poll()
+
+    assert status.state is TapState.AUTHENTICATED
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.records[-1].kind is PourKind.MANUAL
+    assert controller.records[-1].completion is PourCompletion.LIMIT_REACHED
+    assert controller.records[-1].measured_pulses == 4
+
+
 def test_second_card_is_ignored_while_pouring() -> None:
     controller, _hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")
@@ -153,6 +195,39 @@ def test_missing_first_pulse_locks_tap() -> None:
     assert hardware.valve.snapshot().is_open is False
 
 
+def test_debug_mode_disables_only_flow_watchdog() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup(
+        flow_watchdog_enabled=False
+    )
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+
+    clock.advance(3)
+    controller.heartbeat()
+    status = controller.poll()
+
+    assert status.state is TapState.MANUAL_POURING
+    assert hardware.valve.snapshot().is_open is True
+    record = controller.stop_manual_pour()
+    assert record.measured_pulses == 0
+    assert hardware.valve.snapshot().is_open is False
+
+
+def test_debug_flow_mode_keeps_control_watchdog_active() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup(
+        flow_watchdog_enabled=False
+    )
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+
+    clock.advance(2)
+    status = controller.poll()
+
+    assert status.state is TapState.FAULT_LOCKED
+    assert status.safety_reason == "Steuerungs-Watchdog abgelaufen"
+    assert hardware.valve.snapshot().is_open is False
+
+
 def test_watchdog_closes_tap_without_heartbeat() -> None:
     controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")
@@ -184,6 +259,26 @@ def test_top_up_stops_at_configured_pulse_limit() -> None:
     assert controller.records[-1].measured_pulses == 3
 
 
+def test_top_up_stops_at_configured_time_limit() -> None:
+    controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_portion(target_pulses=1)
+    flow_meter.add_pulses(1)
+    controller.poll()
+    controller.start_top_up()
+    flow_meter.add_pulses(1)
+    clock.advance(2)
+    flow_meter.add_pulses(1)
+    controller.heartbeat()
+
+    status = controller.poll()
+
+    assert status.state is TapState.AUTHENTICATED
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.records[-1].completion is PourCompletion.LIMIT_REACHED
+    assert controller.records[-1].measured_pulses == 2
+
+
 def test_top_up_window_expires_without_opening_valve() -> None:
     controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")
@@ -196,6 +291,47 @@ def test_top_up_window_expires_without_opening_valve() -> None:
     assert hardware.valve.snapshot().is_open is False
     with pytest.raises(InvalidTransition):
         controller.start_top_up()
+
+
+def test_zz_tap_009_status_reports_remaining_top_up_window() -> None:
+    controller, _hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_portion(target_pulses=1)
+    flow_meter.add_pulses(1)
+
+    status = controller.poll()
+    assert status.top_up_remaining_ms == 5000
+
+    clock.advance(1.25)
+    assert controller.snapshot().top_up_remaining_ms == 3750
+
+
+def test_zz_aut_010_inactive_session_logs_out_automatically() -> None:
+    controller, hardware, clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    clock.advance(14)
+    assert controller.poll().state is TapState.AUTHENTICATED
+    clock.advance(1)
+    status = controller.poll()
+
+    assert status.state is TapState.IDLE
+    assert status.user_id is None
+    assert hardware.valve.snapshot().is_open is False
+
+
+def test_zz_aut_010_ui_activity_resets_session_timeout() -> None:
+    controller, _hardware, clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    assert controller.snapshot().session_remaining_ms == 15_000
+    clock.advance(5)
+    assert controller.snapshot().session_remaining_ms == 10_000
+
+    controller.register_activity()
+    assert controller.snapshot().session_remaining_ms == 15_000
+    clock.advance(14)
+    assert controller.poll().state is TapState.AUTHENTICATED
 
 
 def test_missing_followup_pulses_lock_tap() -> None:

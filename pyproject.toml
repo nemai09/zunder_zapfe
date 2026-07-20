@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zunder-zapfe"
-version = "0.1.0"
+version = "0.2.0-alpha.4"
 description = "Offline web application for the Zunder Zapfe tap system"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -43,7 +43,7 @@ zunder-zapfe-smoke-test = "zunder_zapfe.smoke_test:run"
 where = ["src"]
 
 [tool.setuptools.package-data]
-zunder_zapfe = ["web/*.html", "web/*.css"]
+zunder_zapfe = ["web/*.html", "web/*.css", "web/*.js"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

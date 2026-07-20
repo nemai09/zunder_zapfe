@@ -29,6 +29,10 @@ preferences do not belong here.
 ## Safety and data invariants
 
 - Start, stop, faults and shutdown must leave the valve closed.
+- `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` is a temporary, documented
+  alpha deviation for tests without flow hardware. Never broaden it to disable
+  the control watchdog, emergency stop or time limits; set it to `0` before
+  real valve hardware is connected.
 - Safety locks stay latched until a valid admin-card reset; restoring an input
   alone must not resume pouring.
 - Volume is stored in millilitres, prices in cents per litre and amounts in

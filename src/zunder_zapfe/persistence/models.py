@@ -36,6 +36,7 @@ class UserRole(StrEnum):
 
 
 class BookingKind(StrEnum):
+    MANUAL = "manual"
     PORTION = "portion"
     TOP_UP = "top_up"
     MAINTENANCE = "maintenance"
