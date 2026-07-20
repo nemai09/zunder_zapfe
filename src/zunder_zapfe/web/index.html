@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.3.0-alpha.1">
-    <script src="/static/app.js?v=0.3.0-alpha.1" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.3.0-alpha.2">
+    <script src="/static/app.js?v=0.3.0-alpha.2" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -129,7 +129,19 @@
                 </button>
               </div>
               <div class="user-workspace">
-                <div class="user-list" id="user-list" aria-label="Benutzerliste"></div>
+                <div class="user-browser">
+                  <div class="user-tools">
+                    <input id="user-search" type="search" placeholder="Name suchen" aria-label="Benutzer suchen">
+                    <select id="user-filter" aria-label="Benutzer filtern">
+                      <option value="all">Alle</option>
+                      <option value="active">Aktiv</option>
+                      <option value="blocked">Gesperrt</option>
+                      <option value="admin">Admins</option>
+                    </select>
+                    <span id="user-result-count">0 Benutzer</span>
+                  </div>
+                  <div class="user-list" id="user-list" aria-label="Benutzerliste"></div>
+                </div>
                 <form class="user-editor" id="user-form">
                   <input id="user-id" type="hidden">
                   <div class="field-row">

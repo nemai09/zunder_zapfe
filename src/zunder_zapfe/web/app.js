@@ -27,6 +27,8 @@ const model = {
   lastActivitySentAt: 0,
   adminUsers: [],
   adminCards: [],
+  userSearch: "",
+  userFilter: "all",
   adminSettings: null,
   adminSelectedUserId: null,
   adminLoaded: false,
@@ -67,6 +69,9 @@ const elements = {
   adminPanels: [...document.querySelectorAll("[data-admin-panel]")],
   adminNavButtons: [...document.querySelectorAll("[data-admin-section]")],
   userList: document.querySelector("#user-list"),
+  userSearch: document.querySelector("#user-search"),
+  userFilter: document.querySelector("#user-filter"),
+  userResultCount: document.querySelector("#user-result-count"),
   userForm: document.querySelector("#user-form"),
   userId: document.querySelector("#user-id"),
   firstName: document.querySelector("#first-name"),
@@ -154,6 +159,7 @@ function render() {
   elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
   if (model.health?.build) elements.buildVersion.textContent = model.health.build;
 
+  elements.readerStatus.classList.remove("is-unknown", "is-blocked");
   if (model.nfc) {
     const ready = ["ready", "card"].includes(model.nfc.state);
     elements.readerStatus.classList.toggle("is-ready", ready);
@@ -166,6 +172,14 @@ function render() {
       error: "NFC-Leser meldet einen Fehler",
     };
     elements.readerLabel.textContent = labels[model.nfc.state] || "NFC-Status unbekannt";
+  }
+  const nfcFeedback = currentScreen() === "idle" ? model.tap?.nfc_feedback : null;
+  if (nfcFeedback === "unknown") {
+    elements.readerStatus.classList.add("is-unknown");
+    elements.readerLabel.textContent = "Karte nicht erkannt";
+  } else if (nfcFeedback === "blocked") {
+    elements.readerStatus.classList.add("is-blocked");
+    elements.readerLabel.textContent = "Karte gesperrt";
   }
 
   elements.userName.textContent = model.tap?.user_display_name || "Zapfer";
@@ -395,7 +409,20 @@ function selectedAdminUser() {
 
 function renderAdminUsers() {
   elements.userList.replaceChildren();
-  for (const user of model.adminUsers) {
+  const query = model.userSearch.trim().toLocaleLowerCase("de-DE");
+  const users = model.adminUsers.filter((user) => {
+    const matchesQuery = !query || [user.display_name, user.note]
+      .filter(Boolean)
+      .some((value) => value.toLocaleLowerCase("de-DE").includes(query));
+    const matchesFilter =
+      model.userFilter === "all"
+      || (model.userFilter === "active" && user.active)
+      || (model.userFilter === "blocked" && !user.active)
+      || (model.userFilter === "admin" && user.is_admin);
+    return matchesQuery && matchesFilter;
+  });
+  elements.userResultCount.textContent = `${users.length} von ${model.adminUsers.length}`;
+  for (const user of users) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "user-list-item";
@@ -405,7 +432,8 @@ function renderAdminUsers() {
     name.textContent = user.display_name;
     const meta = document.createElement("span");
     const role = user.is_admin ? "Admin" : "Benutzer";
-    meta.textContent = `${role} · ${user.active_nfc_card_count} Armband`;
+    const status = user.active ? "Aktiv" : "Gesperrt";
+    meta.textContent = `${role} · ${status} · ${user.active_nfc_card_count} Armband`;
     button.append(name, meta);
     button.addEventListener("click", async () => {
       model.adminSelectedUserId = user.id;
@@ -510,7 +538,28 @@ function renderAdminCards() {
         elements.userMessage.textContent = error.message;
       }
     });
-    row.append(label, toggle);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "card-remove";
+    remove.textContent = "Entfernen";
+    remove.title = "Zuordnung entfernen";
+    remove.addEventListener("click", async () => {
+      const confirmed = window.confirm(
+        `Zuordnung von Armband ${card.uid_hint} wirklich entfernen?`,
+      );
+      if (!confirmed) return;
+      try {
+        await api(`/api/admin/nfc-cards/${card.id}`, { method: "DELETE" });
+        await loadAdminData();
+        elements.userMessage.textContent = "Armband-Zuordnung entfernt.";
+      } catch (error) {
+        elements.userMessage.textContent = error.message;
+      }
+    });
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+    actions.append(toggle, remove);
+    row.append(label, actions);
     elements.cardList.append(row);
   }
 }
@@ -649,6 +698,14 @@ elements.adminBackButton.addEventListener("click", exitAdmin);
 elements.adminLogoutButton.addEventListener("click", logout);
 document.querySelector("#new-user-button").addEventListener("click", newUser);
 elements.userForm.addEventListener("submit", saveUser);
+elements.userSearch.addEventListener("input", () => {
+  model.userSearch = elements.userSearch.value;
+  renderAdminUsers();
+});
+elements.userFilter.addEventListener("change", () => {
+  model.userFilter = elements.userFilter.value;
+  renderAdminUsers();
+});
 elements.captureCardButton.addEventListener("click", beginCapture);
 document.querySelector("#cancel-capture-button").addEventListener("click", () => stopCapture());
 elements.adminSettingsForm.addEventListener("submit", saveAdminSettings);

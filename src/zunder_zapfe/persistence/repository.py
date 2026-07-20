@@ -176,6 +176,11 @@ class Repository:
         self.session.flush()
         return card
 
+    def delete_nfc_card(self, card_id: int) -> None:
+        card = self.get_nfc_card(card_id)
+        self.session.delete(card)
+        self.session.flush()
+
     def find_active_user_by_card(self, uid: str) -> User | None:
         statement = (
             select(User)

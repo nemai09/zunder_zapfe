@@ -56,6 +56,7 @@ einspeisen.
 | `special_portion_ml` | `int | null` | individuelle Portion |
 | `persistence_error` | `str | null` | letzter Buchungsfehler |
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
+| `nfc_feedback` | `"unknown" | "blocked" | null` | kurzlebige Ablehnungsursache für die Idle-WebUI |
 
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
@@ -119,6 +120,7 @@ ausführende Benutzer-ID.
 | `POST /api/admin/users/{id}/nfc-cards/capture` | `AdminNfcCaptureResponse` | `remove_card`, `waiting`, `reader_unavailable` oder `assigned` |
 | `DELETE /api/admin/nfc-capture` | `204` | laufende Live-Zuordnung abbrechen |
 | `PATCH /api/admin/nfc-cards/{id}` | `{"active":false}` | Armband sperren oder reaktivieren und auditieren |
+| `DELETE /api/admin/nfc-cards/{id}` | `204` | Zuordnung nach Bestätigung entfernen und auditieren |
 | `GET /api/admin/settings` | `AdminSettingsResponse` | wirksamen Admin-Timeout lesen |
 | `PATCH /api/admin/settings` | `{"admin_session_timeout_seconds":45}` | Timeout 10 bis 3600 Sekunden persistent und auditiert ändern |
 
@@ -127,6 +129,8 @@ muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächst
 kurz aufgelegte Armband übernommen wird. So kann ein noch aufliegendes
 Admin-Armband nicht versehentlich zugeordnet werden. Vollständige UIDs werden
 weder in Adminantworten noch in Admin-Auditwerten ausgegeben.
+Eine entfernte UID darf danach neu zugeordnet werden. Das letzte aktive
+Armband eines aktiven Admins kann weder gesperrt noch entfernt werden.
 
 ## Wartung und Sicherheit
 

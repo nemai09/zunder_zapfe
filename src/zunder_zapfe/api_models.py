@@ -92,6 +92,7 @@ class TapStatusResponse(BaseModel):
     special_portion_ml: int | None
     persistence_error: str | None
     last_booking: BookingSummaryResponse | None
+    nfc_feedback: str | None
 
 
 class SessionStatusResponse(BaseModel):

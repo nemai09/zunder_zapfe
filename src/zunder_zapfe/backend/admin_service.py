@@ -249,6 +249,33 @@ class AdminService:
             )
             return self._card_snapshot(card)
 
+    def remove_nfc_card(self, card_id: int) -> None:
+        admin_id = self._require_admin_id()
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            card = repository.get_nfc_card(card_id)
+            user = repository.get_user(card.user_id)
+            if card.active and user.active and user.role is UserRole.ADMIN:
+                active_cards = session.scalar(
+                    select(func.count(NfcCard.id)).where(
+                        NfcCard.user_id == user.id,
+                        NfcCard.active.is_(True),
+                    )
+                )
+                if int(active_cards or 0) <= 1:
+                    raise AdminConflict(
+                        "The last active wristband of an active admin cannot be removed"
+                    )
+            user_id = card.user_id
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="nfc_card.removed",
+                entity_type="nfc_card",
+                entity_id=str(card.id),
+                old_values={"user_id": user_id, "active": card.active},
+            )
+            repository.delete_nfc_card(card_id)
+
     def _require_admin_id(self) -> int:
         admin_id = self._tap_service.require_admin_user_id()
         with self._sessions() as session:

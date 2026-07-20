@@ -45,8 +45,9 @@ Administration angeboten. Der Adminmodus sperrt Zapfaktionen und besitzt einen
 separat konfigurierbaren Inaktivitäts-Timeout mit `30 s` Alpha-Default.
 
 Der erste vollständig abnehmbare Verwaltungsablauf umfasst schlanke
-Benutzerdaten, Rollen- und Aktivstatus, Sperren bestehender Armbänder sowie die
-Live-Zuordnung eines kurz aufgelegten Veranstaltungsarmbands. Die UID stammt
+Benutzerdaten, Rollen- und Aktivstatus, Sperren und Entfernen bestehender
+Armbandzuordnungen sowie die Live-Zuordnung eines kurz aufgelegten
+Veranstaltungsarmbands. Die UID stammt
 dabei ausschließlich vom Hardwareadapter. Alle schreibenden Adminaktionen
 werden mit ausführendem Admin und alten beziehungsweise neuen Werten auditiert.
 
@@ -54,5 +55,9 @@ Weitere Bereiche werden im Admin-Grundgerüst sichtbar gruppiert, aber erst in
 Milestone 7 vollständig ausgebaut. Passwortgeschützter Zugriff aus dem späteren
 Admin-WLAN bleibt von der lokalen NFC-Adminsitzung getrennt.
 
-Traceability: `ZZ-AUT-001`, `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-011`,
+Die Benutzerliste bleibt durch Suche, Statusfilter und Scrollen auch bei 20 bis
+30 Einträgen bedienbar. Der Lockscreen unterscheidet unbekannte und gesperrte
+Armbänder. Milestone 6 bleibt bis zur Zielsystemprüfung in Arbeit.
+
+Traceability: `ZZ-AUT-001`, `ZZ-AUT-003` bis `ZZ-AUT-008`, `ZZ-AUT-011`,
 `ZZ-DAT-003`, `ZZ-UI-001` und `ZZ-UI-006`.

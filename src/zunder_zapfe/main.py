@@ -314,6 +314,15 @@ def create_app(
     ) -> dict[str, Any]:
         return admin_service.set_nfc_card_active(card_id, active=request.active)
 
+    @application.delete(
+        "/api/admin/nfc-cards/{card_id}",
+        status_code=204,
+        responses=admin_responses,
+    )
+    async def remove_admin_nfc_card(card_id: int) -> Response:
+        admin_service.remove_nfc_card(card_id)
+        return Response(status_code=204)
+
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)
     async def logout() -> Response:
         tap_service.logout()

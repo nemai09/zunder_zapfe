@@ -92,9 +92,12 @@ optionalem Zusatzfeld anlegen und bearbeiten koennen. Weitere Personen- oder
 Adressdaten sind nicht erforderlich. Ein NFC-Armband muss durch kurzes Auflegen
 am Geraet direkt dem ausgewaehlten Benutzer zugeordnet werden koennen; die UID
 darf dabei nicht manuell vom Webclient vorgegeben werden.
+Admins muessen eine bestehende Armbandzuordnung bewusst entfernen koennen,
+damit das Armband anschliessend einem anderen Benutzer zugewiesen werden kann.
 Abnahme: Ein Admin legt einen Benutzer an, startet die Zuordnung, legt ein
 bislang unbekanntes Armband kurz auf und kann den Benutzer danach damit
-anmelden.
+anmelden. Nach bestaetigtem Entfernen der Zuordnung kann dasselbe Armband neu
+zugewiesen werden.
 
 [ZZ-AUT-005] Adminvergabe
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -110,14 +113,19 @@ Abnahme: Nach einer Neuinstallation kann die Administration gestartet werden.
 
 [ZZ-AUT-007] Kartensperre
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Admins muessen verlorene NFC-Karten sperren koennen.
-Abnahme: Eine gesperrte Karte ermoeglicht keine Anmeldung oder Zapfung.
+Admins muessen verlorene NFC-Karten sperren koennen. Beim Auflegen einer
+gesperrten Karte oder der Karte eines gesperrten Benutzers muss die
+Kioskoberflaeche kurz "Karte gesperrt" anzeigen.
+Abnahme: Eine gesperrte Karte ermoeglicht keine Anmeldung oder Zapfung und wird
+fuer den Bediener eindeutig als gesperrt gemeldet.
 
 [ZZ-AUT-008] Unbekannte NFC-Karten
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
-Unbekannte NFC-Karten muessen ohne Zustandsaenderung ignoriert werden.
-Abnahme: Das Vorhalten einer unbekannten Karte oeffnet kein Ventil und meldet
-keinen Benutzer an.
+Unbekannte NFC-Karten muessen ohne Zustandsaenderung abgewiesen werden. Die
+Kioskoberflaeche muss kurz "Karte nicht erkannt" anzeigen; die Meldung bleibt
+auch bei sofortigem Entfernen lange genug sichtbar.
+Abnahme: Das Vorhalten einer unbekannten Karte oeffnet kein Ventil, meldet
+keinen Benutzer an und zeigt die eindeutige Rueckmeldung.
 
 [ZZ-AUT-009] NFC waehrend des Zapfens
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -508,9 +516,12 @@ Die normale Zapfoberflaeche muss ausschliesslich fuer Admins links neben dem
 Logout einen blauen Admin-Button anzeigen. Admin- und Logout-Button muessen
 zusammen die Breite der rechten Informationsspalte einnehmen. Die lokale
 Adminoberflaeche muss Verwaltung, Diagnose, Einstellungen und Protokolle als
-klar getrennte Bereiche gruppieren.
+klar getrennte Bereiche gruppieren. Eine Benutzerliste mit mindestens 30
+Eintraegen muss durch kompakte Darstellung, Suche, Filter und Scrollen
+bedienbar bleiben.
 Abnahme: Ein Admin kann zwischen normalem Zapfen und der gruppierten
-Adminoberflaeche wechseln; ein normaler Benutzer sieht keinen Admin-Einstieg.
+Adminoberflaeche wechseln, einen Benutzer in einer Liste mit 30 Eintraegen
+gezielt finden; ein normaler Benutzer sieht keinen Admin-Einstieg.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION

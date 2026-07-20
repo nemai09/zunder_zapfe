@@ -7,8 +7,8 @@ WEB_ROOT = PROJECT_ROOT / "src" / "zunder_zapfe" / "web"
 def test_zz_ui_001_kiosk_assets_are_offline_and_packaged_locally() -> None:
     html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
 
-    assert 'href="/static/styles.css?v=0.3.0-alpha.1"' in html
-    assert 'src="/static/app.js?v=0.3.0-alpha.1"' in html
+    assert 'href="/static/styles.css?v=0.3.0-alpha.2"' in html
+    assert 'src="/static/app.js?v=0.3.0-alpha.2"' in html
     assert "https://" not in html
     assert "http://" not in html
 
@@ -65,6 +65,11 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert 'data-screen="admin"' in html
     assert 'data-admin-panel="users"' in html
     assert 'id="capture-card-button"' in html
+    assert 'id="user-search"' in html
+    assert 'id="user-filter"' in html
+    assert "Karte nicht erkannt" in script
+    assert "Karte gesperrt" in script
+    assert "Zuordnung entfernen" in script
     assert "Admin-Armband vom Leser entfernen" in script
     assert "Neues Veranstaltungsarmband kurz auflegen" in script
     for route in (
@@ -72,6 +77,7 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
         "/api/admin/session/exit",
         "/api/admin/users",
         "/nfc-cards/capture",
+        "/api/admin/nfc-cards/",
         "/api/admin/settings",
     ):
         assert route in script

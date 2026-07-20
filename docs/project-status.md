@@ -21,7 +21,9 @@ Phase: Alpha-Entwicklung
 - sichtbarer, durch Touch zurückgesetzter Inaktivitäts-Timeout mit manuellem Logout
 - ventilgesperrter lokaler Adminmodus mit eigenem, auditiert einstellbarem Timeout
 - geschützte Verwaltungs-API für schlanke Benutzerdaten, Rollen und Aktivstatus
-- Live-Zuordnung und Sperre von NFC-Armbändern ohne UID-Eingabe im Webclient
+- Live-Zuordnung, Sperre und Entfernen von NFC-Armbändern ohne UID-Eingabe im Webclient
+- eindeutige Lockscreen-Rückmeldung für unbekannte und gesperrte Armbänder
+- kompakte, durchsuch- und filterbare Benutzerliste für typische Veranstaltungen
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine

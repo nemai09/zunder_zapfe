@@ -249,6 +249,18 @@ h1 span {
   color: var(--cream);
 }
 
+.reader-status.is-unknown {
+  border-color: rgb(245 166 35 / 60%);
+  background: rgb(245 166 35 / 12%);
+  color: var(--amber-light);
+}
+
+.reader-status.is-blocked {
+  border-color: rgb(255 101 93 / 60%);
+  background: rgb(255 101 93 / 12%);
+  color: #ffb6b1;
+}
+
 .reader-wave {
   width: 1rem;
   height: 1.5rem;
@@ -713,11 +725,48 @@ h1 span {
   min-height: 0;
 }
 
+.user-browser {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.user-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.3rem;
+}
+
+.user-tools input,
+.user-tools select {
+  min-width: 0;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.42rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  outline: none;
+  background: rgb(255 255 255 / 8%);
+  color: var(--cream);
+  font-size: 0.68rem;
+}
+
+.user-tools select option {
+  background: #211b13;
+}
+
+.user-tools span {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.6rem;
+  text-align: right;
+}
+
 .user-list {
   display: grid;
   align-content: start;
   gap: 0.35rem;
-  max-height: 15.5rem;
+  max-height: 12.75rem;
   padding-right: 0.25rem;
   overflow: auto;
 }
@@ -725,8 +774,8 @@ h1 span {
 .user-list-item {
   display: grid;
   gap: 0.15rem;
-  min-height: 3.1rem;
-  padding: 0.45rem 0.6rem;
+  min-height: 2.55rem;
+  padding: 0.35rem 0.55rem;
   border: 1px solid var(--line);
   border-radius: 0.65rem;
   background: var(--panel);
@@ -852,6 +901,23 @@ h1 span {
 .card-status.is-active {
   background: rgb(97 217 145 / 16%);
   color: #9cf0bd;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.card-remove {
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 101 93 / 16%);
+  color: #ffb6b1;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 800;
 }
 
 .admin-message {

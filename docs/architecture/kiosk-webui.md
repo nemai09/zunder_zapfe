@@ -18,6 +18,12 @@ zulässig ist.
 | `fault_locked`, `emergency_stop` | Sperrgrund und Admin-Hinweis | sicher zurücksetzen |
 | Backend nicht erreichbar | Verbindungsfehler | automatisch erneut verbinden |
 
+Im Idle-Zustand unterscheidet die Anzeige eine unbekannte Karte (`Karte nicht
+erkannt`) von einer gesperrten Karte beziehungsweise einem gesperrten Benutzer
+(`Karte gesperrt`). Das Backend hält diese Rückmeldung kurzzeitig vor, damit
+sie auch sichtbar bleibt, wenn das Armband direkt nach dem Leserton entfernt
+wird. Weder UID noch Benutzerinformationen werden dabei angezeigt.
+
 Die Kioskoberfläche bietet gemäß
 [`CR-001`](../../requirements/changes/CR-001-manual-push-to-fill.md) keine
 Portionswahl und kein Nachfüllen mehr an. Die entsprechenden Backendaktionen

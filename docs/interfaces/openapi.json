@@ -781,6 +781,17 @@
             "title": "Measured Volume Ml",
             "type": "integer"
           },
+          "nfc_feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nfc Feedback"
+          },
           "persistence_error": {
             "anyOf": [
               {
@@ -904,7 +915,8 @@
           "user_display_name",
           "special_portion_ml",
           "persistence_error",
-          "last_booking"
+          "last_booking",
+          "nfc_feedback"
         ],
         "title": "TapStatusResponse",
         "type": "object"
@@ -992,7 +1004,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.3.0-alpha.1"
+    "version": "0.3.0-alpha.2"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1038,6 +1050,56 @@
       }
     },
     "/api/admin/nfc-cards/{card_id}": {
+      "delete": {
+        "operationId": "remove_admin_nfc_card_api_admin_nfc_cards__card_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "card_id",
+            "required": true,
+            "schema": {
+              "title": "Card Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Active admin mode required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Remove Admin Nfc Card"
+      },
       "patch": {
         "operationId": "update_admin_nfc_card_api_admin_nfc_cards__card_id__patch",
         "parameters": [

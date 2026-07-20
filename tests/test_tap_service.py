@@ -178,6 +178,55 @@ def test_zz_aut_002_007_008_nfc_resolves_only_active_known_cards(
         stop_service(service, hardware)
 
 
+def test_zz_aut_007_008_nfc_rejection_feedback_is_specific_and_transient(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    ids = seed_data(sessions)
+    clock = ManualClock()
+    service, hardware, nfc, _flow_meter = start_service(sessions, clock)
+    try:
+        nfc.present_card("11223344")
+        assert service.process_nfc_snapshot() is False
+        assert service.status_dict()["nfc_feedback"] == "unknown"
+
+        nfc.remove_card()
+        service.process_nfc_snapshot()
+        assert service.status_dict()["nfc_feedback"] == "unknown"
+        clock.advance(2.6)
+        assert service.status_dict()["nfc_feedback"] is None
+
+        with sessions.begin() as session:
+            card = session.scalar(select(NfcCard).where(NfcCard.user_id == ids["user_id"]))
+            assert card is not None
+            card.active = False
+
+        nfc.present_card("04AABBCC")
+        assert service.process_nfc_snapshot() is False
+        assert service.status_dict()["nfc_feedback"] == "blocked"
+
+        nfc.remove_card()
+        service.process_nfc_snapshot()
+        with sessions.begin() as session:
+            card = session.scalar(select(NfcCard).where(NfcCard.user_id == ids["user_id"]))
+            user = session.get(User, ids["user_id"])
+            assert card is not None
+            assert user is not None
+            card.active = True
+            user.active = False
+        nfc.present_card("04AABBCC")
+        assert service.process_nfc_snapshot() is False
+        assert service.status_dict()["nfc_feedback"] == "blocked"
+
+        nfc.remove_card()
+        service.process_nfc_snapshot()
+        nfc.present_card("04DDEEFF")
+        assert service.process_nfc_snapshot() is True
+        assert service.status_dict()["nfc_feedback"] is None
+    finally:
+        stop_service(service, hardware)
+
+
 def test_zz_aut_002_background_supervisor_authenticates_presented_card(
     database: tuple[Engine, sessionmaker[Session]],
 ) -> None:

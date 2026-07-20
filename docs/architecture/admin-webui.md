@@ -45,6 +45,9 @@ links eine stabile Bereichsnavigation, rechts der jeweils aktive Verwaltungsbere
 Die Benutzerverwaltung kombiniert eine kompakte Auswahlliste mit einem Editor
 für Vorname, optionalen Nachnamen, Zusatzfeld, Rolle und Aktivstatus. Bereits
 zugeordnete Armbänder werden ausschließlich mit maskiertem UID-Hinweis gezeigt.
+Für typische Veranstaltungen mit 20 bis 30 Benutzern besitzt die Liste eine
+Namenssuche, Filter für Aktiv-, Sperr- und Adminstatus, einen Ergebniszähler
+und einen eigenen Scrollbereich.
 
 ## Komponentenvertrag
 
@@ -60,8 +63,8 @@ zugeordnete Armbänder werden ausschließlich mit maskiertem UID-Hinweis gezeigt
 - Die WebUI verwendet ausschließlich `/api/admin/*` und besitzt keine direkte
   SQLite- oder Hardwareverbindung.
 
-Selbstdeaktivierung, Selbstdemotion sowie das Sperren des letzten aktiven
-Armbands des angemeldeten Admins werden abgelehnt. Ebenso kann der letzte
+Selbstdeaktivierung, Selbstdemotion sowie das Sperren oder Entfernen des letzten
+aktiven Armbands eines aktiven Admins werden abgelehnt. Ebenso kann der letzte
 aktive Admin nicht durch einen anderen Admin deaktiviert oder herabgestuft
 werden.
 
@@ -77,8 +80,9 @@ werden.
    Ende der Adminsitzung an.
 
 Der Webclient übermittelt keine UID. Bereits bekannte Armbänder werden nicht
-stillschweigend umgehängt; sie müssen nachvollziehbar gesperrt oder durch einen
-späteren bewussten Verwaltungsablauf ersetzt werden.
+stillschweigend umgehängt. Eine Zuordnung kann nach einer Bestätigung entfernt
+und im selben Transaktionsablauf ohne vollständige UID im Audit protokolliert
+werden. Danach steht das Armband für eine neue Live-Zuordnung bereit.
 
 Traceability: `ZZ-AUT-002`, `ZZ-AUT-004`, `ZZ-AUT-005`, `ZZ-AUT-007`,
 `ZZ-AUT-011`, `ZZ-DAT-003` und `ZZ-UI-006`.

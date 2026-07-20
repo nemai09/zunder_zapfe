@@ -164,6 +164,53 @@ def test_live_nfc_capture_requires_removal_and_never_returns_full_uid(
         assert NEW_UID not in (audit[-1].new_values_json or "")
 
 
+def test_nfc_assignment_can_be_removed_audited_and_reused(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, ids = admin_api
+    enter_admin(client)
+    cards = client.get(f"/api/admin/users/{ids['user_id']}/nfc-cards").json()
+
+    removed = client.delete(f"/api/admin/nfc-cards/{cards[0]['id']}")
+    assert removed.status_code == 204
+    assert client.get(f"/api/admin/users/{ids['user_id']}/nfc-cards").json() == []
+
+    created = client.post(
+        "/api/admin/users",
+        json={
+            "first_name": "Neu",
+            "last_name": None,
+            "note": None,
+            "is_admin": False,
+        },
+    ).json()
+    remove(client)
+    capture_path = f"/api/admin/users/{created['id']}/nfc-cards/capture"
+    assert client.post(capture_path).json()["state"] == "waiting"
+    present(client, USER_UID)
+    assert client.post(capture_path).json()["state"] == "assigned"
+
+    with sessions() as session:
+        reused = session.scalar(select(NfcCard).where(NfcCard.uid == USER_UID))
+        assert reused is not None
+        assert reused.user_id == created["id"]
+        actions = list(session.scalars(select(AdminAuditEntry.action)))
+        assert "nfc_card.removed" in actions
+
+
+def test_last_active_admin_wristband_cannot_be_removed(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, _nfc, ids = admin_api
+    enter_admin(client)
+    cards = client.get(f"/api/admin/users/{ids['admin_id']}/nfc-cards").json()
+
+    response = client.delete(f"/api/admin/nfc-cards/{cards[0]['id']}")
+
+    assert response.status_code == 409
+    assert "last active wristband" in response.json()["detail"]
+
+
 def test_admin_timeout_is_configurable_and_self_protected(admin_api: tuple[object, ...]) -> None:
     client, _sessions, _nfc, ids = admin_api
     enter_admin(client)

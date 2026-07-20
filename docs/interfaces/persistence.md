@@ -17,7 +17,7 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 | Bereich | Operation | Wesentliche Bedingung |
 | --- | --- | --- |
 | Veranstaltung | `create_event`, `activate_event` | höchstens eine aktive Veranstaltung |
-| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `update_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
+| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `update_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
 | Getränk/Fass | `create_beverage`, `activate_new_keg`, `active_tap_context` | höchstens ein aktives Fass und passender Kontext |
 | Buchung | `add_tap_booking`, `list_user_bookings` | Event und Getränk passen zum Fass |
 | Summen | `user_consumption`, `remaining_keg_volume_ml` | ausschließlich persistierte Istmengen |
@@ -28,6 +28,8 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 
 - Identitäten sind ganzzahlige Datenbank-IDs.
 - NFC-UIDs sind uppercase Hex ohne Leerzeichen, Doppelpunkte oder Bindestriche.
+- `delete_nfc_card` entfernt nur die Zuordnung; Schutzregeln und Audit liegen im
+  aufrufenden `AdminService`. Danach kann dieselbe UID neu zugeordnet werden.
 - Benutzer besitzen einen verpflichtenden `first_name`, optionalen `last_name`
   und optionalen `note`; `display_name` wird daraus für bestehende Clients
   abgeleitet.
