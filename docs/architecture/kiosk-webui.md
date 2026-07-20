@@ -36,9 +36,9 @@ angemeldete Admins erscheint links neben dem Logout der blaue Einstieg in die
 Administration; beide Aktionen belegen zusammen die Breite der rechten
 Informationsspalte. Der manuelle Logout bleibt rechts im Kopfbereich sichtbar.
 Ein schmaler Balken am unteren
-Bildschirmrand zeigt gemäß CR-002 während der gesamten Sitzung die verbleibende
-Zeit des 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität
-an das Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
+Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
+15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das
+Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
 
 ## Touch- und Sicherheitsverhalten
 

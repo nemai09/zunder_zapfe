@@ -139,9 +139,8 @@ Die Benutzeroberflaeche muss einen Logout-Button anbieten und nach einer durch
 Admins konfigurierbaren Inaktivitaetszeit automatisch abmelden.
 Abnahme: Beide Wege beenden die Sitzung und verhindern anschliessendes Zapfen
 ohne neue Authentifizierung.
-Hinweis: Gemaess CR-002 gilt fuer die Alpha-WebUI ein Default von 15 Sekunden.
-Jede Touchberuehrung und der Abschluss einer Zapfung setzen die Inaktivitaet
-zurueck.
+Fuer die Alpha-WebUI gilt ein Default von 15 Sekunden. Jede Touchberuehrung und
+der Abschluss einer Zapfung setzen die Inaktivitaet zurueck.
 
 [ZZ-AUT-011] Lokaler Adminmodus
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -649,8 +648,9 @@ Zapfung; eine Beruehrung unterhalb der Entprellzeit oeffnet das Ventil nicht.
 =========================
 
 OD-001: Konkrete Standard-Portionsgroessen.
-OD-002: Der Alpha-Default fuer automatischen Logout ist durch CR-002 auf 15
-Sekunden festgelegt. Das kompatible Nachfuellfenster bleibt spaeter zu bewerten.
+OD-002: Der Alpha-Default fuer automatischen Logout ist auf 15 Sekunden
+festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
+spaeter zu bewerten.
 OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
 OD-004: Detailregeln der Happy Hour.
 OD-005: Format und Inhalt der Einzelabrechnung.

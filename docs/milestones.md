@@ -22,9 +22,10 @@ bestanden sind.
 Der Kiosk bildet den Backend-Zustandsautomaten als lokale Touchoberfläche ab.
 Er umfasst NFC-Aufforderung, Benutzer- und Verbrauchsanzeige, genau eine große
 gedrückt gehaltene Zapffläche, Istmenge, Logout sowie Sicherheits- und
-Verbindungsfehler. CR-002 ergänzt die zweispaltige Kartenanordnung und den
-sichtbaren Inaktivitäts-Timeout. Standard- und Sonderportionen bleiben gemäß CR-001 im
-Backend erhalten, werden im Kiosk aber nicht mehr angeboten.
+Verbindungsfehler. Die zweispaltige Kartenanordnung und der sichtbare
+Inaktivitäts-Timeout gehören direkt zum Kiosk-Umfang. Standard- und
+Sonderportionen bleiben gemäß CR-001 im Backend erhalten, werden im Kiosk aber
+nicht mehr angeboten.
 
 Die Bedienoberfläche kommuniziert ausschließlich über die dokumentierte
 HTTP-API. Sie steuert weder Hardware noch SQLite direkt. Layout und Bedienablauf
