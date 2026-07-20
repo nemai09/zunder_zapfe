@@ -216,6 +216,19 @@ class TapService:
     def abort_portion(self) -> PourRecord:
         return self._controller.abort_portion()
 
+    def start_manual_pour(self) -> dict[str, Any]:
+        self._prepare_booking(None)
+        try:
+            self._controller.start_manual_pour()
+        except Exception:
+            with self._mutex:
+                self._pending_booking = None
+            raise
+        return self.status_dict()
+
+    def stop_manual_pour(self) -> PourRecord:
+        return self._controller.stop_manual_pour()
+
     def start_top_up(self) -> dict[str, Any]:
         self._prepare_booking(None)
         try:

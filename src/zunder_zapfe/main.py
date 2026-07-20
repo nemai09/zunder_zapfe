@@ -71,7 +71,10 @@ def create_app(
     tap_service = TapService(
         hardware_layer,
         sessions,
-        development_limits(session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds),
+        development_limits(
+            session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds,
+            manual_maximum_seconds=resolved_kiosk_settings.manual_maximum_pour_seconds,
+        ),
         calibration=FlowCalibration(
             pulses_per_liter=int(os.environ.get("ZUNDER_ZAPFE_PULSES_PER_LITER", "500"))
         ),
@@ -163,6 +166,8 @@ def create_app(
         return {
             **tap_service.portion_options(),
             "session_timeout_seconds": resolved_kiosk_settings.session_timeout_seconds,
+            "manual_press_debounce_ms": resolved_kiosk_settings.manual_press_debounce_ms,
+            "manual_maximum_pour_seconds": (resolved_kiosk_settings.manual_maximum_pour_seconds),
         }
 
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)
@@ -183,6 +188,20 @@ def create_app(
     )
     async def abort_portion() -> dict[str, Any]:
         return asdict(tap_service.abort_portion())
+
+    @application.post(
+        "/api/tap/manual/start", response_model=TapStatusResponse, responses=conflict_response
+    )
+    async def start_manual_pour() -> dict[str, Any]:
+        return tap_service.start_manual_pour()
+
+    @application.post(
+        "/api/tap/manual/stop",
+        response_model=PourRecordResponse,
+        responses=conflict_response,
+    )
+    async def stop_manual_pour() -> dict[str, Any]:
+        return asdict(tap_service.stop_manual_pour())
 
     @application.post(
         "/api/tap/top-up/start", response_model=TapStatusResponse, responses=conflict_response

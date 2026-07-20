@@ -1,6 +1,7 @@
 "use strict";
 
 const ACTIVE_POUR_STATES = new Set([
+  "manual_pouring",
   "portion_pouring",
   "top_up_pouring",
   "maintenance_pouring",
@@ -15,8 +16,11 @@ const model = {
   keg: null,
   health: null,
   actionPending: false,
-  topUpHeld: false,
-  topUpStopPending: false,
+  manualHeld: false,
+  manualStartPending: false,
+  manualStopPending: false,
+  manualReleaseRequested: false,
+  manualActivationTimer: null,
   refreshRunning: false,
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
@@ -31,21 +35,16 @@ const elements = {
   buildVersion: document.querySelector("#build-version"),
   clock: document.querySelector("#clock"),
   userName: document.querySelector("#user-name"),
-  portionGrid: document.querySelector("#portion-grid"),
   actionError: document.querySelector("#action-error"),
   beverageName: document.querySelector("#beverage-name"),
   beverageDetail: document.querySelector("#beverage-detail"),
   consumptionVolume: document.querySelector("#consumption-volume"),
   consumptionAmount: document.querySelector("#consumption-amount"),
-  measuredVolume: document.querySelector("#measured-volume"),
-  targetVolume: document.querySelector("#target-volume"),
-  progressRing: document.querySelector("#progress-ring"),
-  topUpButton: document.querySelector("#top-up-button"),
-  topUpCountdown: document.querySelector("#top-up-countdown"),
-  topUpLabel: document.querySelector("#top-up-label"),
-  topUpUnit: document.querySelector("#top-up-unit"),
-  topUpInstruction: document.querySelector("#top-up-instruction"),
-  topUpLogout: document.querySelector("#top-up-logout"),
+  manualButton: document.querySelector("#manual-button"),
+  manualVolume: document.querySelector("#manual-volume"),
+  manualLabel: document.querySelector("#manual-label"),
+  manualHint: document.querySelector("#manual-hint"),
+  legacyState: document.querySelector("#legacy-state"),
   safetyReason: document.querySelector("#safety-reason"),
   resetError: document.querySelector("#reset-error"),
 };
@@ -78,10 +77,9 @@ function currentScreen() {
   if (!model.connected) return "offline";
   const state = model.tap?.state || "starting";
   if (["fault_locked", "emergency_stop"].includes(state)) return "locked";
-  if (state === "portion_pouring") return "pouring";
-  if (["top_up_available", "top_up_pouring"].includes(state)) return "top-up";
-  if (["authenticated", "maintenance", "maintenance_pouring"].includes(state)) {
-    return "authenticated";
+  if (["authenticated", "manual_pouring"].includes(state)) return "tap";
+  if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring"].includes(state)) {
+    return "legacy";
   }
   return state === "idle" ? "idle" : "offline";
 }
@@ -99,28 +97,6 @@ function formatMoney(amountCents) {
     style: "currency",
     currency: "EUR",
   }).format(amountCents / 100);
-}
-
-function renderPortions() {
-  const portions = model.options?.standard_portions_ml || [];
-  const special = model.options?.special_portion_ml;
-  const signature = JSON.stringify([portions, special]);
-  if (elements.portionGrid.dataset.signature === signature) return;
-  elements.portionGrid.dataset.signature = signature;
-  elements.portionGrid.replaceChildren();
-
-  const choices = portions.map((volume) => ({ volume, special: false }));
-  if (special !== null && special !== undefined) {
-    choices.push({ volume: special, special: true });
-  }
-  for (const choice of choices) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `portion-button${choice.special ? " is-special" : ""}`;
-    button.innerHTML = `<strong>${choice.volume}</strong><span>${choice.special ? "Deine Sondergröße" : "Milliliter"}</span>`;
-    button.addEventListener("click", () => startPortion(choice.volume));
-    elements.portionGrid.append(button);
-  }
 }
 
 function render() {
@@ -144,7 +120,6 @@ function render() {
   }
 
   elements.userName.textContent = model.tap?.user_display_name || "Zapfer";
-  renderPortions();
   elements.beverageName.textContent = model.keg?.beverage_name || "Kein aktives Getränk";
   elements.beverageDetail.textContent = model.keg
     ? `${formatMoney(model.keg.price_per_liter_cents)} / Liter · ${formatVolume(model.keg.remaining_volume_ml)} im Fass`
@@ -152,26 +127,31 @@ function render() {
   elements.consumptionVolume.textContent = formatVolume(model.consumption?.measured_volume_ml);
   elements.consumptionAmount.textContent = formatMoney(model.consumption?.amount_cents);
 
-  const measured = model.tap?.measured_volume_ml || 0;
-  const target = model.tap?.target_volume_ml || 0;
-  elements.measuredVolume.textContent = String(measured);
-  elements.targetVolume.textContent = String(target);
-  const progress = target > 0 ? Math.min(1, measured / target) : 0;
-  elements.progressRing.style.setProperty("--progress", `${progress * 360}deg`);
+  const manualPouring = model.tap?.state === "manual_pouring";
+  const holding = manualPouring || model.manualHeld;
+  const limitReachedWhileHeld =
+    model.manualHeld &&
+    !manualPouring &&
+    model.tap?.last_booking?.kind === "manual" &&
+    model.tap?.last_booking?.completion === "limit_reached";
+  elements.manualVolume.textContent = String(model.tap?.measured_volume_ml || 0);
+  elements.manualLabel.textContent = limitReachedWhileHeld
+    ? "Zeitlimit erreicht"
+    : manualPouring
+      ? "Zapfung läuft"
+      : "Gedrückt halten";
+  elements.manualHint.textContent = limitReachedWhileHeld
+    ? "Loslassen und erneut drücken"
+    : manualPouring
+      ? "Loslassen stoppt sofort"
+      : "zum Zapfen";
+  elements.manualButton.classList.toggle("is-holding", holding);
+  elements.manualButton.setAttribute("aria-pressed", String(holding));
+  elements.manualButton.disabled = !["authenticated", "manual_pouring"].includes(
+    model.tap?.state,
+  );
 
-  const topUpPouring = model.tap?.state === "top_up_pouring";
-  const remainingMs = model.tap?.top_up_remaining_ms;
-  elements.topUpCountdown.textContent = topUpPouring
-    ? String(model.tap?.measured_volume_ml || 0)
-    : String(Math.max(0, Math.ceil((remainingMs || 0) / 1000)));
-  elements.topUpLabel.textContent = topUpPouring ? "Nachfüllen läuft" : "Gedrückt halten";
-  elements.topUpUnit.textContent = topUpPouring ? "Milliliter" : "zum Nachfüllen";
-  elements.topUpInstruction.textContent = topUpPouring
-    ? "Weiter gedrückt halten. Loslassen stoppt sofort."
-    : "Button gedrückt halten. Loslassen stoppt sofort.";
-  elements.topUpButton.classList.toggle("is-holding", topUpPouring || model.topUpHeld);
-  elements.topUpLogout.disabled = topUpPouring;
-
+  elements.legacyState.textContent = model.tap?.state || "unbekannt";
   elements.safetyReason.textContent = model.tap?.safety_reason || "Die Anlage wurde sicher verriegelt.";
 }
 
@@ -204,9 +184,7 @@ async function refresh() {
     const previousBooking = model.tap?.last_booking?.id;
     const now = Date.now();
     const requests = [api("/api/tap/status")];
-    if (!model.health || now - model.lastHealthRefresh >= 3000) {
-      requests.push(api("/api/health"));
-    }
+    if (!model.health || now - model.lastHealthRefresh >= 3000) requests.push(api("/api/health"));
     if (!model.tap || model.tap.state === "idle") requests.push(api("/api/nfc/status"));
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
@@ -222,8 +200,7 @@ async function refresh() {
       if (result?.state && "simulated" in result) model.nfc = result;
     }
     model.connected = true;
-    const contextChanged =
-      previousUser !== model.tap.user_id || previousBooking !== model.tap.last_booking?.id;
+    const contextChanged = previousUser !== tap.user_id || previousBooking !== tap.last_booking?.id;
     await refreshContext(contextChanged);
   } catch (_error) {
     model.connected = false;
@@ -247,71 +224,88 @@ async function performAction(action, errorElement = elements.actionError) {
   }
 }
 
-function startPortion(volumeMl) {
-  return performAction(() =>
-    api("/api/tap/portion", {
-      method: "POST",
-      body: JSON.stringify({ target_volume_ml: volumeMl }),
-    }),
-  );
-}
-
 function logout() {
   return performAction(() => api("/api/session/logout", { method: "POST" }));
 }
 
-async function startTopUp(event) {
-  if (model.topUpHeld || model.tap?.state !== "top_up_available") return;
-  model.topUpHeld = true;
-  elements.topUpButton.classList.add("is-holding");
+async function requestManualStop() {
+  if (model.manualStopPending) return;
+  if (model.manualStartPending) {
+    model.manualReleaseRequested = true;
+    return;
+  }
+  if (model.tap?.state !== "manual_pouring") return;
+  model.manualStopPending = true;
   try {
-    elements.topUpButton.setPointerCapture(event.pointerId);
+    await api("/api/tap/manual/stop", { method: "POST" });
+  } catch (_error) {
+    // The backend watchdog remains the independent safety fallback.
+  } finally {
+    await refresh();
+    model.manualStopPending = false;
+  }
+}
+
+function startManual(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (model.manualHeld || model.tap?.state !== "authenticated") return;
+  model.manualHeld = true;
+  model.manualReleaseRequested = false;
+  elements.actionError.textContent = "";
+  elements.manualButton.classList.add("is-holding");
+  try {
+    elements.manualButton.setPointerCapture(event.pointerId);
   } catch (_error) {
     // Pointer capture is an enhancement; global release handlers remain active.
   }
-  try {
-    await api("/api/tap/top-up/start", { method: "POST" });
+
+  const debounceMs = model.options?.manual_press_debounce_ms ?? 120;
+  model.manualActivationTimer = window.setTimeout(async () => {
+    model.manualActivationTimer = null;
+    if (!model.manualHeld) return;
+    model.manualStartPending = true;
+    try {
+      model.tap = await api("/api/tap/manual/start", { method: "POST" });
+    } catch (error) {
+      elements.actionError.textContent = error.message;
+      model.manualHeld = false;
+    } finally {
+      model.manualStartPending = false;
+    }
+    if (model.manualReleaseRequested || !model.manualHeld) await requestManualStop();
     await refresh();
-  } catch (error) {
-    model.topUpHeld = false;
-    elements.actionError.textContent = error.message;
-    render();
-  }
+  }, debounceMs);
 }
 
-async function stopTopUp() {
-  if (model.topUpStopPending) return;
-  if (!model.topUpHeld && model.tap?.state !== "top_up_pouring") return;
-  model.topUpStopPending = true;
-  model.topUpHeld = false;
-  elements.topUpButton.classList.remove("is-holding");
-  try {
-    await api("/api/tap/top-up/stop", { method: "POST" });
-  } catch (_error) {
-    // The backend watchdog remains the independent safety fallback.
+function releaseManual() {
+  if (model.manualActivationTimer !== null) {
+    window.clearTimeout(model.manualActivationTimer);
+    model.manualActivationTimer = null;
   }
-  await refresh();
-  model.topUpStopPending = false;
+  const wasHeld = model.manualHeld;
+  model.manualHeld = false;
+  model.manualReleaseRequested = true;
+  elements.manualButton.classList.remove("is-holding");
+  if (wasHeld || model.manualStartPending || model.tap?.state === "manual_pouring") {
+    requestManualStop();
+  }
 }
 
 document.querySelector("#logout-button").addEventListener("click", logout);
-elements.topUpLogout.addEventListener("click", logout);
-document.querySelector("#abort-button").addEventListener("click", () =>
-  performAction(() => api("/api/tap/portion/abort", { method: "POST" })),
-);
 document.querySelector("#reset-button").addEventListener("click", () =>
   performAction(
     () => api("/api/tap/safety/reset", { method: "POST" }),
     elements.resetError,
   ),
 );
-elements.topUpButton.addEventListener("pointerdown", startTopUp);
-elements.topUpButton.addEventListener("pointerup", stopTopUp);
-elements.topUpButton.addEventListener("pointercancel", stopTopUp);
-elements.topUpButton.addEventListener("lostpointercapture", stopTopUp);
-window.addEventListener("blur", stopTopUp);
+elements.manualButton.addEventListener("pointerdown", startManual);
+elements.manualButton.addEventListener("pointerup", releaseManual);
+elements.manualButton.addEventListener("pointercancel", releaseManual);
+elements.manualButton.addEventListener("lostpointercapture", releaseManual);
+window.addEventListener("pointerup", releaseManual);
+window.addEventListener("blur", releaseManual);
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) stopTopUp();
+  if (document.hidden) releaseManual();
 });
 document.addEventListener("contextmenu", (event) => event.preventDefault());
 

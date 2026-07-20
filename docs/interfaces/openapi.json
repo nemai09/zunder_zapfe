@@ -453,6 +453,14 @@
       },
       "TapOptionsResponse": {
         "properties": {
+          "manual_maximum_pour_seconds": {
+            "title": "Manual Maximum Pour Seconds",
+            "type": "integer"
+          },
+          "manual_press_debounce_ms": {
+            "title": "Manual Press Debounce Ms",
+            "type": "integer"
+          },
           "session_timeout_seconds": {
             "title": "Session Timeout Seconds",
             "type": "integer"
@@ -479,7 +487,9 @@
         "required": [
           "standard_portions_ml",
           "special_portion_ml",
-          "session_timeout_seconds"
+          "session_timeout_seconds",
+          "manual_press_debounce_ms",
+          "manual_maximum_pour_seconds"
         ],
         "title": "TapOptionsResponse",
         "type": "object"
@@ -707,7 +717,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.2.0-alpha.1"
+    "version": "0.2.0-alpha.2"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -967,6 +977,62 @@
           }
         },
         "summary": "Stop Maintenance Pour"
+      }
+    },
+    "/api/tap/manual/start": {
+      "post": {
+        "operationId": "start_manual_pour_api_tap_manual_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Start Manual Pour"
+      }
+    },
+    "/api/tap/manual/stop": {
+      "post": {
+        "operationId": "stop_manual_pour_api_tap_manual_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PourRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Stop Manual Pour"
       }
     },
     "/api/tap/options": {

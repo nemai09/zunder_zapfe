@@ -111,6 +111,28 @@ def test_initial_migration_creates_missing_database_directory(tmp_path: Path) ->
     assert database_path.is_file()
 
 
+def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path / "upgrade-from-initial.db")
+    config = alembic_config(url)
+    command.upgrade(config, "665c808f8308")
+    engine = create_database_engine(url)
+    try:
+        _event_id, _user_id, _beverage_id, _keg_id, booking_id = seed_booking(engine)
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, "head")
+    migrated = create_database_engine(url)
+    try:
+        sessions = create_session_factory(migrated)
+        with sessions() as session:
+            booking = session.get(TapBooking, booking_id)
+            assert booking is not None
+            assert booking.kind is BookingKind.PORTION
+    finally:
+        migrated.dispose()
+
+
 def test_repository_persists_core_domain_and_calculates_amount(
     migrated_engine: Engine,
 ) -> None:

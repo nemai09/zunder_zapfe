@@ -1,6 +1,6 @@
 # Zapf-Zustandsautomat
 
-Stand: 2026-07-19
+Stand: 2026-07-20
 
 Der Zustandsautomat ist die einzige Backend-Komponente, die Ventil und
 Durchflussmessung zu einem Zapfvorgang koordiniert. Die WebUI fordert nur
@@ -13,6 +13,7 @@ stateDiagram-v2
     state "Startphase<br/>STARTING" as STARTING
     state "Bereit, wartet auf Karte<br/>IDLE" as IDLE
     state "Benutzer angemeldet<br/>AUTHENTICATED" as AUTHENTICATED
+    state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
     state "Nachfüllen möglich<br/>TOP_UP_AVAILABLE" as TOP_UP_AVAILABLE
     state "Nachfüllen aktiv<br/>TOP_UP_POURING" as TOP_UP_POURING
@@ -29,6 +30,9 @@ stateDiagram-v2
     IDLE --> AUTHENTICATED: bekannte aktive Karte
     AUTHENTICATED --> IDLE: Logout oder Inaktivität
 
+    AUTHENTICATED --> MANUAL_POURING: Zapffläche gehalten<br/>Messung starten, Ventil öffnen
+    MANUAL_POURING --> AUTHENTICATED: losgelassen oder Zeitlimit<br/>Ventil schließen, Istmenge buchen
+
     AUTHENTICATED --> PORTION_POURING: Portionswahl<br/>Messung starten, Ventil öffnen
     PORTION_POURING --> TOP_UP_AVAILABLE: Zielimpulse erreicht<br/>Ventil schließen, Istmenge buchen
     PORTION_POURING --> AUTHENTICATED: manueller Abbruch<br/>Ventil schließen, Istmenge buchen
@@ -43,6 +47,7 @@ stateDiagram-v2
     MAINTENANCE --> AUTHENTICATED: Admin beendet Wartungsmodus
 
     PORTION_POURING --> FAULT_LOCKED: Durchfluss-, Zeit- oder Watchdogfehler
+    MANUAL_POURING --> FAULT_LOCKED: Durchfluss- oder Watchdogfehler
     TOP_UP_POURING --> FAULT_LOCKED: Durchfluss- oder Watchdogfehler
     MAINTENANCE_POURING --> FAULT_LOCKED: Durchfluss-, Zeit- oder Watchdogfehler
     FAULT_LOCKED --> IDLE: Ursache behoben und Admin-Reset
@@ -50,6 +55,7 @@ stateDiagram-v2
 
     IDLE --> EMERGENCY_STOP: Not-Aus
     AUTHENTICATED --> EMERGENCY_STOP: Not-Aus
+    MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     TOP_UP_AVAILABLE --> EMERGENCY_STOP: Not-Aus
     TOP_UP_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
@@ -77,6 +83,9 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `STARTING` | `start` | Not-Aus aktiv | `EMERGENCY_STOP` | Ventil schließen, Grund speichern |
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
+| `AUTHENTICATED` | `start_manual_pour` | aktiver Fachkontext | `MANUAL_POURING` | Messung nullen, Ventil öffnen |
+| `MANUAL_POURING` | `stop_manual_pour` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
+| `MANUAL_POURING` | maximales Zeitlimit | – | `AUTHENTICATED` | Ventil schließen, Istmenge mit Limitabschluss buchen |
 | `AUTHENTICATED` | `start_portion` | Ziel > 0, aktiver Fachkontext | `PORTION_POURING` | Messung nullen, Ventil öffnen |
 | `PORTION_POURING` | Zielimpulse erreicht | – | `TOP_UP_AVAILABLE` | Ventil schließen, Istmenge buchen |
 | `PORTION_POURING` | `abort_portion` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
@@ -115,6 +124,8 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
 4. Weitere Kartenereignisse veraendern einen laufenden Zapfvorgang nicht.
 5. Buchungen verwenden die gemessenen Impulse, auch bei Abbruch und Fehler.
 6. Wartungszapfungen werden gemessen, aber als nicht kostenpflichtig markiert.
+7. Das Zeitlimit manueller Zapfungen beendet den Vorgang kontrolliert. Fehler
+   bei Durchfluss, Watchdog oder Not-Aus bleiben verriegelnde Safety-Ereignisse.
 
 ## Integration und verbleibende Grenzen
 
@@ -126,7 +137,7 @@ wird dazu beim Zapfstart festgehalten. Der vollstaendige Fluss ist unter
 
 Die in `development_limits()` enthaltenen Werte und die Demonstrator-Kalibrierung
 sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
-Produktentscheidungen `OD-002` und `OD-003`; reale Ventil- und
+Produktentscheidungen `OD-002`, `OD-003` und `OD-012`; reale Ventil- und
 Durchfluss-Hardware sind noch nicht integriert.
 
 Für Milestone 5 gelten `60` Sekunden Inaktivität als konfigurierbarer
@@ -136,7 +147,7 @@ Zapfung oder das Nachfüllfenster werden nicht dadurch beendet.
 ## Traceability
 
 Der aktuelle Stand deckt die Struktur und simulatorischen Tests fuer
-`ZZ-AUT-008` bis `ZZ-AUT-010`, `ZZ-TAP-005` bis `ZZ-TAP-010`, `ZZ-HW-003` bis
+`ZZ-AUT-008` bis `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`, `ZZ-HW-003` bis
 `ZZ-HW-005`, `ZZ-SAF-003` bis `ZZ-SAF-009`, `ZZ-MNT-001`, `ZZ-MNT-002`,
 `ZZ-NFR-001` und `ZZ-NFR-002` ab. Persistenz und NFC-Benutzerzuordnung sind nun
 simulatorisch integriert. Eine Anforderung gilt erst nach Integration der noch

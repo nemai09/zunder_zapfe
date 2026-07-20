@@ -8,12 +8,16 @@ from dataclasses import dataclass
 
 DEFAULT_STANDARD_PORTIONS_ML = (300, 500)
 DEFAULT_SESSION_TIMEOUT_SECONDS = 60
+DEFAULT_MANUAL_PRESS_DEBOUNCE_MS = 120
+DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS = 30
 
 
 @dataclass(frozen=True)
 class KioskSettings:
     standard_portions_ml: tuple[int, ...] = DEFAULT_STANDARD_PORTIONS_ML
     session_timeout_seconds: int = DEFAULT_SESSION_TIMEOUT_SECONDS
+    manual_press_debounce_ms: int = DEFAULT_MANUAL_PRESS_DEBOUNCE_MS
+    manual_maximum_pour_seconds: int = DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS
 
     def __post_init__(self) -> None:
         if len(self.standard_portions_ml) < 2:
@@ -24,6 +28,10 @@ class KioskSettings:
             raise ValueError("Standard portions must be unique")
         if self.session_timeout_seconds <= 0:
             raise ValueError("Session timeout must be greater than zero")
+        if self.manual_press_debounce_ms < 0:
+            raise ValueError("Manual press debounce must not be negative")
+        if self.manual_maximum_pour_seconds <= 0:
+            raise ValueError("Manual maximum pour time must be greater than zero")
 
 
 def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSettings:
@@ -40,9 +48,23 @@ def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSe
                 str(DEFAULT_SESSION_TIMEOUT_SECONDS),
             )
         )
+        manual_press_debounce_ms = int(
+            values.get(
+                "ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS",
+                str(DEFAULT_MANUAL_PRESS_DEBOUNCE_MS),
+            )
+        )
+        manual_maximum_pour_seconds = int(
+            values.get(
+                "ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS",
+                str(DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS),
+            )
+        )
     except ValueError as error:
         raise ValueError("Kiosk configuration must contain integer values") from error
     return KioskSettings(
         standard_portions_ml=portions,
         session_timeout_seconds=timeout,
+        manual_press_debounce_ms=manual_press_debounce_ms,
+        manual_maximum_pour_seconds=manual_maximum_pour_seconds,
     )

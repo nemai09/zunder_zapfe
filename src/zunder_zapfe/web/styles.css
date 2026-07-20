@@ -135,6 +135,7 @@ button {
 }
 
 .screen-idle,
+.screen-manual,
 .screen-pour,
 .screen-top-up,
 .screen-alert,
@@ -258,8 +259,28 @@ h1 span {
   margin-bottom: clamp(1rem, 3vw, 2.5rem);
 }
 
-.screen[data-screen="authenticated"] {
+.screen[data-screen="tap"] {
   align-content: center;
+}
+
+.screen-manual {
+  grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.65fr);
+}
+
+.manual-main {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+}
+
+.manual-hold-area {
+  gap: 0.8rem;
+}
+
+.manual-button {
+  width: min(48vh, 38vw);
+  min-width: 16rem;
+  max-width: 27rem;
 }
 
 .tap-layout {
@@ -328,6 +349,11 @@ h1 span {
 }
 
 .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.hold-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -557,6 +583,7 @@ h1 span {
   body { overflow: auto; }
   .kiosk-shell { min-height: 100dvh; }
   .screen-idle,
+  .screen-manual,
   .screen-pour,
   .screen-top-up,
   .screen-alert,
@@ -569,6 +596,8 @@ h1 span {
   .session-heading { align-items: flex-start; }
   .progress-ring,
   .hold-button { width: min(56vw, 18rem); }
+  .screen-manual { grid-template-columns: 1fr; }
+  .screen-manual .info-panel { display: none; }
   .screen-pour,
   .screen-top-up { grid-template-columns: 1fr 1fr; }
 }
@@ -609,6 +638,7 @@ h1 span {
   }
 
   .tap-layout,
+  .screen-manual,
   .info-panel,
   .stat-row {
     gap: 0.65rem;

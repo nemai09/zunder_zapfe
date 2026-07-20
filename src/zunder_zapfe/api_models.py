@@ -104,6 +104,8 @@ class TapOptionsResponse(BaseModel):
     standard_portions_ml: list[int]
     special_portion_ml: int | None
     session_timeout_seconds: int
+    manual_press_debounce_ms: int
+    manual_maximum_pour_seconds: int
 
 
 class PourRecordResponse(BaseModel):

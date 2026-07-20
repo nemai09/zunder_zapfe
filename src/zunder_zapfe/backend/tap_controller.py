@@ -17,6 +17,7 @@ class TapState(StrEnum):
     STARTING = "starting"
     IDLE = "idle"
     AUTHENTICATED = "authenticated"
+    MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
     TOP_UP_AVAILABLE = "top_up_available"
     TOP_UP_POURING = "top_up_pouring"
@@ -28,6 +29,7 @@ class TapState(StrEnum):
 
 
 class PourKind(StrEnum):
+    MANUAL = "manual"
     PORTION = "portion"
     TOP_UP = "top_up"
     MAINTENANCE = "maintenance"
@@ -55,6 +57,7 @@ class TapLimits:
     top_up_window_seconds: float
     top_up_maximum_seconds: float
     top_up_maximum_pulses: int
+    manual_maximum_seconds: float = 30.0
     session_timeout_seconds: float = 60.0
 
     def __post_init__(self) -> None:
@@ -65,6 +68,7 @@ class TapLimits:
             self.watchdog_timeout_seconds,
             self.top_up_window_seconds,
             self.top_up_maximum_seconds,
+            self.manual_maximum_seconds,
             self.session_timeout_seconds,
         )
         if any(value <= 0 for value in numeric_limits):
@@ -111,6 +115,7 @@ class _ActivePour:
 
 
 ACTIVE_POUR_STATES = {
+    TapState.MANUAL_POURING,
     TapState.PORTION_POURING,
     TapState.TOP_UP_POURING,
     TapState.MAINTENANCE_POURING,
@@ -212,6 +217,16 @@ class TapController:
         with self._mutex:
             self._require_state(TapState.AUTHENTICATED)
             self._begin_pour(PourKind.PORTION, target_pulses, TapState.PORTION_POURING)
+
+    def start_manual_pour(self) -> None:
+        with self._mutex:
+            self._require_state(TapState.AUTHENTICATED)
+            self._begin_pour(PourKind.MANUAL, None, TapState.MANUAL_POURING)
+
+    def stop_manual_pour(self) -> PourRecord:
+        with self._mutex:
+            self._require_state(TapState.MANUAL_POURING)
+            return self._finish_active_pour(PourCompletion.RELEASED, TapState.AUTHENTICATED)
 
     def abort_portion(self) -> PourRecord:
         with self._mutex:
@@ -382,6 +397,11 @@ class TapController:
             self._lock_safely(TapState.FAULT_LOCKED, "Durchflussimpulse ausgeblieben")
             return
 
+        if active.kind is PourKind.MANUAL:
+            if now - active.started_at >= self._limits.manual_maximum_seconds:
+                self._finish_active_pour(PourCompletion.LIMIT_REACHED, TapState.AUTHENTICATED)
+            return
+
         if now - active.started_at >= self._limits.maximum_pour_seconds:
             self._lock_safely(TapState.FAULT_LOCKED, "Maximale Zapfdauer ueberschritten")
 
@@ -466,7 +486,11 @@ class TapController:
                     )
 
 
-def development_limits(*, session_timeout_seconds: float = 60.0) -> TapLimits:
+def development_limits(
+    *,
+    session_timeout_seconds: float = 60.0,
+    manual_maximum_seconds: float = 30.0,
+) -> TapLimits:
     """Non-production limits used while only simulated tap hardware is present."""
     return TapLimits(
         first_pulse_timeout_seconds=2.0,
@@ -476,5 +500,6 @@ def development_limits(*, session_timeout_seconds: float = 60.0) -> TapLimits:
         top_up_window_seconds=8.0,
         top_up_maximum_seconds=3.0,
         top_up_maximum_pulses=100,
+        manual_maximum_seconds=manual_maximum_seconds,
         session_timeout_seconds=session_timeout_seconds,
     )

@@ -23,7 +23,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
-| Kiosk-WebUI | Zustandsbasierte Touch-Alpha; Pi- und Bedienreview ausstehend |
+| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha; Pi- und Bedienreview ausstehend |
 | Admin-WebUI | Noch nicht implementiert |
 | Reale Zapfhardware | Noch nicht implementiert |
 
@@ -106,6 +106,7 @@ parallele Entwicklung sind:
 - [Entwicklungsmeilensteine](docs/milestones.md)
 - [Versionierung](docs/versioning.md)
 - [Anforderungskatalog](requirements/anforderungskatalog.txt)
+- [Anforderungsänderungen](requirements/changes/README.md)
 
 ## Mitwirken
 

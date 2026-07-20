@@ -10,14 +10,14 @@ Phase: Alpha-Entwicklung
 - Hardwareverträge und Simulatoren für Ventil, Durchfluss und Not-Aus
 - sicherheitsorientierter Zapfzustandsautomat
 - bekannte, aktive NFC-Karten und Benutzer-/Adminrollen
-- Portion, Abbruch, Nachfüllen und Wartungszapfung im Backend
+- manuelles Push-to-Fill sowie kompatible Portion, Abbruch, Nachfüllen und Wartungszapfung im Backend
 - Watchdog-, Durchfluss-, Zeit- und Not-Aus-Verriegelung
 - bewusster Sicherheitsreset mit aufgelegter Admin-Karte
 - SQLite-Schema, Migrationen und unveränderliche Zapfbuchungen
 - Verbrauchssummen, Preisberechnung und rechnerischer Fassbestand
 - automatisierter lokaler Smoke-Test mit realem NFC oder NFC-Simulator
 - schreibgeschützter SQLite-Datenbankbrowser für Diagnose
-- zustandsbasierte Touch-Kiosk-WebUI für Idle, Portion, Nachfüllen und Sperren
+- zustandsbasierte Ein-Knopf-Touch-WebUI für Idle, manuelles Zapfen und Sperren
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -29,7 +29,7 @@ geprüft; Bedienreview und Zielsystemprüfung sind für Milestone 5 noch offen.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Kiosk-WebUI | vollständiger Alpha-Bedienablauf | Bedienfeedback und Pi-Prüfung |
+| Kiosk-WebUI | manueller Push-to-Fill-Alpha-Ablauf nach CR-001 | Bedienfeedback, Zeitkalibrierung und Pi-Prüfung |
 | Adminfunktionen | Rolle, Persistenz und Sicherheitsreset | Verwaltungsoberfläche und Webauthentifizierung |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
@@ -48,7 +48,7 @@ geprüft; Bedienreview und Zielsystemprüfung sind für Milestone 5 noch offen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Kiosk-WebUI gemeinsam reviewen und auf dem Raspberry Pi prüfen.
+1. Push-to-Fill-WebUI gemeinsam reviewen und auf dem Raspberry Pi prüfen.
 2. Webauthentifizierung und notwendige Verwaltungsendpunkte ergänzen.
 3. Admin-WebUI implementieren.
 4. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
@@ -61,11 +61,13 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 
 ## Bekannte Alpha-Eigenschaften
 
-- Nach einer Portion bleibt der Zustand acht Sekunden lang
+- Kompatibel gestartete Portionen bleiben im Backend erhalten; nach einer Portion bleibt der Zustand acht Sekunden lang
   `top_up_available`; eine unmittelbar gestartete weitere Portion wird bewusst
   abgelehnt.
 - Die Simulator-API ist nur aktiv, wenn
   `ZUNDER_ZAPFE_ENABLE_SIMULATOR_API=1` gesetzt ist.
 - Entwicklungsgrenzwerte und `500` Impulse pro Liter sind Demonstratorwerte,
   keine Produktionskalibrierung.
+- `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
+  konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.

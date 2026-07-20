@@ -71,7 +71,9 @@ Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
-| `GET /api/tap/options` | keine | Standardportionen, persönliche Sonderportion und Sitzungszeit |
+| `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit sowie manuelle Entprell- und Zeitgrenzen |
+| `POST /api/tap/manual/start` | `authenticated`, aktiver Kontext und Fassbestand | wechselt zu `manual_pouring` |
+| `POST /api/tap/manual/stop` | `manual_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
 | `POST /api/tap/portion/abort` | `portion_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/top-up/start` | `top_up_available` innerhalb Zeitfenster | wechselt zu `top_up_pouring` |
@@ -81,8 +83,14 @@ Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 Eine vollständig erreichte Portion endet in `top_up_available`. Der aktuelle
 Alpha-Grenzwert hält diesen Zustand acht Sekunden; erst danach ist eine neue
 Portion möglich.
-`POST /api/tap/portion` akzeptiert ausschließlich eine konfigurierte
+Die Kiosk-WebUI verwendet ausschließlich die manuellen Start-/Stop-Aktionen.
+Die Portions- und Nachfüllaktionen bleiben nach CR-001 für kompatible Clients
+erhalten. `POST /api/tap/portion` akzeptiert ausschließlich eine konfigurierte
 Standardportion oder die Sonderportion des angemeldeten Benutzers.
+
+Ein manueller Vorgang besitzt keine Zielmenge. Er endet beim ersten Stoppsignal
+oder nach der konfigurierten Maximaldauer. In beiden Fällen wird genau die
+gemessene Istmenge als Buchungsart `manual` gespeichert.
 
 ## Wartung und Sicherheit
 

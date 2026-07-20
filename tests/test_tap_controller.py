@@ -106,6 +106,45 @@ def test_manual_abort_records_only_measured_pulses() -> None:
     assert controller.snapshot().state is TapState.AUTHENTICATED
 
 
+def test_zz_tap_013_manual_pour_stops_on_release_and_records_actual_pulses() -> None:
+    controller, hardware, _clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    controller.start_manual_pour()
+    flow_meter.add_pulses(7)
+    record = controller.stop_manual_pour()
+
+    assert record.kind is PourKind.MANUAL
+    assert record.measured_pulses == 7
+    assert record.target_pulses is None
+    assert record.completion is PourCompletion.RELEASED
+    assert record.chargeable is True
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.snapshot().state is TapState.AUTHENTICATED
+
+    with pytest.raises(InvalidTransition):
+        controller.stop_manual_pour()
+    assert len(controller.records) == 1
+
+
+def test_zz_tap_014_manual_pour_stops_at_configured_time_limit() -> None:
+    controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_manual_pour()
+    flow_meter.add_pulses(3)
+    clock.advance(29.5)
+    flow_meter.add_pulses(1)
+    clock.advance(0.5)
+    controller.heartbeat()
+    status = controller.poll()
+
+    assert status.state is TapState.AUTHENTICATED
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.records[-1].kind is PourKind.MANUAL
+    assert controller.records[-1].completion is PourCompletion.LIMIT_REACHED
+    assert controller.records[-1].measured_pulses == 4
+
+
 def test_second_card_is_ignored_while_pouring() -> None:
     controller, _hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")
@@ -182,6 +221,26 @@ def test_top_up_stops_at_configured_pulse_limit() -> None:
     assert hardware.valve.snapshot().is_open is False
     assert controller.records[-1].completion is PourCompletion.LIMIT_REACHED
     assert controller.records[-1].measured_pulses == 3
+
+
+def test_top_up_stops_at_configured_time_limit() -> None:
+    controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+    controller.start_portion(target_pulses=1)
+    flow_meter.add_pulses(1)
+    controller.poll()
+    controller.start_top_up()
+    flow_meter.add_pulses(1)
+    clock.advance(2)
+    flow_meter.add_pulses(1)
+    controller.heartbeat()
+
+    status = controller.poll()
+
+    assert status.state is TapState.AUTHENTICATED
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.records[-1].completion is PourCompletion.LIMIT_REACHED
+    assert controller.records[-1].measured_pulses == 2
 
 
 def test_top_up_window_expires_without_opening_valve() -> None:

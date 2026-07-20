@@ -35,6 +35,10 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
   unterstützten Zeitwert.
 - strukturierte Settings- und Auditwerte: kanonisches JSON als Text.
 
+Die Buchungsart `manual` kennzeichnet eine kostenpflichtige, durch Loslassen
+oder Zeitlimit beendete Push-to-Fill-Zapfung. Ihre `target_volume_ml` ist `NULL`;
+Abrechnung und Fassbestand beruhen weiterhin ausschließlich auf der Istmenge.
+
 ## Unveränderliche Buchungen
 
 `tap_bookings` sind abgeschlossene historische Fakten. ORM-Events und

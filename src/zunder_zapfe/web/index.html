@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.1">
-    <script src="/static/app.js?v=0.2.0-alpha.1" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.2.0-alpha.2">
+    <script src="/static/app.js?v=0.2.0-alpha.2" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -41,79 +41,53 @@
         </div>
       </section>
 
-      <section class="screen" data-screen="authenticated" aria-labelledby="welcome-title">
-        <div class="session-heading">
-          <div>
-            <p class="eyebrow">Hallo</p>
-            <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
-            <p class="lead compact">Wähle deine Portion. Das Zapfen startet sofort.</p>
+      <section class="screen screen-manual" data-screen="tap" aria-labelledby="welcome-title">
+        <div class="manual-main">
+          <div class="session-heading">
+            <div>
+              <p class="eyebrow">Hallo</p>
+              <h1 class="compact-title" id="welcome-title"><span id="user-name">Zapfer</span></h1>
+              <p class="lead compact">Zapfknopf gedrückt halten. Loslassen stoppt sofort.</p>
+            </div>
+            <button class="button button-quiet" id="logout-button" type="button">Abmelden</button>
           </div>
-          <button class="button button-quiet" id="logout-button" type="button">Abmelden</button>
-        </div>
 
-        <div class="tap-layout">
-          <div class="portion-panel">
-            <p class="section-label">Portionsgröße</p>
-            <div class="portion-grid" id="portion-grid"></div>
+          <div class="hold-area manual-hold-area">
+            <button class="hold-button manual-button" id="manual-button" type="button" aria-pressed="false">
+              <span class="hold-countdown" id="manual-volume">0</span>
+              <strong id="manual-label">Gedrückt halten</strong>
+              <small id="manual-hint">zum Zapfen</small>
+            </button>
             <p class="action-error" id="action-error" role="alert"></p>
           </div>
-
-          <aside class="info-panel">
-            <div class="beverage-card">
-              <p class="section-label">Aktiv am Hahn</p>
-              <p class="beverage-name" id="beverage-name">–</p>
-              <p class="beverage-detail" id="beverage-detail">Fassdaten werden geladen …</p>
-            </div>
-            <div class="stat-row">
-              <div class="stat">
-                <span>Dein Verbrauch</span>
-                <strong id="consumption-volume">–</strong>
-              </div>
-              <div class="stat">
-                <span>Dein Betrag</span>
-                <strong id="consumption-amount">–</strong>
-              </div>
-            </div>
-          </aside>
         </div>
-      </section>
 
-      <section class="screen screen-pour" data-screen="pouring" aria-labelledby="pour-title">
-        <div class="pour-copy">
-          <p class="eyebrow">Zapfung läuft</p>
-          <h1 class="compact-title" id="pour-title">Lass laufen.</h1>
-          <p class="lead compact">Die Portion stoppt automatisch bei der Zielmenge.</p>
-          <button class="button button-danger button-large" id="abort-button" type="button">
-            Zapfung abbrechen
-          </button>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-ring" id="progress-ring">
-            <div class="progress-inner">
-              <strong id="measured-volume">0</strong>
-              <span>von <b id="target-volume">0</b> ml</span>
+        <aside class="info-panel">
+          <div class="beverage-card">
+            <p class="section-label">Aktiv am Hahn</p>
+            <p class="beverage-name" id="beverage-name">–</p>
+            <p class="beverage-detail" id="beverage-detail">Fassdaten werden geladen …</p>
+          </div>
+          <div class="stat-row">
+            <div class="stat">
+              <span>Dein Verbrauch</span>
+              <strong id="consumption-volume">–</strong>
+            </div>
+            <div class="stat">
+              <span>Dein Betrag</span>
+              <strong id="consumption-amount">–</strong>
             </div>
           </div>
-        </div>
+        </aside>
       </section>
 
-      <section class="screen screen-top-up" data-screen="top-up" aria-labelledby="top-up-title">
+      <section class="screen screen-alert" data-screen="legacy" aria-labelledby="legacy-title">
+        <div class="alert-symbol" aria-hidden="true">…</div>
         <div>
-          <p class="eyebrow">Noch etwas Platz?</p>
-          <h1 class="compact-title" id="top-up-title">Nachfüllen</h1>
-          <p class="lead compact" id="top-up-instruction">
-            Button gedrückt halten. Loslassen stoppt sofort.
-          </p>
-          <button class="button button-quiet top-up-logout" id="top-up-logout" type="button">
-            Fertig und abmelden
-          </button>
-        </div>
-        <div class="hold-area">
-          <button class="hold-button" id="top-up-button" type="button">
-            <span class="hold-countdown" id="top-up-countdown">8</span>
-            <strong id="top-up-label">Gedrückt halten</strong>
-            <small id="top-up-unit">zum Nachfüllen</small>
-          </button>
+          <p class="eyebrow">Backend-Vorgang aktiv</p>
+          <h1 class="compact-title" id="legacy-title">Bitte kurz warten.</h1>
+          <p class="lead compact">Ein kompatibler Portions- oder Wartungsvorgang läuft.</p>
+          <p class="reset-help">Zustand: <span id="legacy-state">unbekannt</span></p>
         </div>
       </section>
 
@@ -143,7 +117,7 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.2.0_alpha.1_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.2.0_alpha.2_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
     </main>

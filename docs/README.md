@@ -9,6 +9,7 @@ unbemerkt auseinanderlaufen.
 | Thema | Verbindliche Quelle | Erläuterung |
 | --- | --- | --- |
 | Produktverhalten | [`requirements/anforderungskatalog.txt`](../requirements/anforderungskatalog.txt) | Nummerierte Anforderungen und Abnahmekriterien |
+| Anforderungsänderungen | [`requirements/changes/`](../requirements/changes/README.md) | Annahme, Auswirkungen und Nachverfolgung wesentlicher Change Requests |
 | Hardwaremethoden und Statusobjekte | [`src/zunder_zapfe/hardware`](../src/zunder_zapfe/hardware) | Ausführbare Python-Verträge |
 | HTTP-Pfade und JSON-Schemata | [`interfaces/openapi.json`](interfaces/openapi.json) | Aus FastAPI generierter, geprüfter Snapshot |
 | Zapfübergänge | [`tap_controller.py`](../src/zunder_zapfe/backend/tap_controller.py) | Ausführbarer Zustandsautomat |

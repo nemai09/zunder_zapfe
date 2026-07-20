@@ -8,7 +8,8 @@ Dieser Alpha-Checkpoint verbindet die bisher getrennten Hardware-,
 Zustandsautomaten- und Persistenzschichten zu einem durchgaengigen Ablauf:
 
 1. Eine bekannte aktive NFC-Karte meldet den zugeordneten Benutzer an.
-2. Eine Portionswahl friert Benutzer, Veranstaltung, Fass, Getraenk und Preis
+2. Der Start einer manuellen Zapfung oder kompatiblen Portion friert Benutzer,
+   Veranstaltung, Fass, Getraenk und Preis
    fuer genau diesen Zapfvorgang ein.
 3. Der Zustandsautomat oeffnet das Ventil und wertet die Impulse aus.
 4. Der Abschluss erzeugt synchron eine unveraenderliche SQLite-Buchung.
@@ -42,7 +43,7 @@ Kontext auf, konvertiert Impulse und nimmt die Buchung entgegen.
 
 ## Buchungssnapshot
 
-Beim Start jeder Portion, Nachfuellung oder Wartungszapfung werden folgende
+Beim Start jeder manuellen Zapfung, Portion, Nachfuellung oder Wartungszapfung werden folgende
 Werte festgehalten:
 
 - Benutzer-ID,
@@ -88,7 +89,7 @@ Sitzung in `IDLE`; fuer eine Anmeldung muss die Karte erneut aufgelegt werden.
 
 ## Lokale API
 
-Die API bietet Sitzung, Portion, Nachfuellen, Wartung, Sicherheitsreset,
+Die API bietet Sitzung, manuelles Zapfen, kompatible Portion und Nachfuellen, Wartung, Sicherheitsreset,
 Verbrauch und Fassstatus fuer die naechsten UI-Schritte. Der vollstaendige
 menschlich lesbare Vertrag liegt unter
 [`docs/interfaces/http-api.md`](../interfaces/http-api.md), die aus der
