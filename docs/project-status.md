@@ -6,7 +6,7 @@ Phase: Alpha-Entwicklung
 ## Implementiert und geprüft
 
 - Raspberry-Pi-Webdienst und Chromium-Kioskstart
-- realer ACS-ACR122U-Leser über PC/SC
+- realer, ereignisgesteuerter ACS-ACR122U-Leser über PC/SC mit Hotplug-Recovery
 - Hardwareverträge und Simulatoren für Ventil, Durchfluss und Not-Aus
 - sicherheitsorientierter Zapfzustandsautomat
 - bekannte, aktive NFC-Karten und Benutzer-/Adminrollen
@@ -24,13 +24,14 @@ Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
 Freigabe für reale Ventilhardware.
 Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
-geprüft; Bedienreview und Zielsystemprüfung sind für Milestone 5 noch offen.
+und anschließend im vollständigen Bedienablauf auf dem Zielsystem geprüft.
+Milestone 5 umfasst 84 bestandene automatisierte Tests sowie die erfolgreiche
+Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Kiosk-WebUI | manueller Push-to-Fill-Alpha-Ablauf nach CR-001 | Bedienfeedback, Zeitkalibrierung und Pi-Prüfung |
 | Adminfunktionen | Rolle, Persistenz und Sicherheitsreset | Verwaltungsoberfläche und Webauthentifizierung |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
@@ -49,9 +50,9 @@ geprüft; Bedienreview und Zielsystemprüfung sind für Milestone 5 noch offen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Push-to-Fill-WebUI gemeinsam reviewen und auf dem Raspberry Pi prüfen.
-2. Webauthentifizierung und notwendige Verwaltungsendpunkte ergänzen.
-3. Admin-WebUI implementieren.
+1. Lokalen Adminmodus und geschützte Verwaltungsendpunkte ergänzen.
+2. Benutzerverwaltung und Live-Zuordnung von NFC-Armbändern implementieren.
+3. Weitere Adminbereiche und die Webauthentifizierung ergänzen.
 4. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
 5. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch

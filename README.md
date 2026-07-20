@@ -17,13 +17,13 @@ eine Weboberfläche für den Kioskbetrieb.
 
 | Bereich | Status |
 | --- | --- |
-| ACR122U-NFC-Leser | Auf dem Raspberry Pi integriert und getestet |
+| ACR122U-NFC-Leser | Ereignisgesteuert, Hotplug-fähig und auf dem Raspberry Pi getestet |
 | Ventil, Durchfluss, Not-Aus | Stabile Verträge und Simulatoren vorhanden |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
-| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha; Pi- und Bedienreview ausstehend |
+| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
 | Admin-WebUI | Noch nicht implementiert |
 | Reale Zapfhardware | Noch nicht implementiert |
 

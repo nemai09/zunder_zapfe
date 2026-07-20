@@ -1,6 +1,6 @@
 # Kiosk-WebUI
 
-Status: Milestone-5-Alpha nach CR-001
+Status: Milestone 5 abgeschlossen
 
 Die Kiosk-WebUI ist ein lokaler, zustandsbasierter Client der HTTP-API. Sie
 besteht aus statischem HTML, CSS und JavaScript ohne externe
