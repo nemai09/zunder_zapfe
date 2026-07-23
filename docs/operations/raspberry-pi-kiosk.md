@@ -190,6 +190,23 @@ Repository hinterlegt werden. Der tatsächliche Desktop-Benutzer und
 Repositorypfad sind bei einer abweichenden Installation entsprechend
 anzupassen.
 
+Smartphone-Administration nach eingerichtem Admin-WLAN:
+
+1. Smartphone mit `ZUNDER_ZAPFE` verbinden. Eine Warnung „kein Internet“ ist
+   im Standalone-Betrieb normal.
+2. `http://10.42.0.1/admin` öffnen.
+3. Persönlichen Admin auswählen und mit dessen Passwort anmelden.
+4. Unter **Benutzer** suchen, bearbeiten oder mit **+ Neu** anlegen.
+5. Für eine Armbandzuordnung den Benutzer öffnen, **Zuweisen** drücken und das
+   neue Veranstaltungsarmband kurz am ACR122U auflegen.
+
+Während der Zuordnung zeigt der Kiosk den gesperrten Zustand
+`nfc_capture`; das Ventil bleibt geschlossen. Erfolg, Abbruch oder das
+serverseitige Zeitlimit geben die Anlage wieder frei. Die finale
+Zielsystemabnahme muss mindestens Login, 20 bis 30 sichtbare Benutzer, Suche,
+Sperren/Aktivieren/Löschen eines Demo-Armbands, Passwortwechsel und
+Neustartverhalten prüfen.
+
 Dienst neu starten:
 
 ```bash

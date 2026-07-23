@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#12251e">
+    <title>Zunder Zapfe · Administration</title>
+    <link rel="stylesheet" href="/static/admin-styles.css?v=0.4.0-alpha.1">
+    <script src="/static/admin-app.js?v=0.4.0-alpha.1" defer></script>
+  </head>
+  <body>
+    <section class="login-shell" id="login-screen">
+      <div class="login-card">
+        <div class="brand-mark" aria-hidden="true">Z</div>
+        <p class="eyebrow">Zunder Zapfe</p>
+        <h1>Administration</h1>
+        <p class="muted">Persönlich am lokalen Admin-WLAN anmelden.</p>
+        <form id="login-form">
+          <label for="login-user">Admin</label>
+          <select id="login-user" required>
+            <option value="">Admins werden geladen …</option>
+          </select>
+          <label for="login-password">Passwort</label>
+          <input id="login-password" type="password" autocomplete="current-password" maxlength="128" required>
+          <button class="button button-primary" type="submit">Anmelden</button>
+          <p class="message error" id="login-message" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell" id="admin-app" hidden>
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Zunder Zapfe</p>
+          <strong>Administration</strong>
+        </div>
+        <div class="session-menu">
+          <span id="session-name">Admin</span>
+          <button class="button button-quiet button-small" id="logout-button" type="button">Abmelden</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="view is-active" data-view="overview" aria-labelledby="overview-title">
+          <p class="eyebrow">Übersicht</p>
+          <h1 id="overview-title">Guten Tag, <span id="welcome-name">Admin</span>.</h1>
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>Bekannte Benutzer</span>
+              <strong id="user-count">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Aktive Armbänder</span>
+              <strong id="card-count">–</strong>
+            </article>
+            <article class="metric-card wide">
+              <span>Backend</span>
+              <strong id="backend-status">Wird geprüft …</strong>
+              <small id="build-version"></small>
+            </article>
+          </div>
+          <h2>Verwaltungsbereiche</h2>
+          <div class="area-grid">
+            <button class="area-card is-ready" type="button" data-open-view="users">
+              <span>Jetzt verfügbar</span>
+              <strong>Benutzer &amp; Armbänder</strong>
+              <small>Anlegen, sperren und live zuweisen</small>
+            </button>
+            <article class="area-card"><span>M7.5</span><strong>Veranstaltung &amp; Fass</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+            <article class="area-card"><span>M7.6</span><strong>Buchungen &amp; Statistik</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+            <article class="area-card"><span>M7.7</span><strong>Diagnose &amp; Einstellungen</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+          </div>
+        </section>
+
+        <section class="view" data-view="users" aria-labelledby="users-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">Verwaltung</p>
+              <h1 id="users-title">Benutzer &amp; Armbänder</h1>
+            </div>
+            <button class="button button-primary" id="new-user-button" type="button">+ Neu</button>
+          </div>
+          <div class="filter-row">
+            <input id="user-search" type="search" placeholder="Name oder Zusatz suchen" aria-label="Benutzer suchen">
+            <select id="user-filter" aria-label="Benutzer filtern">
+              <option value="all">Alle</option>
+              <option value="active">Aktiv</option>
+              <option value="blocked">Gesperrt</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
+          <p class="result-count" id="user-result-count"></p>
+          <div class="user-list" id="user-list"></div>
+          <p class="empty-state" id="user-empty" hidden>Keine passenden Benutzer gefunden.</p>
+        </section>
+
+        <section class="view" data-view="account" aria-labelledby="account-title">
+          <p class="eyebrow">Persönliches Konto</p>
+          <h1 id="account-title">Passwort ändern</h1>
+          <p class="muted">Nach der Änderung wirst du auf allen Geräten abgemeldet.</p>
+          <form class="panel form-stack" id="own-password-form">
+            <label for="current-password">Aktuelles Passwort</label>
+            <input id="current-password" type="password" autocomplete="current-password" maxlength="128" required>
+            <label for="new-own-password">Neues Passwort</label>
+            <input id="new-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+            <label for="confirm-own-password">Neues Passwort wiederholen</label>
+            <input id="confirm-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+            <button class="button button-primary" type="submit">Passwort ändern</button>
+            <p class="message" id="account-message" role="status"></p>
+          </form>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Admin-Navigation">
+        <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
+        <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
+        <button type="button" data-nav-view="account"><span>●</span>Konto</button>
+      </nav>
+    </div>
+
+    <div class="sheet-backdrop" id="user-sheet" hidden>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+        <header class="sheet-header">
+          <div>
+            <p class="eyebrow">Benutzerverwaltung</p>
+            <h2 id="editor-title">Benutzer bearbeiten</h2>
+          </div>
+          <button class="icon-button" id="close-user-sheet" type="button" aria-label="Schließen">×</button>
+        </header>
+        <form class="form-stack" id="user-form">
+          <input id="user-id" type="hidden">
+          <label for="first-name">Vorname</label>
+          <input id="first-name" maxlength="80" required>
+          <label for="last-name">Nachname <small>optional</small></label>
+          <input id="last-name" maxlength="80">
+          <label for="user-note">Zusatzfeld <small>optional</small></label>
+          <input id="user-note" maxlength="500">
+          <div class="toggle-grid">
+            <label class="toggle"><input id="user-is-admin" type="checkbox"><span>Adminzugang</span></label>
+            <label class="toggle"><input id="user-active" type="checkbox" checked><span>Benutzer aktiv</span></label>
+          </div>
+          <button class="button button-primary" type="submit">Speichern</button>
+          <p class="message" id="user-message" role="status"></p>
+        </form>
+
+        <section class="editor-section" id="password-section" hidden>
+          <h3>Adminpasswort</h3>
+          <p class="muted" id="password-state"></p>
+          <form class="inline-form" id="reset-password-form">
+            <input id="reset-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Neues Passwort" required>
+            <button class="button button-secondary" type="submit">Setzen</button>
+          </form>
+        </section>
+
+        <section class="editor-section" id="cards-section" hidden>
+          <div class="section-heading">
+            <div>
+              <h3>Armbänder</h3>
+              <p class="muted">UIDs werden nur verkürzt angezeigt.</p>
+            </div>
+            <button class="button button-secondary button-small" id="capture-card-button" type="button">+ Zuweisen</button>
+          </div>
+          <div class="card-list" id="card-list"></div>
+        </section>
+      </section>
+    </div>
+
+    <div class="capture-backdrop" id="capture-dialog" hidden>
+      <section class="capture-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
+        <div class="reader-animation" aria-hidden="true"><span></span></div>
+        <p class="eyebrow">Live am Zapfhahn</p>
+        <h2 id="capture-title">Armband zuweisen</h2>
+        <p id="capture-instruction">NFC-Leser wird vorbereitet …</p>
+        <p class="muted">Die Zapfanlage bleibt währenddessen gesperrt.</p>
+        <button class="button button-quiet" id="cancel-capture-button" type="button">Abbrechen</button>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

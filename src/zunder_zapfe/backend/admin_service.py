@@ -1,4 +1,4 @@
-"""Protected administration workflows for the local kiosk UI."""
+"""Protected administration workflows shared by kiosk and smartphone sessions."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from zunder_zapfe.persistence.repository import Repository, canonicalize_nfc_uid
 ADMIN_TIMEOUT_SETTING = "session.admin_timeout_seconds"
 MIN_ADMIN_TIMEOUT_SECONDS = 10
 MAX_ADMIN_TIMEOUT_SECONDS = 3600
+REMOTE_NFC_CAPTURE_TIMEOUT_SECONDS = 45
 
 
 class AdminConflict(RuntimeError):
@@ -26,9 +27,11 @@ class AdminConflict(RuntimeError):
 
 @dataclass
 class _NfcCapture:
+    sequence: int
     admin_user_id: int
     target_user_id: int
     observed_empty_reader: bool
+    remote: bool
 
 
 class AdminService:
@@ -47,6 +50,9 @@ class AdminService:
         self._tap_service = tap_service
         self._default_timeout_seconds = self._validate_timeout(default_timeout_seconds)
         self._capture: _NfcCapture | None = None
+        self._capture_sequence = 0
+        self._capture_timer: threading.Timer | None = None
+        self._expired_capture: tuple[int, int] | None = None
         self._mutex = threading.RLock()
 
     def enter(self) -> dict[str, Any]:
@@ -75,7 +81,7 @@ class AdminService:
                 timeout_seconds,
                 admin_user_id=admin_id,
             )
-        self._tap_service.set_admin_session_timeout(timeout_seconds)
+        self._tap_service.apply_admin_session_timeout(timeout_seconds)
         return {"admin_session_timeout_seconds": timeout_seconds}
 
     def list_users(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
@@ -183,26 +189,42 @@ class AdminService:
         user_id: int,
         *,
         admin_user_id: int | None = None,
+        remote: bool = False,
     ) -> dict[str, Any]:
         """Capture only a UID observed by the local reader after an empty-reader phase."""
         admin_id = self._require_admin_id(admin_user_id)
         with self._sessions() as session:
             Repository(session).get_user(user_id)
 
-        nfc = self._hardware.nfc.snapshot()
         with self._mutex:
+            capture_key = (admin_id, user_id)
+            if remote and self._expired_capture == capture_key:
+                self._expired_capture = None
+                return {"state": "timed_out", "card": None}
             capture = self._capture
             if (
                 capture is None
                 or capture.admin_user_id != admin_id
                 or capture.target_user_id != user_id
+                or capture.remote != remote
             ):
+                self._cancel_capture_unlocked()
+                if remote:
+                    self._tap_service.begin_remote_nfc_capture()
+                nfc = self._hardware.nfc.snapshot()
+                self._capture_sequence += 1
                 capture = _NfcCapture(
+                    sequence=self._capture_sequence,
                     admin_user_id=admin_id,
                     target_user_id=user_id,
                     observed_empty_reader=nfc.state != "card",
+                    remote=remote,
                 )
                 self._capture = capture
+                if remote:
+                    self._start_capture_timer(capture)
+            else:
+                nfc = self._hardware.nfc.snapshot()
 
             if not capture.observed_empty_reader:
                 if nfc.state == "card":
@@ -218,13 +240,14 @@ class AdminService:
             try:
                 uid = canonicalize_nfc_uid(nfc.uid)
             except ValueError as error:
+                self._cancel_capture_unlocked()
                 raise AdminConflict("The reader returned an invalid NFC UID") from error
 
             with self._sessions.begin() as session:
                 repository = Repository(session)
                 existing = repository.find_nfc_card(uid)
                 if existing is not None and existing.user_id != user_id:
-                    self._capture = None
+                    self._cancel_capture_unlocked()
                     raise AdminConflict("This wristband is already assigned to another user")
                 if existing is None:
                     card = repository.add_nfc_card(user_id, uid)
@@ -240,7 +263,7 @@ class AdminService:
                     new_values={"user_id": user_id, "active": True},
                 )
                 snapshot = self._card_snapshot(card)
-            self._capture = None
+            self._cancel_capture_unlocked()
             return {"state": "assigned", "card": snapshot}
 
     def cancel_nfc_capture(self, *, admin_user_id: int | None = None) -> None:
@@ -373,4 +396,32 @@ class AdminService:
 
     def _cancel_capture(self) -> None:
         with self._mutex:
-            self._capture = None
+            self._expired_capture = None
+            self._cancel_capture_unlocked()
+
+    def _cancel_capture_unlocked(self) -> None:
+        capture = self._capture
+        self._capture = None
+        if self._capture_timer is not None:
+            self._capture_timer.cancel()
+            self._capture_timer = None
+        if capture is not None and capture.remote:
+            self._tap_service.end_remote_nfc_capture()
+
+    def _start_capture_timer(self, capture: _NfcCapture) -> None:
+        timer = threading.Timer(
+            REMOTE_NFC_CAPTURE_TIMEOUT_SECONDS,
+            self._expire_capture,
+            args=(capture.sequence,),
+        )
+        timer.daemon = True
+        self._capture_timer = timer
+        timer.start()
+
+    def _expire_capture(self, sequence: int) -> None:
+        with self._mutex:
+            capture = self._capture
+            if capture is None or capture.sequence != sequence:
+                return
+            self._expired_capture = (capture.admin_user_id, capture.target_user_id)
+            self._cancel_capture_unlocked()

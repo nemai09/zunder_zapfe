@@ -63,6 +63,9 @@ const elements = {
   manualHint: document.querySelector("#manual-hint"),
   sessionTimeout: document.querySelector("#session-timeout"),
   sessionTimeoutFill: document.querySelector("#session-timeout-fill"),
+  legacyEyebrow: document.querySelector("#legacy-eyebrow"),
+  legacyTitle: document.querySelector("#legacy-title"),
+  legacyDescription: document.querySelector("#legacy-description"),
   legacyState: document.querySelector("#legacy-state"),
   safetyReason: document.querySelector("#safety-reason"),
   resetError: document.querySelector("#reset-error"),
@@ -93,6 +96,7 @@ const elements = {
   diagnosticConnection: document.querySelector("#diagnostic-connection"),
   diagnosticNfc: document.querySelector("#diagnostic-nfc"),
   diagnosticValve: document.querySelector("#diagnostic-valve"),
+  localAdminToast: document.querySelector("#local-admin-toast"),
 };
 
 async function api(path, options = {}) {
@@ -125,7 +129,7 @@ function currentScreen() {
   if (["fault_locked", "emergency_stop"].includes(state)) return "locked";
   if (state === "admin") return "admin";
   if (["authenticated", "manual_pouring"].includes(state)) return "tap";
-  if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring"].includes(state)) {
+  if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring", "nfc_capture"].includes(state)) {
     return "legacy";
   }
   return state === "idle" ? "idle" : "offline";
@@ -236,6 +240,16 @@ function render() {
   elements.sessionTimeoutFill.style.width = `${sessionProgress * 100}%`;
 
   elements.legacyState.textContent = model.tap?.state || "unbekannt";
+  const nfcCapture = model.tap?.state === "nfc_capture";
+  elements.legacyEyebrow.textContent = nfcCapture
+    ? "Administration aktiv"
+    : "Backend-Vorgang aktiv";
+  elements.legacyTitle.textContent = nfcCapture
+    ? "Armband wird zugeordnet."
+    : "Bitte kurz warten.";
+  elements.legacyDescription.textContent = nfcCapture
+    ? "Die Zapfanlage bleibt vorübergehend gesperrt."
+    : "Ein kompatibler Portions- oder Wartungsvorgang läuft.";
   elements.safetyReason.textContent = model.tap?.safety_reason || "Die Anlage wurde sicher verriegelt.";
 
   const readerState = model.nfc?.state || "unbekannt";
@@ -353,19 +367,10 @@ function showAdminSection(section) {
 }
 
 async function enterAdmin() {
-  if (model.actionPending) return;
-  model.actionPending = true;
-  elements.actionError.textContent = "";
-  try {
-    model.tap = await api("/api/admin/session/enter", { method: "POST" });
-    model.adminLoaded = false;
-    await loadAdminData();
-  } catch (error) {
-    elements.actionError.textContent = error.message;
-  } finally {
-    model.actionPending = false;
-    render();
-  }
+  elements.localAdminToast.textContent =
+    "Lokale Administration vorübergehend deaktiviert · Smartphone mit ZUNDER_ZAPFE verbinden.";
+  elements.localAdminToast.classList.add("is-visible");
+  window.setTimeout(() => elements.localAdminToast.classList.remove("is-visible"), 4200);
 }
 
 async function exitAdmin() {

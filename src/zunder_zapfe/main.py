@@ -153,7 +153,7 @@ def create_app(
                 content={"detail": "Local admin API is only available over loopback"},
             )
         response = await call_next(request)
-        if request.url.path == "/" or request.url.path.startswith("/static/"):
+        if request.url.path in {"/", "/admin"} or request.url.path.startswith("/static/"):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -195,6 +195,10 @@ def create_app(
     @application.get("/", include_in_schema=False)
     async def index() -> FileResponse:
         return FileResponse(WEB_ROOT / "index.html")
+
+    @application.get("/admin", include_in_schema=False)
+    async def smartphone_admin() -> FileResponse:
+        return FileResponse(WEB_ROOT / "admin.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
 
@@ -563,6 +567,32 @@ def create_app(
     ) -> list[dict[str, Any]]:
         identity = require_web_admin(request)
         return admin_service.list_nfc_cards(user_id, admin_user_id=identity.user_id)
+
+    @application.post(
+        "/api/web-admin/users/{user_id}/nfc-cards/capture",
+        response_model=AdminNfcCaptureResponse,
+        responses=web_admin_responses,
+    )
+    async def capture_web_admin_user_nfc_card(
+        user_id: int,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.capture_nfc_card(
+            user_id,
+            admin_user_id=identity.user_id,
+            remote=True,
+        )
+
+    @application.delete(
+        "/api/web-admin/nfc-capture",
+        status_code=204,
+        responses=web_admin_responses,
+    )
+    async def cancel_web_admin_nfc_capture(request: Request) -> Response:
+        identity = require_web_admin(request, write=True)
+        admin_service.cancel_nfc_capture(admin_user_id=identity.user_id)
+        return Response(status_code=204)
 
     @application.patch(
         "/api/web-admin/nfc-cards/{card_id}",

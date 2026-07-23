@@ -1115,7 +1115,7 @@
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.3.0-alpha.2"
+    "version": "0.4.0-alpha.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2327,6 +2327,57 @@
         "summary": "Stop Top Up"
       }
     },
+    "/api/web-admin/nfc-capture": {
+      "delete": {
+        "operationId": "cancel_web_admin_nfc_capture_api_web_admin_nfc_capture_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Cancel Web Admin Nfc Capture"
+      }
+    },
     "/api/web-admin/nfc-cards/{card_id}": {
       "delete": {
         "operationId": "remove_web_admin_nfc_card_api_web_admin_nfc_cards__card_id__delete",
@@ -2868,6 +2919,75 @@
           }
         },
         "summary": "List Web Admin User Nfc Cards"
+      }
+    },
+    "/api/web-admin/users/{user_id}/nfc-cards/capture": {
+      "post": {
+        "operationId": "capture_web_admin_user_nfc_card_api_web_admin_users__user_id__nfc_cards_capture_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNfcCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Capture Web Admin User Nfc Card"
       }
     },
     "/api/web-admin/users/{user_id}/password": {

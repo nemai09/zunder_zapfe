@@ -30,6 +30,10 @@ Phase: Alpha-Entwicklung
   Passwortverwaltung
 - installierbarer NetworkManager-Access-Point `ZUNDER_ZAPFE` mit
   eingeschränktem nginx-Zugang zur Smartphone-API
+- responsive Smartphone-Admin-WebUI mit persönlichem Login, Benutzer-,
+  Passwort- und Armbandverwaltung
+- ventilgesperrte, zeitbegrenzte NFC-Live-Zuordnung vom Smartphone mit
+  sichtbarem Kioskzustand
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -41,19 +45,23 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
+Der lokale Stand nach `M7.4` umfasst 119 bestandene automatisierte Tests.
+Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
+auf dem Raspberry Pi demonstriert werden.
 
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Webauthentifizierung, Benutzer-/Armbandverwaltung und Sicherheitsreset | Smartphone-WebUI und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung und Sicherheitsreset | Veranstaltung, Fass, Buchungen, Diagnose und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle und Admin-WLAN-Installer | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
 
 ## Nicht implementiert
 
-- vollständige Smartphone-Admin-WebUI; Zielsystemabnahme des Access Points
+- vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
+  Point, Login und NFC-Zuordnung
 - Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer, Buchungen,
   Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter

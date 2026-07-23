@@ -42,7 +42,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 
 | Feld | Typ | Bedeutung |
 | --- | --- | --- |
-| `state` | `str` | Zustand aus dem Zustandsautomaten |
+| `state` | `str` | Zustand aus dem Zustandsautomaten, einschließlich des ventilgesperrten `nfc_capture` |
 | `user_id` | `str | null` | intern angemeldeter Benutzer |
 | `is_admin` | `bool` | Rolle der aktuellen Sitzung |
 | `valve_open` | `bool` | angeforderter Ventilzustand |
@@ -171,13 +171,20 @@ lokalen Verwaltungs-API.
 | `PATCH /api/web-admin/users/{id}` | Profil, Rolle und Aktivstatus ändern |
 | `PUT /api/web-admin/users/{id}/password` | persönliches Passwort eines anderen aktiven Admins setzen oder zurücksetzen |
 | `GET /api/web-admin/users/{id}/nfc-cards` | maskierte Armbandzuordnungen lesen |
+| `POST /api/web-admin/users/{id}/nfc-cards/capture` | ventilgesperrte Live-Zuordnung starten oder deren Status lesen |
+| `DELETE /api/web-admin/nfc-capture` | laufende Live-Zuordnung abbrechen |
 | `PATCH /api/web-admin/nfc-cards/{id}` | Armband sperren oder reaktivieren |
 | `DELETE /api/web-admin/nfc-cards/{id}` | Armbandzuordnung entfernen |
 | `GET /api/web-admin/settings` | bestehenden lokalen Admin-Timeout lesen |
 | `PATCH /api/web-admin/settings` | bestehenden lokalen Admin-Timeout ändern |
 
-Die hardwaregebundene Live-Zuordnung wird erst mit dem sicheren
-Zuordnungszustand aus `M7.4` über die Smartphone-API freigegeben.
+Der Capture-Request enthält keinen UID-Parameter. Beim ersten Aufruf wechselt
+der Zustandsautomat nur aus einem nicht zapfenden Zustand zu `nfc_capture`,
+schließt das Ventil und beendet die lokale NFC-Sitzung. NFC-Anmeldungen werden
+bis Erfolg, Abbruch oder serverseitigem Timeout ignoriert. Mögliche
+Antwortzustände sind `remove_card`, `waiting`, `reader_unavailable`,
+`assigned` und `timed_out`. Die Smartphone-Abfragen lesen nur diesen
+kurzlebigen Ablauf; der ACR122U selbst bleibt ereignisgesteuert.
 
 ## Wartung und Sicherheit
 

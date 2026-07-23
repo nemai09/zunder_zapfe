@@ -18,6 +18,7 @@ class TapState(StrEnum):
     IDLE = "idle"
     AUTHENTICATED = "authenticated"
     ADMIN = "admin"
+    NFC_CAPTURE = "nfc_capture"
     MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
     TOP_UP_AVAILABLE = "top_up_available"
@@ -239,6 +240,34 @@ class TapController:
             self._set_admin_session_timeout(timeout_seconds)
             if self._state is TapState.ADMIN:
                 self._session_last_active_at = self._clock()
+
+    def begin_nfc_capture(self) -> None:
+        """Lock the tap while a remote admin assigns a wristband."""
+        with self._mutex:
+            self._require_state(
+                TapState.IDLE,
+                TapState.AUTHENTICATED,
+                TapState.TOP_UP_AVAILABLE,
+            )
+            self._hardware.valve.close()
+            self._session = None
+            self._session_last_active_at = None
+            self._top_up_deadline = None
+            self._state = TapState.NFC_CAPTURE
+
+    def end_nfc_capture(self) -> None:
+        """Release a remote assignment lock without weakening safety locks."""
+        with self._mutex:
+            self._hardware.valve.close()
+            self._synchronize_emergency_stop()
+            if self._state is TapState.NFC_CAPTURE:
+                self._state = TapState.IDLE
+            elif self._state not in {
+                TapState.FAULT_LOCKED,
+                TapState.EMERGENCY_STOP,
+                TapState.STOPPED,
+            }:
+                raise InvalidTransition("No remote NFC capture is active")
 
     def start_portion(self, target_pulses: int) -> None:
         if target_pulses <= 0:

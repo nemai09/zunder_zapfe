@@ -179,6 +179,8 @@ class TapService:
             return accepted
 
     def process_nfc_snapshot(self) -> bool:
+        if self._controller.snapshot().state is TapState.NFC_CAPTURE:
+            return False
         nfc = self._hardware.nfc.snapshot()
         if nfc.state != "card" or not nfc.uid:
             with self._mutex:
@@ -219,9 +221,24 @@ class TapService:
         self._controller.exit_admin_mode()
         return self.status_dict()
 
-    def set_admin_session_timeout(self, timeout_seconds: float) -> None:
-        self.require_admin_user_id()
+    def apply_admin_session_timeout(self, timeout_seconds: float) -> None:
+        """Apply an already authorized and validated administration setting."""
         self._controller.set_admin_session_timeout(timeout_seconds)
+
+    def begin_remote_nfc_capture(self) -> dict[str, Any]:
+        self._controller.begin_nfc_capture()
+        with self._mutex:
+            self._authenticated_user = None
+            self._last_presented_uid = None
+            self._clear_nfc_feedback()
+        return self.status_dict()
+
+    def end_remote_nfc_capture(self) -> dict[str, Any]:
+        self._controller.end_nfc_capture()
+        with self._mutex:
+            self._last_presented_uid = None
+            self._clear_nfc_feedback()
+        return self.status_dict()
 
     def require_admin_user_id(self) -> int:
         status = self._controller.snapshot()

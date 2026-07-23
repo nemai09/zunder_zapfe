@@ -13,7 +13,7 @@ bestanden sind.
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
-| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | in Planung |
+| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | in Umsetzung |
 | 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
 
@@ -92,7 +92,7 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.1 PLAN` | CR-002, Zielarchitektur, Anforderungsversion 0.6 und WLAN-Plan |
 | `M7.2 FEAT` | persönliche Adminpasswörter, Websitzungen, Initial-Admin, Passwortwechsel und gemeinsame Autorisierung |
 | `M7.3 OPS` | NetworkManager-Access-Point `ZUNDER_ZAPFE`, lokaler Webzugang und Pi-Verifikation |
-| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung |
+| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik |
 | `M7.7 FEAT` | Einstellungen, Diagnose, Wartung und Safety-Reset |

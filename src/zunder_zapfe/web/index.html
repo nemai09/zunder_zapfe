@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.3.0-alpha.2">
-    <script src="/static/app.js?v=0.3.0-alpha.2" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.4.0-alpha.1">
+    <script src="/static/app.js?v=0.4.0-alpha.1" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -220,9 +220,9 @@
       <section class="screen screen-alert" data-screen="legacy" aria-labelledby="legacy-title">
         <div class="alert-symbol" aria-hidden="true">…</div>
         <div>
-          <p class="eyebrow">Backend-Vorgang aktiv</p>
+          <p class="eyebrow" id="legacy-eyebrow">Backend-Vorgang aktiv</p>
           <h1 class="compact-title" id="legacy-title">Bitte kurz warten.</h1>
-          <p class="lead compact">Ein kompatibler Portions- oder Wartungsvorgang läuft.</p>
+          <p class="lead compact" id="legacy-description">Ein kompatibler Portions- oder Wartungsvorgang läuft.</p>
           <p class="reset-help">Zustand: <span id="legacy-state">unbekannt</span></p>
         </div>
       </section>
@@ -252,8 +252,9 @@
         </div>
       </section>
 
+      <div class="kiosk-toast" id="local-admin-toast" role="status" aria-live="polite"></div>
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.3.0_alpha.1_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.4.0_alpha.1_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
       <div class="session-timeout" id="session-timeout" aria-hidden="true">

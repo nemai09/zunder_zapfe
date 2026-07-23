@@ -113,7 +113,7 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 3. Der Pi besitzt `10.42.0.1/24`.
 4. Ein Smartphone erhält per DHCP eine Adresse.
 5. `http://10.42.0.1/api/health` ist erreichbar.
-6. `/admin` fordert ohne gültige Sitzung zur Anmeldung auf (ab `M7.4 UI`).
+6. `/admin` fordert ohne gültige Sitzung zur persönlichen Anmeldung auf.
 7. Der Kiosk bleibt parallel über `127.0.0.1:8000` funktionsfähig.
 8. Ein Neustart aktiviert Access Point, Backend und Kiosk erneut.
 9. WLAN- und Adminpasswörter erscheinen weder in Git-Diff noch Dienstlogs.

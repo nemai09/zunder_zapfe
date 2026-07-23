@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,6 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend import admin_service as admin_service_module
 from zunder_zapfe.backend.web_auth_service import WebAuthenticationError, WebAuthService
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
@@ -304,3 +306,87 @@ def test_zz_aut_003_expired_web_session_is_persistently_revoked(
         stored = session.get(WebAdminSession, issued.identity.session_id)
         assert stored is not None
         assert stored.revoked_at is not None
+
+
+def test_web_admin_can_assign_wristband_while_tap_is_safely_locked(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    started = client.post(path, headers=headers)
+    assert started.status_code == 200
+    assert started.json()["state"] == "waiting"
+    tap_status = client.get("/api/tap/status").json()
+    assert tap_status["state"] == "nfc_capture"
+    assert tap_status["user_id"] is None
+    assert tap_status["valve_open"] is False
+
+    client.post("/api/simulator/nfc/present", json={"uid": "A1B2C3D4"})
+    assigned = client.post(path, headers=headers)
+
+    assert assigned.status_code == 200
+    assert assigned.json()["state"] == "assigned"
+    assert assigned.json()["card"]["uid_hint"] == "…C3D4"
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+    cards = client.get(f"/api/web-admin/users/{ids['user_id']}/nfc-cards").json()
+    assert len(cards) == 1
+    assert cards[0]["uid_hint"] == "…C3D4"
+
+
+def test_web_admin_can_cancel_remote_wristband_capture(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    assert client.post(path, headers=headers).status_code == 200
+    assert client.get("/api/tap/status").json()["state"] == "nfc_capture"
+    assert client.delete("/api/web-admin/nfc-capture").status_code == 403
+    assert client.delete("/api/web-admin/nfc-capture", headers=headers).status_code == 204
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+
+
+def test_web_admin_can_update_existing_admin_timeout(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+
+    response = client.patch(
+        "/api/web-admin/settings",
+        json={"admin_session_timeout_seconds": 45},
+        headers=csrf_headers(csrf_token),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"admin_session_timeout_seconds": 45}
+    assert client.get("/api/web-admin/settings").json() == {"admin_session_timeout_seconds": 45}
+
+
+def test_remote_wristband_capture_times_out_and_releases_tap(
+    web_admin_api: tuple[object, ...],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _sessions, ids = web_admin_api
+    monkeypatch.setattr(
+        admin_service_module,
+        "REMOTE_NFC_CAPTURE_TIMEOUT_SECONDS",
+        0.02,
+    )
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    assert client.post(path, headers=headers).json()["state"] == "waiting"
+    deadline = time.monotonic() + 1
+    while client.get("/api/tap/status").json()["state"] == "nfc_capture":
+        assert time.monotonic() < deadline
+        time.sleep(0.01)
+
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+    assert client.post(path, headers=headers).json()["state"] == "timed_out"

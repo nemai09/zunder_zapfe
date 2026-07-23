@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: M7.2 Authentifizierungsgrundlage implementiert; weitere Bereiche geplant
+Status: `M7.2` bis `M7.4` implementiert; weitere Fachbereiche geplant
 
 ## Ziel und Abgrenzung
 
@@ -12,6 +12,8 @@ Internet noch einen Cloud-Dienst.
 Der vorhandene lokale Adminmodus aus Milestone 6 bleibt im Code erhalten, wird
 aber nicht geöffnet oder weiter ausgebaut. Die Smartphone-WebUI steuert weder
 SQLite noch Hardware direkt, sondern ausschließlich dokumentierte HTTP-APIs.
+Der blaue Kiosk-Button öffnet deshalb keine lokale Verwaltung mehr, sondern
+weist auf Smartphone und WLAN `ZUNDER_ZAPFE` hin.
 
 ## Gemeinsames Benutzer- und Anmeldemodell
 
@@ -40,7 +42,7 @@ opakes Sitzungstoken. Im Browser liegt es ausschließlich als
 Hash des Tokens zusammen mit Admin-ID, Erzeugung, letzter Aktivität und Ablauf.
 JWT ist nicht notwendig.
 
-Als Alpha-Defaults werden vorgeschlagen:
+Als Alpha-Defaults gelten:
 
 - Inaktivitätsablauf nach 30 Minuten;
 - absolute Sitzungsdauer von 12 Stunden;
@@ -74,8 +76,9 @@ NFC-Leser:
 
 1. Admin wählt oder erstellt den Benutzer auf dem Smartphone.
 2. Admin startet „Armband zuweisen“.
-3. Das Backend sperrt Zapfstarts und versetzt den Kiosk sichtbar in den
-   Zuordnungszustand.
+3. Das Backend beendet eine eventuell offene NFC-Benutzersitzung, schließt das
+   Ventil, sperrt Zapfstarts und versetzt den Kiosk sichtbar in den
+   Zuordnungszustand `nfc_capture`.
 4. Ein bislang unbekanntes Armband wird kurz am Leser aufgelegt.
 5. Der ereignisgesteuerte NFC-Adapter liefert die UID ausschließlich an das
    Backend.
@@ -84,7 +87,10 @@ NFC-Leser:
 
 Der Smartphone-Client darf den Status dieses kurzlebigen Ablaufs abfragen. Das
 ist eine HTTP-Statusabfrage und kein erneutes Hardware-Polling. Timeout, Abbruch
-und Verbindungsverlust schließen den Zuordnungszustand sicher.
+und Verbindungsverlust schließen den Zuordnungszustand sicher. Ein
+serverseitiges Limit von `45 s` verhindert eine dauerhaft liegen gebliebene
+Sperre, wenn Browser oder WLAN-Verbindung abbrechen. Not-Aus und verriegelte
+Fehlerzustände werden dadurch niemals aufgehoben.
 
 ## Navigations- und Funktionsumfang
 
@@ -93,20 +99,26 @@ Bildschirmen dieselben Ansichten mit mehrspaltigem Layout. Für die erste
 Ausbaustufe bleibt sie bei HTML, CSS und JavaScript ohne zusätzlichen
 Frontend-Buildschritt.
 
-### Übersicht
+### Übersicht (`M7.4`)
 
-- Betriebsbereitschaft, aktives Event, Getränk und Fass;
-- rechnerischer Restbestand;
-- aktuelle Störung und wichtige Diagnosehinweise;
-- kurze Verbrauchs- und Buchungssummen.
+- Backendbereitschaft und Buildstring;
+- Anzahl bekannter Benutzer und aktiver Armbänder;
+- klare Kennzeichnung der folgenden Arbeitspakete.
 
-### Benutzer und Armbänder
+Event, Fass, Störung und Summen werden mit den zugehörigen Fach-APIs in
+`M7.5` bis `M7.7` ergänzt.
+
+### Benutzer und Armbänder (`M7.4`)
 
 - suchen, filtern, anlegen, bearbeiten, aktivieren und sperren;
 - Rolle vergeben oder entziehen;
 - NFC-Armband zuweisen, sperren und entfernen;
 - persönliches Adminpasswort setzen, ändern oder zurücksetzen;
 - Schutz des letzten aktiven Adminzugangs.
+
+Die mobile Liste ist such- und filterbar und bleibt damit auch bei 20 bis 30
+Personen übersichtlich. Das Bearbeitungsformular erscheint als mobile
+Vollbreitenkarte und auf größeren Bildschirmen als begrenztes Dialogfenster.
 
 ### Veranstaltungen, Getränke und Fässer
 

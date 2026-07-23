@@ -374,6 +374,36 @@ def test_zz_aut_011_admin_activity_timeout_and_return_to_tap() -> None:
     assert status.user_id is None
 
 
+def test_remote_nfc_capture_logs_out_and_keeps_valve_closed() -> None:
+    controller, hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.present_authenticated_card("user-1")
+
+    controller.begin_nfc_capture()
+
+    status = controller.snapshot()
+    assert status.state is TapState.NFC_CAPTURE
+    assert status.user_id is None
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.present_authenticated_card("user-2") is False
+    with pytest.raises(InvalidTransition):
+        controller.start_manual_pour()
+
+    controller.end_nfc_capture()
+    assert controller.snapshot().state is TapState.IDLE
+
+
+def test_remote_nfc_capture_end_never_releases_emergency_stop() -> None:
+    controller, hardware, _clock, _flow_meter, emergency_stop = tap_setup()
+    controller.begin_nfc_capture()
+    emergency_stop.trigger()
+
+    assert controller.poll().state is TapState.EMERGENCY_STOP
+    controller.end_nfc_capture()
+
+    assert controller.snapshot().state is TapState.EMERGENCY_STOP
+    assert hardware.valve.snapshot().is_open is False
+
+
 def test_missing_followup_pulses_lock_tap() -> None:
     controller, hardware, clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")

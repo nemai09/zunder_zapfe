@@ -11,8 +11,10 @@ geprüften Entwicklungsstand von Milestone 6. Gemäß
 er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
 
 Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Als
-vorläufiges Kioskverhalten soll er lediglich darauf hinweisen, dass die lokale
-Adminoberfläche deaktiviert ist. Die weitere Administration wird als
+Kioskverhalten weist er darauf hin, dass die lokale Adminoberfläche
+vorübergehend deaktiviert ist und ein Smartphone mit `ZUNDER_ZAPFE` verbunden
+werden soll. Ein Wechsel zu `ADMIN` findet dabei nicht statt. Die weitere
+Administration wird als
 responsive WebUI für Smartphones im lokalen Admin-WLAN umgesetzt. Ihre
 Zielarchitektur und der getrennte Passwortzugang stehen unter
 [`smartphone-admin-webui.md`](smartphone-admin-webui.md). Die Websitzung darf

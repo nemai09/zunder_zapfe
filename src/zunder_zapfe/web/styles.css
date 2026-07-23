@@ -191,6 +191,29 @@ button {
   gap: clamp(1rem, 5vw, 5rem);
 }
 
+.kiosk-toast {
+  position: fixed;
+  z-index: 30;
+  right: 1.25rem;
+  bottom: 2.5rem;
+  left: 1.25rem;
+  padding: .85rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: .8rem;
+  color: #fff;
+  background: #183d70;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.kiosk-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .eyebrow,
 .section-label {
   margin: 0 0 0.65rem;

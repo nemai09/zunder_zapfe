@@ -24,7 +24,8 @@ eine Weboberfläche für den Kioskbetrieb.
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
-| Admin-WebUI | Milestone 6: lokaler Adminmodus sowie Benutzer- und Armbandverwaltung auf dem Raspberry Pi geprüft |
+| Admin-WebUI | Milestone 7: persönliche Webauthentifizierung und responsive Smartphone-Benutzer-/Armbandverwaltung implementiert; Pi-Abnahme offen |
+| Admin-WLAN | Installer für eigenständiges `ZUNDER_ZAPFE` mit eingeschränktem Reverse Proxy implementiert; Pi-Abnahme offen |
 | Reale Zapfhardware | Noch nicht implementiert |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
@@ -85,6 +86,7 @@ dokumentiert:
 - [ACR122U-NFC-Leser](docs/operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](docs/operations/alpha-integration-test.md)
 - [SQLite-Diagnose](docs/operations/database-browser.md)
+- [Admin-WLAN und Smartphone-Zugang](docs/operations/admin-wifi.md)
 
 Die Anwendung lauscht standardmäßig nur auf `127.0.0.1` und benötigt zur
 Laufzeit keine Internetverbindung.
