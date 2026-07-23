@@ -11,18 +11,21 @@ from pathlib import Path
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe import __version__
 from zunder_zapfe.api_models import (
+    AdminAuditEntryResponse,
     AdminBeverageCreateRequest,
     AdminBeverageResponse,
     AdminBeverageUpdateRequest,
+    AdminBookingResponse,
     AdminEventCreateRequest,
     AdminEventResponse,
+    AdminEventStatisticsResponse,
     AdminEventUpdateRequest,
     AdminKegResponse,
     AdminKegSwitchRequest,
@@ -31,6 +34,7 @@ from zunder_zapfe.api_models import (
     AdminNfcCardStatusRequest,
     AdminSettingsResponse,
     AdminSettingsUpdateRequest,
+    AdminTechnicalEventResponse,
     AdminUserCreateRequest,
     AdminUserResponse,
     AdminUserUpdateRequest,
@@ -619,6 +623,88 @@ def create_app(
         identity = require_web_admin(request, write=True)
         return admin_service.switch_keg(
             **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/bookings",
+        response_model=list[AdminBookingResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_bookings(
+        request: Request,
+        event_id: int | None = Query(default=None, gt=0),
+        user_id: int | None = Query(default=None, gt=0),
+        keg_id: int | None = Query(default=None, gt=0),
+        kind: str | None = None,
+        completion: str | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int = Query(default=100, ge=1, le=500),
+    ) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_bookings(
+            event_id=event_id,
+            user_id=user_id,
+            keg_id=keg_id,
+            kind=kind,
+            completion=completion,
+            occurred_from=occurred_from,
+            occurred_to=occurred_to,
+            limit=limit,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/statistics",
+        response_model=AdminEventStatisticsResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_statistics(
+        request: Request,
+        event_id: int = Query(gt=0),
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request)
+        return admin_service.event_statistics(
+            event_id,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/audit",
+        response_model=list[AdminAuditEntryResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_audit(
+        request: Request,
+        entity_type: str | None = None,
+        action: str | None = None,
+        limit: int = Query(default=100, ge=1, le=500),
+    ) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_audit_entries(
+            entity_type=entity_type,
+            action=action,
+            limit=limit,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/technical-events",
+        response_model=list[AdminTechnicalEventResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_technical_events(
+        request: Request,
+        severity: str | None = None,
+        event_type: str | None = None,
+        limit: int = Query(default=100, ge=1, le=500),
+    ) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_technical_events(
+            severity=severity,
+            event_type=event_type,
+            limit=limit,
             admin_user_id=identity.user_id,
         )
 

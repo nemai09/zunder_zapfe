@@ -94,7 +94,7 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.3 OPS` | NetworkManager-Access-Point `ZUNDER_ZAPFE`, lokaler Webzugang und Pi-Verifikation |
 | `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
-| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik |
+| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
 | `M7.7 FEAT` | Einstellungen, Diagnose, Wartung und Safety-Reset |
 | `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
 

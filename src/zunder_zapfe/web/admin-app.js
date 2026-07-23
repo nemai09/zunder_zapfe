@@ -6,6 +6,10 @@ const model = {
   events: [],
   beverages: [],
   kegs: [],
+  bookings: [],
+  statistics: null,
+  auditEntries: [],
+  technicalEvents: [],
   selectedUserId: null,
   cards: [],
   captureActive: false,
@@ -74,6 +78,23 @@ const elements = {
   kegList: document.querySelector("#keg-list"),
   operationsActiveKeg: document.querySelector("#operations-active-keg"),
   operationsActiveKegDetail: document.querySelector("#operations-active-keg-detail"),
+  reportEvent: document.querySelector("#report-event"),
+  reportBookingCount: document.querySelector("#report-booking-count"),
+  reportVolume: document.querySelector("#report-volume"),
+  reportAmount: document.querySelector("#report-amount"),
+  reportMaintenance: document.querySelector("#report-maintenance"),
+  billingUserList: document.querySelector("#billing-user-list"),
+  bookingFilterForm: document.querySelector("#booking-filter-form"),
+  bookingUserFilter: document.querySelector("#booking-user-filter"),
+  bookingKegFilter: document.querySelector("#booking-keg-filter"),
+  bookingKindFilter: document.querySelector("#booking-kind-filter"),
+  bookingCompletionFilter: document.querySelector("#booking-completion-filter"),
+  bookingFromFilter: document.querySelector("#booking-from-filter"),
+  bookingToFilter: document.querySelector("#booking-to-filter"),
+  bookingResultCount: document.querySelector("#booking-result-count"),
+  bookingList: document.querySelector("#booking-list"),
+  auditList: document.querySelector("#audit-list"),
+  technicalEventList: document.querySelector("#technical-event-list"),
   captureDialog: document.querySelector("#capture-dialog"),
   captureInstruction: document.querySelector("#capture-instruction"),
   ownPasswordForm: document.querySelector("#own-password-form"),
@@ -146,6 +167,7 @@ function showView(name) {
     button.classList.toggle("is-active", button.dataset.navView === name);
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (name === "data") loadReporting();
 }
 
 async function loadLoginOptions() {
@@ -218,6 +240,7 @@ async function loadWorkspace() {
     elements.buildVersion.textContent = health.build;
     renderUsers();
     renderOperations();
+    renderReportingOptions();
     renderMetrics();
   } catch (error) {
     showToast(error.message, true);
@@ -569,6 +592,204 @@ function renderOperations() {
   renderKegs();
 }
 
+function renderReportingOptions() {
+  const selectedEventId = Number(elements.reportEvent.value);
+  elements.reportEvent.replaceChildren(new Option("Veranstaltung wählen", ""));
+  for (const event of model.events) {
+    elements.reportEvent.add(new Option(`${event.name} (${event.year})`, String(event.id)));
+  }
+  const activeEvent = model.events.find((event) => event.active);
+  elements.reportEvent.value = String(
+    model.events.some((event) => event.id === selectedEventId)
+      ? selectedEventId
+      : activeEvent?.id || model.events[0]?.id || "",
+  );
+
+  const selectedUserId = elements.bookingUserFilter.value;
+  elements.bookingUserFilter.replaceChildren(new Option("Alle Benutzer", ""));
+  for (const user of model.users) {
+    elements.bookingUserFilter.add(new Option(user.display_name, String(user.id)));
+  }
+  elements.bookingUserFilter.value = selectedUserId;
+
+  const selectedKegId = elements.bookingKegFilter.value;
+  elements.bookingKegFilter.replaceChildren(new Option("Alle Fässer", ""));
+  const eventId = Number(elements.reportEvent.value);
+  for (const keg of model.kegs.filter((item) => item.event_id === eventId)) {
+    elements.bookingKegFilter.add(
+      new Option(
+        `#${keg.id} · ${keg.beverage_name} · ${formatDateTime(keg.opened_at)}`,
+        String(keg.id),
+      ),
+    );
+  }
+  elements.bookingKegFilter.value = selectedKegId;
+}
+
+function dateFilterValue(input) {
+  return input.value ? new Date(input.value).toISOString() : "";
+}
+
+async function loadReporting() {
+  const eventId = Number(elements.reportEvent.value);
+  if (!eventId) {
+    model.statistics = null;
+    model.bookings = [];
+    model.auditEntries = [];
+    model.technicalEvents = [];
+    renderReporting();
+    return;
+  }
+  const params = new URLSearchParams({ event_id: String(eventId), limit: "100" });
+  const optionalFilters = {
+    user_id: elements.bookingUserFilter.value,
+    keg_id: elements.bookingKegFilter.value,
+    kind: elements.bookingKindFilter.value,
+    completion: elements.bookingCompletionFilter.value,
+    occurred_from: dateFilterValue(elements.bookingFromFilter),
+    occurred_to: dateFilterValue(elements.bookingToFilter),
+  };
+  for (const [key, value] of Object.entries(optionalFilters)) {
+    if (value) params.set(key, value);
+  }
+  try {
+    const [statistics, bookings, auditEntries, technicalEvents] = await Promise.all([
+      api(`/api/web-admin/statistics?event_id=${eventId}`),
+      api(`/api/web-admin/bookings?${params.toString()}`),
+      api("/api/web-admin/audit?limit=50"),
+      api("/api/web-admin/technical-events?limit=50"),
+    ]);
+    model.statistics = statistics;
+    model.bookings = bookings;
+    model.auditEntries = auditEntries;
+    model.technicalEvents = technicalEvents;
+    renderReporting();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+function dataRow(title, detail, badges = []) {
+  const row = recordRow(title, detail);
+  if (badges.length) {
+    const meta = document.createElement("div");
+    meta.className = "record-meta";
+    for (const item of badges) meta.append(badge(item.text, item.className || ""));
+    row.firstElementChild.append(meta);
+  }
+  return row;
+}
+
+function compactJson(value) {
+  if (value === null || value === undefined) return "keine Werte";
+  const text = JSON.stringify(value);
+  return text.length > 160 ? `${text.slice(0, 157)}…` : text;
+}
+
+function renderReporting() {
+  const statistics = model.statistics;
+  elements.reportBookingCount.textContent = statistics
+    ? String(statistics.booking_count)
+    : "–";
+  elements.reportVolume.textContent = statistics
+    ? formatLiters(statistics.chargeable_volume_ml)
+    : "–";
+  elements.reportAmount.textContent = statistics
+    ? formatEuros(statistics.amount_cents)
+    : "–";
+  elements.reportMaintenance.textContent = statistics
+    ? formatLiters(statistics.maintenance_volume_ml)
+    : "–";
+
+  elements.billingUserList.replaceChildren();
+  if (!statistics?.users.length) {
+    elements.billingUserList.append(
+      recordRow("Noch keine kostenpflichtigen Buchungen", "Für diese Veranstaltung."),
+    );
+  } else {
+    for (const summary of statistics.users) {
+      elements.billingUserList.append(
+        dataRow(
+          summary.user_display_name,
+          `${summary.booking_count} Buchungen · `
+            + `${formatLiters(summary.measured_volume_ml)} L`,
+          [{ text: formatEuros(summary.amount_cents), className: "admin" }],
+        ),
+      );
+    }
+  }
+
+  elements.bookingResultCount.textContent =
+    `${model.bookings.length} Buchungen angezeigt`;
+  elements.bookingList.replaceChildren();
+  if (!model.bookings.length) {
+    elements.bookingList.append(recordRow("Keine Buchungen", "Filter gegebenenfalls ändern."));
+  }
+  const kindLabels = {
+    manual: "Manuell",
+    portion: "Portion",
+    top_up: "Nachfüllen",
+    maintenance: "Wartung",
+    free_admin: "Adminfrei",
+  };
+  const completionLabels = {
+    target_reached: "Ziel erreicht",
+    released: "Losgelassen",
+    limit_reached: "Zeitlimit",
+    user_abort: "Abgebrochen",
+    fault: "Fehler",
+    shutdown: "Shutdown",
+  };
+  for (const booking of model.bookings) {
+    elements.bookingList.append(
+      dataRow(
+        `${booking.user_display_name} · ${formatLiters(booking.measured_volume_ml)} L`,
+        `${formatDateTime(booking.occurred_at)} · ${booking.beverage_name} · Fass #${booking.keg_id}`,
+        [
+          { text: kindLabels[booking.kind] || booking.kind },
+          { text: completionLabels[booking.completion] || booking.completion },
+          {
+            text: booking.chargeable ? formatEuros(booking.amount_cents) : "kostenfrei",
+            className: booking.chargeable ? "admin" : "",
+          },
+        ],
+      ),
+    );
+  }
+
+  elements.auditList.replaceChildren();
+  if (!model.auditEntries.length) {
+    elements.auditList.append(recordRow("Keine Auditaktionen", "Noch keine Einträge."));
+  }
+  for (const entry of model.auditEntries) {
+    const values = entry.new_values ?? entry.old_values;
+    elements.auditList.append(
+      dataRow(
+        entry.action,
+        `${formatDateTime(entry.occurred_at)} · ${entry.admin_display_name} · `
+          + `${entry.entity_type}${entry.entity_id ? ` #${entry.entity_id}` : ""} · `
+          + compactJson(values),
+      ),
+    );
+  }
+
+  elements.technicalEventList.replaceChildren();
+  if (!model.technicalEvents.length) {
+    elements.technicalEventList.append(
+      recordRow("Keine technischen Ereignisse", "Derzeit liegen keine Einträge vor."),
+    );
+  }
+  for (const entry of model.technicalEvents) {
+    elements.technicalEventList.append(
+      dataRow(
+        entry.message,
+        `${formatDateTime(entry.occurred_at)} · ${entry.event_type}`,
+        [{ text: entry.severity, className: entry.severity.toLowerCase() }],
+      ),
+    );
+  }
+}
+
 function renderEvents() {
   elements.eventList.replaceChildren();
   if (!model.events.length) {
@@ -827,6 +1048,15 @@ elements.beverageForm.addEventListener("submit", saveBeverage);
 document.querySelector("#reset-beverage-button").addEventListener("click", resetBeverageForm);
 elements.kegBeverage.addEventListener("change", applyBeverageDefaultVolume);
 elements.kegSwitchForm.addEventListener("submit", switchKeg);
+elements.reportEvent.addEventListener("change", () => {
+  renderReportingOptions();
+  loadReporting();
+});
+elements.bookingFilterForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadReporting();
+});
+document.querySelector("#refresh-reporting-button").addEventListener("click", loadReporting);
 document.querySelector("#capture-card-button").addEventListener("click", beginCapture);
 document.querySelector("#cancel-capture-button").addEventListener("click", () => stopCapture());
 elements.ownPasswordForm.addEventListener("submit", changeOwnPassword);

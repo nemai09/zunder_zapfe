@@ -117,6 +117,14 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 7. Der Kiosk bleibt parallel über `127.0.0.1:8000` funktionsfähig.
 8. Ein Neustart aktiviert Access Point, Backend und Kiosk erneut.
 9. WLAN- und Adminpasswörter erscheinen weder in Git-Diff noch Dienstlogs.
+10. Veranstaltungen und Getränke lassen sich anlegen und ein Fass lässt sich
+    nach bewusster Bestätigung wechseln.
+11. Der neue aktive Fasskontext erscheint anschließend im Kiosk und in der
+    Smartphone-Übersicht.
+12. Die Datenansicht trennt Buchungen und Summen nach Veranstaltung und
+    kombiniert Benutzer-, Fass-, Art-, Abschluss- und Zeitraumfilter.
+13. Audit und technische Ereignisse sind lesbar; Buchungen bieten weder
+    Bearbeiten noch Löschen an.
 
 ## Offizielle Referenzen
 

@@ -24,7 +24,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
-| Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer-/Armbandverwaltung sowie Veranstaltungen, Getränke und Fasswechsel implementiert; Pi-Abnahme offen |
+| Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer, Betrieb, Fasswechsel, Buchungen, Abrechnung und Protokolle implementiert; Pi-Abnahme offen |
 | Admin-WLAN | Installer für eigenständiges `ZUNDER_ZAPFE` mit eingeschränktem Reverse Proxy implementiert; Pi-Abnahme offen |
 | Reale Zapfhardware | Noch nicht implementiert |
 

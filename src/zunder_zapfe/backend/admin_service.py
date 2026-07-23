@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -12,7 +13,19 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend.tap_service import TapService
 from zunder_zapfe.hardware import HardwareLayer
-from zunder_zapfe.persistence.models import Beverage, Event, Keg, NfcCard, User, UserRole
+from zunder_zapfe.persistence.models import (
+    AdminAuditEntry,
+    Beverage,
+    BookingCompletion,
+    BookingKind,
+    Event,
+    Keg,
+    NfcCard,
+    TapBooking,
+    TechnicalEvent,
+    User,
+    UserRole,
+)
 from zunder_zapfe.persistence.repository import Repository, canonicalize_nfc_uid
 
 ADMIN_TIMEOUT_SETTING = "session.admin_timeout_seconds"
@@ -251,6 +264,125 @@ class AdminService:
         with self._sessions() as session:
             repository = Repository(session)
             return [self._keg_snapshot(repository, keg) for keg in repository.list_kegs()]
+
+    def list_bookings(
+        self,
+        *,
+        event_id: int | None = None,
+        user_id: int | None = None,
+        keg_id: int | None = None,
+        kind: str | None = None,
+        completion: str | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int = 100,
+        admin_user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        occurred_from = _as_utc(occurred_from)
+        occurred_to = _as_utc(occurred_to)
+        if occurred_from is not None and occurred_to is not None and occurred_to < occurred_from:
+            raise ValueError("Booking end must not be before its start")
+        booking_kind = BookingKind(kind) if kind is not None else None
+        booking_completion = BookingCompletion(completion) if completion is not None else None
+        with self._sessions() as session:
+            repository = Repository(session)
+            bookings = repository.list_tap_bookings(
+                event_id=event_id,
+                user_id=user_id,
+                keg_id=keg_id,
+                kind=booking_kind,
+                completion=booking_completion,
+                occurred_from=occurred_from,
+                occurred_to=occurred_to,
+                limit=limit,
+            )
+            return [self._booking_snapshot(session, booking) for booking in bookings]
+
+    def event_statistics(
+        self,
+        event_id: int,
+        *,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            repository = Repository(session)
+            event = repository.get_event(event_id)
+            bookings = repository.list_tap_bookings(event_id=event_id, limit=None)
+            user_totals: dict[int, dict[str, Any]] = {}
+            for booking in bookings:
+                if not booking.chargeable:
+                    continue
+                user = session.get(User, booking.user_id)
+                summary = user_totals.setdefault(
+                    booking.user_id,
+                    {
+                        "user_id": booking.user_id,
+                        "user_display_name": (
+                            user.display_name if user is not None else f"Benutzer {booking.user_id}"
+                        ),
+                        "booking_count": 0,
+                        "measured_volume_ml": 0,
+                        "amount_cents": 0,
+                    },
+                )
+                summary["booking_count"] += 1
+                summary["measured_volume_ml"] += booking.measured_volume_ml
+                summary["amount_cents"] += booking.amount_cents
+            return {
+                "event_id": event.id,
+                "event_name": event.name,
+                "booking_count": len(bookings),
+                "measured_volume_ml": sum(booking.measured_volume_ml for booking in bookings),
+                "chargeable_volume_ml": sum(
+                    booking.measured_volume_ml for booking in bookings if booking.chargeable
+                ),
+                "maintenance_volume_ml": sum(
+                    booking.measured_volume_ml
+                    for booking in bookings
+                    if booking.kind is BookingKind.MAINTENANCE
+                ),
+                "amount_cents": sum(booking.amount_cents for booking in bookings),
+                "users": sorted(
+                    user_totals.values(),
+                    key=lambda item: (-item["amount_cents"], item["user_display_name"]),
+                ),
+            }
+
+    def list_audit_entries(
+        self,
+        *,
+        entity_type: str | None = None,
+        action: str | None = None,
+        limit: int = 100,
+        admin_user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            entries = Repository(session).list_admin_audit_entries(
+                entity_type=entity_type,
+                action=action,
+                limit=limit,
+            )
+            return [self._audit_snapshot(session, entry) for entry in entries]
+
+    def list_technical_events(
+        self,
+        *,
+        severity: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+        admin_user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            entries = Repository(session).list_technical_events(
+                severity=severity,
+                event_type=event_type,
+                limit=limit,
+            )
+            return [self._technical_event_snapshot(entry) for entry in entries]
 
     def switch_keg(
         self,
@@ -615,8 +747,8 @@ class AdminService:
             "id": event.id,
             "name": event.name,
             "year": event.year,
-            "starts_at": event.starts_at.isoformat() if event.starts_at else None,
-            "ends_at": event.ends_at.isoformat() if event.ends_at else None,
+            "starts_at": _iso_utc(event.starts_at),
+            "ends_at": _iso_utc(event.ends_at),
             "active": event.active,
         }
 
@@ -643,8 +775,69 @@ class AdminService:
             "initial_volume_ml": keg.initial_volume_ml,
             "remaining_volume_ml": repository.remaining_keg_volume_ml(keg.id),
             "active": keg.active,
-            "opened_at": keg.opened_at.isoformat(),
-            "closed_at": keg.closed_at.isoformat() if keg.closed_at else None,
+            "opened_at": _iso_utc(keg.opened_at),
+            "closed_at": _iso_utc(keg.closed_at),
+        }
+
+    @staticmethod
+    def _booking_snapshot(session: Session, booking: TapBooking) -> dict[str, Any]:
+        event = session.get(Event, booking.event_id)
+        user = session.get(User, booking.user_id)
+        beverage = session.get(Beverage, booking.beverage_id)
+        return {
+            "id": booking.id,
+            "event_id": booking.event_id,
+            "event_name": event.name if event is not None else f"Event {booking.event_id}",
+            "user_id": booking.user_id,
+            "user_display_name": (
+                user.display_name if user is not None else f"Benutzer {booking.user_id}"
+            ),
+            "beverage_id": booking.beverage_id,
+            "beverage_name": (
+                beverage.name if beverage is not None else f"Getränk {booking.beverage_id}"
+            ),
+            "keg_id": booking.keg_id,
+            "occurred_at": _iso_utc(booking.occurred_at),
+            "target_volume_ml": booking.target_volume_ml,
+            "measured_volume_ml": booking.measured_volume_ml,
+            "measured_pulses": booking.measured_pulses,
+            "price_per_liter_cents": booking.price_per_liter_cents,
+            "amount_cents": booking.amount_cents,
+            "kind": booking.kind.value,
+            "completion": booking.completion.value,
+            "chargeable": booking.chargeable,
+        }
+
+    @staticmethod
+    def _audit_snapshot(session: Session, entry: AdminAuditEntry) -> dict[str, Any]:
+        admin = session.get(User, entry.admin_user_id)
+        return {
+            "id": entry.id,
+            "occurred_at": _iso_utc(entry.occurred_at),
+            "admin_user_id": entry.admin_user_id,
+            "admin_display_name": (
+                admin.display_name if admin is not None else f"Admin {entry.admin_user_id}"
+            ),
+            "action": entry.action,
+            "entity_type": entry.entity_type,
+            "entity_id": entry.entity_id,
+            "old_values": (
+                json.loads(entry.old_values_json) if entry.old_values_json is not None else None
+            ),
+            "new_values": (
+                json.loads(entry.new_values_json) if entry.new_values_json is not None else None
+            ),
+        }
+
+    @staticmethod
+    def _technical_event_snapshot(entry: TechnicalEvent) -> dict[str, Any]:
+        return {
+            "id": entry.id,
+            "occurred_at": _iso_utc(entry.occurred_at),
+            "severity": entry.severity,
+            "event_type": entry.event_type,
+            "message": entry.message,
+            "details": (json.loads(entry.details_json) if entry.details_json is not None else None),
         }
 
     @staticmethod
@@ -711,3 +904,8 @@ def _as_utc(value: datetime | None) -> datetime | None:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def _iso_utc(value: datetime | None) -> str | None:
+    normalized = _as_utc(value)
+    return normalized.isoformat() if normalized is not None else None

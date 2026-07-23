@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.5` implementiert; weitere Fachbereiche geplant
+Status: `M7.2` bis `M7.6` implementiert; Diagnose und Einstellungen geplant
 
 ## Ziel und Abgrenzung
 
@@ -145,12 +145,19 @@ inaktive Getränke, nichtpositive Volumen und widersprüchliche
 Aktivierungswechsel ab. Alle Änderungen werden mit dem angemeldeten Admin
 auditiert.
 
-### Buchungen und Abrechnung
+### Buchungen und Abrechnung (`M7.6`)
 
 - Buchungen nach Veranstaltung, Benutzer, Fass, Zeitraum, Art und Abschluss
   filtern;
 - Buchungsdetails und Summen pro Benutzer und Veranstaltung anzeigen;
 - Einzelabrechnung als nachvollziehbare Bildschirmansicht vorbereiten.
+
+Die Smartphone-Ansicht zeigt für eine gewählte Veranstaltung
+kostenpflichtige Mengen und Beträge je Benutzer, Gesamtmengen,
+Wartungsentnahmen sowie die neuesten Buchungen. Kombinierbare Filter umfassen
+Benutzer, Fass, Buchungsart, Abschluss und Zeitraum. Die Abfragen sind
+ausschließlich lesend und auf höchstens 500, in der WebUI auf 100,
+Buchungszeilen begrenzt.
 
 Abgeschlossene Zapfbuchungen bleiben unveränderlich. Bearbeiten und Löschen
 werden nicht angeboten. Storno, Korrektur und ein verbindliches Exportformat
@@ -172,22 +179,27 @@ verbindlichen Umfangs.
 - Wartungsmodus und gemessene, nicht berechnete Wartungsentnahme;
 - keine Umgehung von Not-Aus, Watchdogs oder Zustandsprüfungen.
 
-### Audit und Statistik
+### Audit und Statistik (`M7.6`)
 
 - Auditaktionen mit Admin, Zeitpunkt, Objekt und Änderung;
 - technische Ereignisse mit Schweregrad und Filter;
 - Verbrauch, Betrag und Mengen nach Veranstaltung, Benutzer, Getränk und Fass.
 
+Die WebUI zeigt jeweils die letzten 50 Audit- und technischen Ereignisse.
+Auditwerte enthalten den konkreten Admin und die gespeicherten alten
+beziehungsweise neuen Werte. Passwörter, Hashes und vollständige NFC-UIDs
+werden durch die schreibenden Fachservices weiterhin nicht protokolliert.
+
 ## Schnittstellen- und Datenarbeit
 
-Milestone 7 benötigt:
+Milestone 7 verwendet:
 
 - eine Migration für widerrufbare Websitzungen;
 - einen Authentifizierungsservice für Hashing, Login, Logout und Passwortpflege;
 - eine gemeinsame serverseitige Admin-Autorisierung;
 - listen- und filterfähige Repository-Operationen;
-- Verwaltungs-APIs für Veranstaltungen, Getränke, Fässer, Buchungen,
-  Einstellungen, Diagnose, Wartung, Audit und Statistik;
+- Verwaltungs-APIs für Veranstaltungen, Getränke, Fässer, Buchungen, Audit
+  und Statistik; Einstellungen, Diagnose und Wartung folgen in `M7.7`;
 - aktualisierte OpenAPI- und menschenlesbare Verträge.
 
 Bestehende Fachinvarianten bleiben bestehen: höchstens eine aktive

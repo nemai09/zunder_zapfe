@@ -225,6 +225,32 @@ laufendem Fass kann nicht unabhängig vom geführten Fasswechsel deaktiviert
 oder ausgetauscht werden. Änderungen an Veranstaltungen, Getränken und Fässern
 werden mit alten und neuen Werten auditiert.
 
+## Smartphone-Buchungen und Protokolle
+
+Alle folgenden Routen sind ausschließlich lesend und benötigen eine gültige
+Websitzung. Sie verändern weder Buchungen noch Audit- oder Technikprotokolle.
+
+| Methode und Pfad | Wirkung |
+| --- | --- |
+| `GET /api/web-admin/bookings` | Zapfbuchungen kombiniert filtern und neueste zuerst auflisten |
+| `GET /api/web-admin/statistics?event_id={id}` | Veranstaltungs-, Wartungs- und Abrechnungssummen je Benutzer liefern |
+| `GET /api/web-admin/audit` | Adminaktionen mit Admin, Objekt sowie alten und neuen Werten auflisten |
+| `GET /api/web-admin/technical-events` | technische Ereignisse mit Schweregrad und Details auflisten |
+
+`bookings` akzeptiert optional `event_id`, `user_id`, `keg_id`, `kind`,
+`completion`, `occurred_from` und `occurred_to`. `audit` kann nach
+`entity_type` und `action`, `technical-events` nach `severity` und
+`event_type` filtern. Alle Listen akzeptieren `limit` von 1 bis 500; die
+Smartphone-WebUI verwendet 100 Buchungen und jeweils 50 Protokolleinträge.
+Zeitwerte sind ISO-8601-Zeitpunkte. Mengen und Preise bleiben ganzzahlige
+Milliliter beziehungsweise Centwerte.
+
+Die Statistik zählt alle Vorgänge und weist kostenpflichtige Istmenge,
+Wartungsmenge sowie den gespeicherten Betrag getrennt aus. Benutzersummen
+enthalten ausschließlich kostenpflichtige Buchungen. Historische Namen bleiben
+auch nach dem fachlichen Löschen eines Benutzers auflösbar. Eine
+Buchungsänderungs- oder Löschroute existiert bewusst nicht.
+
 ## Wartung und Sicherheit
 
 | Methode und Pfad | Vorbedingung | Ergebnis |

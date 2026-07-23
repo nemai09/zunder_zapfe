@@ -1,6 +1,77 @@
 {
   "components": {
     "schemas": {
+      "AdminAuditEntryResponse": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "admin_display_name": {
+            "title": "Admin Display Name",
+            "type": "string"
+          },
+          "admin_user_id": {
+            "title": "Admin User Id",
+            "type": "integer"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "new_values": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Values"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "old_values": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Values"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "admin_user_id",
+          "admin_display_name",
+          "action",
+          "entity_type",
+          "entity_id",
+          "old_values",
+          "new_values"
+        ],
+        "title": "AdminAuditEntryResponse",
+        "type": "object"
+      },
       "AdminBeverageCreateRequest": {
         "properties": {
           "default_keg_size_ml": {
@@ -91,6 +162,107 @@
           "price_per_liter_cents"
         ],
         "title": "AdminBeverageUpdateRequest",
+        "type": "object"
+      },
+      "AdminBookingResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "beverage_id": {
+            "title": "Beverage Id",
+            "type": "integer"
+          },
+          "beverage_name": {
+            "title": "Beverage Name",
+            "type": "string"
+          },
+          "chargeable": {
+            "title": "Chargeable",
+            "type": "boolean"
+          },
+          "completion": {
+            "title": "Completion",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_name": {
+            "title": "Event Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "keg_id": {
+            "title": "Keg Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "measured_pulses": {
+            "title": "Measured Pulses",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "price_per_liter_cents": {
+            "title": "Price Per Liter Cents",
+            "type": "integer"
+          },
+          "target_volume_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Volume Ml"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "event_name",
+          "user_id",
+          "user_display_name",
+          "beverage_id",
+          "beverage_name",
+          "keg_id",
+          "occurred_at",
+          "target_volume_ml",
+          "measured_volume_ml",
+          "measured_pulses",
+          "price_per_liter_cents",
+          "amount_cents",
+          "kind",
+          "completion",
+          "chargeable"
+        ],
+        "title": "AdminBookingResponse",
         "type": "object"
       },
       "AdminEventCreateRequest": {
@@ -196,6 +368,57 @@
           "active"
         ],
         "title": "AdminEventResponse",
+        "type": "object"
+      },
+      "AdminEventStatisticsResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "booking_count": {
+            "title": "Booking Count",
+            "type": "integer"
+          },
+          "chargeable_volume_ml": {
+            "title": "Chargeable Volume Ml",
+            "type": "integer"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_name": {
+            "title": "Event Name",
+            "type": "string"
+          },
+          "maintenance_volume_ml": {
+            "title": "Maintenance Volume Ml",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          },
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUserStatisticsResponse"
+            },
+            "title": "Users",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_name",
+          "booking_count",
+          "measured_volume_ml",
+          "chargeable_volume_ml",
+          "maintenance_volume_ml",
+          "amount_cents",
+          "users"
+        ],
+        "title": "AdminEventStatisticsResponse",
         "type": "object"
       },
       "AdminEventUpdateRequest": {
@@ -435,6 +658,50 @@
         "title": "AdminSettingsUpdateRequest",
         "type": "object"
       },
+      "AdminTechnicalEventResponse": {
+        "properties": {
+          "details": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "severity",
+          "event_type",
+          "message",
+          "details"
+        ],
+        "title": "AdminTechnicalEventResponse",
+        "type": "object"
+      },
       "AdminUserCreateRequest": {
         "properties": {
           "first_name": {
@@ -549,6 +816,39 @@
           "active_nfc_card_count"
         ],
         "title": "AdminUserResponse",
+        "type": "object"
+      },
+      "AdminUserStatisticsResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "booking_count": {
+            "title": "Booking Count",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_display_name",
+          "booking_count",
+          "measured_volume_ml",
+          "amount_cents"
+        ],
+        "title": "AdminUserStatisticsResponse",
         "type": "object"
       },
       "AdminUserUpdateRequest": {
@@ -2718,6 +3018,114 @@
         "summary": "Stop Top Up"
       }
     },
+    "/api/web-admin/audit": {
+      "get": {
+        "operationId": "list_web_admin_audit_api_web_admin_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entity_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminAuditEntryResponse"
+                  },
+                  "title": "Response List Web Admin Audit Api Web Admin Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "List Web Admin Audit"
+      }
+    },
     "/api/web-admin/beverages": {
       "get": {
         "operationId": "list_web_admin_beverages_api_web_admin_beverages_get",
@@ -2923,6 +3331,199 @@
           }
         },
         "summary": "Update Web Admin Beverage"
+      }
+    },
+    "/api/web-admin/bookings": {
+      "get": {
+        "operationId": "list_web_admin_bookings_api_web_admin_bookings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "keg_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Keg Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "completion",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Completion"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminBookingResponse"
+                  },
+                  "title": "Response List Web Admin Bookings Api Web Admin Bookings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "List Web Admin Bookings"
       }
     },
     "/api/web-admin/events": {
@@ -3574,6 +4175,184 @@
           }
         },
         "summary": "Update Web Admin Settings"
+      }
+    },
+    "/api/web-admin/statistics": {
+      "get": {
+        "operationId": "web_admin_statistics_api_web_admin_statistics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Event Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventStatisticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Web Admin Statistics"
+      }
+    },
+    "/api/web-admin/technical-events": {
+      "get": {
+        "operationId": "list_web_admin_technical_events_api_web_admin_technical_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminTechnicalEventResponse"
+                  },
+                  "title": "Response List Web Admin Technical Events Api Web Admin Technical Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "List Web Admin Technical Events"
       }
     },
     "/api/web-admin/users": {

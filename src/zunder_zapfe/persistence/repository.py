@@ -452,6 +452,40 @@ class Repository:
         )
         return list(self.session.scalars(statement))
 
+    def list_tap_bookings(
+        self,
+        *,
+        event_id: int | None = None,
+        user_id: int | None = None,
+        keg_id: int | None = None,
+        kind: BookingKind | None = None,
+        completion: BookingCompletion | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int | None = 100,
+    ) -> list[TapBooking]:
+        statement = select(TapBooking)
+        if event_id is not None:
+            statement = statement.where(TapBooking.event_id == event_id)
+        if user_id is not None:
+            statement = statement.where(TapBooking.user_id == user_id)
+        if keg_id is not None:
+            statement = statement.where(TapBooking.keg_id == keg_id)
+        if kind is not None:
+            statement = statement.where(TapBooking.kind == kind)
+        if completion is not None:
+            statement = statement.where(TapBooking.completion == completion)
+        if occurred_from is not None:
+            statement = statement.where(TapBooking.occurred_at >= occurred_from)
+        if occurred_to is not None:
+            statement = statement.where(TapBooking.occurred_at <= occurred_to)
+        statement = statement.order_by(TapBooking.occurred_at.desc(), TapBooking.id.desc())
+        if limit is not None:
+            if not 1 <= limit <= 500:
+                raise ValueError("Booking limit must be between 1 and 500")
+            statement = statement.limit(limit)
+        return list(self.session.scalars(statement))
+
     def user_consumption(self, *, event_id: int, user_id: int) -> ConsumptionSummary:
         if self.session.get(Event, event_id) is None:
             raise LookupError(f"Event {event_id} does not exist")
@@ -549,6 +583,26 @@ class Repository:
         self.session.add(entry)
         return entry
 
+    def list_admin_audit_entries(
+        self,
+        *,
+        entity_type: str | None = None,
+        action: str | None = None,
+        limit: int = 100,
+    ) -> list[AdminAuditEntry]:
+        if not 1 <= limit <= 500:
+            raise ValueError("Audit limit must be between 1 and 500")
+        statement = select(AdminAuditEntry)
+        if entity_type is not None:
+            statement = statement.where(AdminAuditEntry.entity_type == entity_type)
+        if action is not None:
+            statement = statement.where(AdminAuditEntry.action == action)
+        statement = statement.order_by(
+            AdminAuditEntry.occurred_at.desc(),
+            AdminAuditEntry.id.desc(),
+        ).limit(limit)
+        return list(self.session.scalars(statement))
+
     def record_technical_event(
         self,
         *,
@@ -566,6 +620,26 @@ class Repository:
         self.session.add(entry)
         self.session.flush()
         return entry
+
+    def list_technical_events(
+        self,
+        *,
+        severity: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[TechnicalEvent]:
+        if not 1 <= limit <= 500:
+            raise ValueError("Technical event limit must be between 1 and 500")
+        statement = select(TechnicalEvent)
+        if severity is not None:
+            statement = statement.where(TechnicalEvent.severity == severity)
+        if event_type is not None:
+            statement = statement.where(TechnicalEvent.event_type == event_type)
+        statement = statement.order_by(
+            TechnicalEvent.occurred_at.desc(),
+            TechnicalEvent.id.desc(),
+        ).limit(limit)
+        return list(self.session.scalars(statement))
 
     def find_web_admin_session(self, token_hash: str) -> WebAdminSession | None:
         return self.session.scalar(

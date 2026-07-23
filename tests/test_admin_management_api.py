@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -21,8 +22,15 @@ from zunder_zapfe.hardware.simulators import (
 )
 from zunder_zapfe.main import create_app
 from zunder_zapfe.persistence.database import create_database_engine, create_session_factory
-from zunder_zapfe.persistence.models import AdminAuditEntry, Event, Keg, UserRole
-from zunder_zapfe.persistence.repository import Repository
+from zunder_zapfe.persistence.models import (
+    AdminAuditEntry,
+    BookingCompletion,
+    BookingKind,
+    Event,
+    Keg,
+    UserRole,
+)
+from zunder_zapfe.persistence.repository import NewTapBooking, Repository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADMIN_PASSWORD = "Alpha-Admin-2026"
@@ -208,3 +216,156 @@ def test_zz_sys_004_conflicting_master_data_is_rejected(
     assert (
         client.post("/api/web-admin/beverages", json=beverage, headers=headers).status_code == 422
     )
+
+
+def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterable(
+    management_api: tuple[TestClient, sessionmaker[Session], int],
+) -> None:
+    client, sessions, admin_id = management_api
+    occurred_at = datetime(2026, 7, 23, 18, 0, tzinfo=UTC)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        event = repository.create_event("Zunder 2026", 2026, active=True)
+        beverage = repository.create_beverage(
+            "Pils",
+            default_keg_size_ml=50_000,
+            price_per_liter_cents=450,
+        )
+        keg = repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=50_000,
+        )
+        user = repository.create_user("Berta", last_name="Bier")
+        repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=user.id,
+                beverage_id=beverage.id,
+                keg_id=keg.id,
+                occurred_at=occurred_at,
+                target_volume_ml=None,
+                measured_volume_ml=1_250,
+                measured_pulses=625,
+                price_per_liter_cents=450,
+                kind=BookingKind.MANUAL,
+                completion=BookingCompletion.RELEASED,
+                chargeable=True,
+            )
+        )
+        repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=admin_id,
+                beverage_id=beverage.id,
+                keg_id=keg.id,
+                occurred_at=occurred_at + timedelta(minutes=1),
+                target_volume_ml=500,
+                measured_volume_ml=500,
+                measured_pulses=250,
+                price_per_liter_cents=450,
+                kind=BookingKind.PORTION,
+                completion=BookingCompletion.TARGET_REACHED,
+                chargeable=True,
+            )
+        )
+        repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=admin_id,
+                beverage_id=beverage.id,
+                keg_id=keg.id,
+                occurred_at=occurred_at + timedelta(minutes=2),
+                target_volume_ml=None,
+                measured_volume_ml=250,
+                measured_pulses=125,
+                price_per_liter_cents=450,
+                kind=BookingKind.MAINTENANCE,
+                completion=BookingCompletion.RELEASED,
+                chargeable=False,
+            )
+        )
+        repository.record_admin_action(
+            admin_user_id=admin_id,
+            action="test.reviewed",
+            entity_type="booking",
+            entity_id="1",
+            new_values={"accepted": True},
+        )
+        repository.record_technical_event(
+            severity="warning",
+            event_type="test.sensor",
+            message="Simulierter Sensorhinweis",
+            details={"channel": 1},
+        )
+        event_id = event.id
+        user_id = user.id
+        keg_id = keg.id
+
+    assert client.get("/api/web-admin/bookings").status_code == 401
+    login(client, admin_id)
+    bookings = client.get(
+        "/api/web-admin/bookings",
+        params={
+            "event_id": event_id,
+            "user_id": user_id,
+            "keg_id": keg_id,
+            "kind": "manual",
+            "completion": "released",
+            "occurred_from": (occurred_at - timedelta(seconds=1)).isoformat(),
+            "occurred_to": (occurred_at + timedelta(seconds=1)).isoformat(),
+        },
+    )
+    assert bookings.status_code == 200
+    assert len(bookings.json()) == 1
+    assert bookings.json()[0] == {
+        "id": bookings.json()[0]["id"],
+        "event_id": event_id,
+        "event_name": "Zunder 2026",
+        "user_id": user_id,
+        "user_display_name": "Berta Bier",
+        "beverage_id": bookings.json()[0]["beverage_id"],
+        "beverage_name": "Pils",
+        "keg_id": keg_id,
+        "occurred_at": occurred_at.isoformat().replace("+00:00", "Z"),
+        "target_volume_ml": None,
+        "measured_volume_ml": 1_250,
+        "measured_pulses": 625,
+        "price_per_liter_cents": 450,
+        "amount_cents": 563,
+        "kind": "manual",
+        "completion": "released",
+        "chargeable": True,
+    }
+    assert client.get("/api/web-admin/bookings", params={"kind": "unbekannt"}).status_code == 422
+
+    statistics = client.get(
+        "/api/web-admin/statistics",
+        params={"event_id": event_id},
+    )
+    assert statistics.status_code == 200
+    assert statistics.json()["booking_count"] == 3
+    assert statistics.json()["measured_volume_ml"] == 2_000
+    assert statistics.json()["chargeable_volume_ml"] == 1_750
+    assert statistics.json()["maintenance_volume_ml"] == 250
+    assert statistics.json()["amount_cents"] == 788
+    assert {item["user_display_name"] for item in statistics.json()["users"]} == {
+        "Ada Admin",
+        "Berta Bier",
+    }
+
+    audit = client.get(
+        "/api/web-admin/audit",
+        params={"entity_type": "booking", "action": "test.reviewed"},
+    )
+    assert audit.status_code == 200
+    assert audit.json()[0]["admin_display_name"] == "Ada Admin"
+    assert audit.json()[0]["new_values"] == {"accepted": True}
+
+    technical = client.get(
+        "/api/web-admin/technical-events",
+        params={"severity": "warning", "event_type": "test.sensor"},
+    )
+    assert technical.status_code == 200
+    assert technical.json()[0]["message"] == "Simulierter Sensorhinweis"
+    assert technical.json()[0]["details"] == {"channel": 1}

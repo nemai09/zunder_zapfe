@@ -80,7 +80,11 @@
               <strong>Veranstaltung &amp; Fass</strong>
               <small>Stammdaten pflegen und Fass wechseln</small>
             </button>
-            <article class="area-card"><span>M7.6</span><strong>Buchungen &amp; Statistik</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+            <button class="area-card is-ready" type="button" data-open-view="data">
+              <span>Jetzt verfügbar</span>
+              <strong>Buchungen &amp; Statistik</strong>
+              <small>Abrechnung, Audit und technische Ereignisse</small>
+            </button>
             <article class="area-card"><span>M7.7</span><strong>Diagnose &amp; Einstellungen</strong><small>Folgt im nächsten Arbeitspaket</small></article>
           </div>
         </section>
@@ -192,6 +196,112 @@
           </div>
         </section>
 
+        <section class="view" data-view="data" aria-labelledby="data-title">
+          <div class="view-heading reporting-heading">
+            <div>
+              <p class="eyebrow">Daten</p>
+              <h1 id="data-title">Buchungen &amp; Statistik</h1>
+            </div>
+            <button class="button button-quiet button-small" id="refresh-reporting-button" type="button">Aktualisieren</button>
+          </div>
+
+          <section class="panel reporting-context">
+            <label for="report-event">Veranstaltung auswerten</label>
+            <select id="report-event"></select>
+          </section>
+
+          <div class="metric-grid report-metrics">
+            <article class="metric-card">
+              <span>Buchungen</span>
+              <strong id="report-booking-count">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Kostenpflichtig</span>
+              <strong id="report-volume">–</strong>
+              <small>Liter</small>
+            </article>
+            <article class="metric-card">
+              <span>Betrag</span>
+              <strong class="metric-text" id="report-amount">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Wartung</span>
+              <strong id="report-maintenance">–</strong>
+              <small>Liter</small>
+            </article>
+          </div>
+
+          <div class="report-grid">
+            <section class="panel report-section">
+              <h2>Abrechnung pro Benutzer</h2>
+              <p class="muted">Kostenpflichtige Istmengen der ausgewählten Veranstaltung.</p>
+              <div class="record-list" id="billing-user-list"></div>
+            </section>
+
+            <section class="panel report-section report-wide">
+              <div class="section-heading">
+                <div>
+                  <h2>Buchungen</h2>
+                  <p class="muted">Unveränderliche Vorgänge, neueste zuerst.</p>
+                </div>
+                <small class="muted">max. 100</small>
+              </div>
+              <form class="booking-filters" id="booking-filter-form">
+                <select id="booking-user-filter" aria-label="Benutzer filtern">
+                  <option value="">Alle Benutzer</option>
+                </select>
+                <select id="booking-keg-filter" aria-label="Fass filtern">
+                  <option value="">Alle Fässer</option>
+                </select>
+                <select id="booking-kind-filter" aria-label="Buchungsart filtern">
+                  <option value="">Alle Arten</option>
+                  <option value="manual">Manuell</option>
+                  <option value="portion">Portion</option>
+                  <option value="top_up">Nachfüllen</option>
+                  <option value="maintenance">Wartung</option>
+                  <option value="free_admin">Adminfrei</option>
+                </select>
+                <select id="booking-completion-filter" aria-label="Abschluss filtern">
+                  <option value="">Alle Abschlüsse</option>
+                  <option value="target_reached">Ziel erreicht</option>
+                  <option value="released">Losgelassen</option>
+                  <option value="limit_reached">Zeitlimit</option>
+                  <option value="user_abort">Abgebrochen</option>
+                  <option value="fault">Fehler</option>
+                  <option value="shutdown">Shutdown</option>
+                </select>
+                <input id="booking-from-filter" type="datetime-local" aria-label="Buchungen ab">
+                <input id="booking-to-filter" type="datetime-local" aria-label="Buchungen bis">
+                <button class="button button-secondary" type="submit">Filter anwenden</button>
+              </form>
+              <p class="result-count" id="booking-result-count"></p>
+              <div class="record-list dense-list" id="booking-list"></div>
+            </section>
+
+            <section class="panel report-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Admin-Audit</h2>
+                  <p class="muted">Nachvollziehbare Verwaltungsaktionen.</p>
+                </div>
+                <small class="muted">letzte 50</small>
+              </div>
+              <div class="record-list dense-list" id="audit-list"></div>
+            </section>
+
+            <section class="panel report-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Technische Ereignisse</h2>
+                  <p class="muted">Warnungen und Laufzeitmeldungen.</p>
+                </div>
+                <small class="muted">letzte 50</small>
+              </div>
+              <div class="record-list dense-list" id="technical-event-list"></div>
+            </section>
+          </div>
+        </section>
+
         <section class="view" data-view="account" aria-labelledby="account-title">
           <p class="eyebrow">Persönliches Konto</p>
           <h1 id="account-title">Passwort ändern</h1>
@@ -213,6 +323,7 @@
         <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
         <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
         <button type="button" data-nav-view="operations"><span>●</span>Betrieb</button>
+        <button type="button" data-nav-view="data"><span>●</span>Daten</button>
         <button type="button" data-nav-view="account"><span>●</span>Konto</button>
       </nav>
     </div>

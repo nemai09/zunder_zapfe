@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -218,6 +219,66 @@ class AdminKegResponse(BaseModel):
     active: bool
     opened_at: datetime
     closed_at: datetime | None
+
+
+class AdminBookingResponse(BaseModel):
+    id: int
+    event_id: int
+    event_name: str
+    user_id: int
+    user_display_name: str
+    beverage_id: int
+    beverage_name: str
+    keg_id: int
+    occurred_at: datetime
+    target_volume_ml: int | None
+    measured_volume_ml: int
+    measured_pulses: int
+    price_per_liter_cents: int
+    amount_cents: int
+    kind: str
+    completion: str
+    chargeable: bool
+
+
+class AdminUserStatisticsResponse(BaseModel):
+    user_id: int
+    user_display_name: str
+    booking_count: int
+    measured_volume_ml: int
+    amount_cents: int
+
+
+class AdminEventStatisticsResponse(BaseModel):
+    event_id: int
+    event_name: str
+    booking_count: int
+    measured_volume_ml: int
+    chargeable_volume_ml: int
+    maintenance_volume_ml: int
+    amount_cents: int
+    users: list[AdminUserStatisticsResponse]
+
+
+class AdminAuditEntryResponse(BaseModel):
+    id: int
+    occurred_at: datetime
+    admin_user_id: int
+    admin_display_name: str
+    action: str
+    entity_type: str
+    entity_id: str | None
+    old_values: Any | None
+    new_values: Any | None
+
+
+class AdminTechnicalEventResponse(BaseModel):
+    id: int
+    occurred_at: datetime
+    severity: str
+    event_type: str
+    message: str
+    details: Any | None
 
 
 class WebAdminLoginOptionResponse(BaseModel):

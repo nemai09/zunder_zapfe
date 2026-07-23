@@ -20,10 +20,10 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 | Benutzer/NFC | `create_user`, `get_user`, `list_users`, `list_web_admins`, `update_user`, `soft_delete_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
 | Websitzung | `find_web_admin_session`, `revoke_web_admin_sessions` | nur Token-Hash persistent; Widerruf bei Passwort- oder Rollenänderung |
 | Getränk/Fass | `create_beverage`, `get_beverage`, `list_beverages`, `update_beverage`, `activate_new_keg`, `get_keg`, `list_kegs`, `active_tap_context` | positive Mengen/Preise, höchstens ein aktives Fass und passender Kontext |
-| Buchung | `add_tap_booking`, `list_user_bookings` | Event und Getränk passen zum Fass |
+| Buchung | `add_tap_booking`, `list_user_bookings`, `list_tap_bookings` | Event und Getränk passen zum Fass; lesende Filter nach Event, Benutzer, Fass, Zeitraum, Art und Abschluss |
 | Summen | `user_consumption`, `remaining_keg_volume_ml` | ausschließlich persistierte Istmengen |
 | Einstellungen | `get_setting`, `set_setting` | aktiver Admin bei Änderung, Audit im selben Ablauf |
-| Audit/Diagnose | `record_admin_action`, `record_technical_event` | JSON-Details kanonisch serialisiert |
+| Audit/Diagnose | `record_admin_action`, `list_admin_audit_entries`, `record_technical_event`, `list_technical_events` | JSON-Details kanonisch serialisiert; lesende Filter und begrenzte Ergebnislisten |
 
 ## Datentypen und Einheiten
 

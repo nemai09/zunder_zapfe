@@ -227,6 +227,26 @@ button.user-card { border: 1px solid var(--line); }
 .active-context strong { display: block; margin: .25rem 0; }
 .subheading { margin-top: 1.5rem; }
 
+.reporting-heading { margin-bottom: 1rem; }
+.reporting-context { margin-bottom: 1rem; }
+.reporting-context label { margin-top: 0; }
+.report-metrics { margin-bottom: 1rem; }
+.report-grid { display: grid; gap: 1rem; }
+.report-section { max-width: none; }
+.report-section h2 { margin-bottom: .2rem; }
+.booking-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin: 1rem 0;
+}
+.booking-filters .button { grid-column: 1 / -1; margin-top: 0; }
+.dense-list .record-row { align-items: start; }
+.record-meta { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+.record-meta .badge { font-size: .66rem; }
+.badge.warning { color: #825400; background: #fff0c7; }
+.badge.error, .badge.critical { color: var(--red); background: var(--red-soft); }
+
 .sheet-backdrop, .capture-backdrop {
   position: fixed;
   z-index: 20;
@@ -273,12 +293,12 @@ button.user-card { border: 1px solid var(--line); }
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   padding: .45rem max(.5rem, env(safe-area-inset-right)) max(.45rem, env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-left));
   border-top: 1px solid var(--line);
   background: rgb(255 255 255 / 96%);
 }
-.bottom-nav button { display: grid; gap: .1rem; border: 0; color: var(--muted); background: transparent; font-size: .72rem; font-weight: 750; place-items: center; }
+.bottom-nav button { display: grid; gap: .1rem; border: 0; color: var(--muted); background: transparent; font-size: .68rem; font-weight: 750; place-items: center; }
 .bottom-nav button span { color: #c4ccc7; font-size: .7rem; }
 .bottom-nav button.is-active { color: var(--green); }
 .bottom-nav button.is-active span { color: var(--green); }
@@ -311,6 +331,10 @@ button.user-card { border: 1px solid var(--line); }
   .user-list { grid-template-columns: repeat(2, 1fr); }
   .management-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .management-wide { grid-column: 1 / -1; }
+  .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-wide { grid-column: 1 / -1; }
+  .booking-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .booking-filters .button { grid-column: auto; }
   .sheet-backdrop { align-items: center; padding: 2rem; }
   .sheet { max-height: calc(100vh - 4rem); border-radius: 1.4rem; }
   .panel { max-width: 34rem; padding: 1.4rem; }

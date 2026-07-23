@@ -44,6 +44,11 @@ Phase: Alpha-Entwicklung
   Aktivierung der Veranstaltung und Anlage des neuen Fasses
 - Fasshistorie, rechnerischer Restbestand sowie aktiver Veranstaltungs- und
   Fasskontext in der Smartphone-Übersicht
+- filterbare, ausschließlich lesende Smartphone-Buchungsansicht mit
+  Veranstaltungs-, Benutzer-, Fass-, Zeitraum-, Art- und Abschlussfilter
+- Veranstaltungs- und Benutzersummen für kostenpflichtige Istmengen und
+  Beträge mit getrennt ausgewiesener Wartungsentnahme
+- Smartphone-Ansichten für auditierte Adminaktionen und technische Ereignisse
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -55,7 +60,7 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
-Der lokale Stand nach `M7.5` umfasst 126 bestandene automatisierte Tests.
+Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -63,16 +68,16 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel und Sicherheitsreset | Buchungen, Diagnose und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle und Admin-WLAN-Installer | Adminbedienung und verbindliche Grenzwerte |
-| Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
+| Abrechnung | unveränderliche Buchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
 
 ## Nicht implementiert
 
 - vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
   Point, Login und NFC-Zuordnung
-- Verwaltungsoberflächen für Buchungen, Einstellungen, Diagnose und Wartung
+- Verwaltungsoberflächen für Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
