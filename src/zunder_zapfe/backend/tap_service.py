@@ -107,6 +107,7 @@ class TapService:
         self._authenticated_user: AuthenticatedUser | None = None
         self._pending_booking: _PendingBooking | None = None
         self._last_presented_uid: str | None = None
+        self._nfc_login_suppressed_until_removal = False
         self._nfc_feedback: str | None = None
         self._nfc_feedback_until: float | None = None
         self._last_state = TapState.STARTING
@@ -185,7 +186,12 @@ class TapService:
         if nfc.state != "card" or not nfc.uid:
             with self._mutex:
                 self._last_presented_uid = None
+                self._nfc_login_suppressed_until_removal = False
             return False
+
+        with self._mutex:
+            if self._nfc_login_suppressed_until_removal:
+                return False
 
         try:
             uid = canonicalize_nfc_uid(nfc.uid)
@@ -230,13 +236,16 @@ class TapService:
         with self._mutex:
             self._authenticated_user = None
             self._last_presented_uid = None
+            self._nfc_login_suppressed_until_removal = False
             self._clear_nfc_feedback()
         return self.status_dict()
 
     def end_remote_nfc_capture(self) -> dict[str, Any]:
-        self._controller.end_nfc_capture()
         with self._mutex:
+            self._controller.end_nfc_capture()
+            nfc = self._hardware.nfc.snapshot()
             self._last_presented_uid = None
+            self._nfc_login_suppressed_until_removal = nfc.state == "card"
             self._clear_nfc_feedback()
         return self.status_dict()
 

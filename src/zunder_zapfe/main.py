@@ -420,6 +420,15 @@ def create_app(
     ) -> dict[str, Any]:
         return admin_service.update_user(user_id, **request.model_dump())
 
+    @application.delete(
+        "/api/admin/users/{user_id}",
+        status_code=204,
+        responses=admin_responses,
+    )
+    async def delete_admin_user(user_id: int) -> Response:
+        admin_service.delete_user(user_id)
+        return Response(status_code=204)
+
     @application.get(
         "/api/admin/users/{user_id}/nfc-cards",
         response_model=list[AdminNfcCardResponse],
@@ -537,6 +546,16 @@ def create_app(
             **request_body.model_dump(),
             admin_user_id=identity.user_id,
         )
+
+    @application.delete(
+        "/api/web-admin/users/{user_id}",
+        status_code=204,
+        responses=web_admin_responses,
+    )
+    async def delete_web_admin_user(user_id: int, request: Request) -> Response:
+        identity = require_web_admin(request, write=True)
+        admin_service.delete_user(user_id, admin_user_id=identity.user_id)
+        return Response(status_code=204)
 
     @application.put(
         "/api/web-admin/users/{user_id}/password",

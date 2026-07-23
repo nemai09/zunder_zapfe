@@ -101,6 +101,8 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
         "users",
         "web_admin_sessions",
     }
+    user_columns = {column["name"] for column in inspect(migrated_engine).get_columns("users")}
+    assert "deleted_at" in user_columns
     command.check(alembic_config(str(migrated_engine.url)))
 
 
@@ -240,6 +242,28 @@ def test_web_admin_session_migration_preserves_existing_admin(tmp_path: Path) ->
         assert "web_admin_sessions" in inspect(migrated).get_table_names()
     finally:
         migrated.dispose()
+
+
+def test_user_ids_are_not_reused_after_a_physical_row_delete(
+    migrated_engine: Engine,
+) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        repository.create_user("Erster")
+        removed = repository.create_user("Zweiter")
+        removed_id = removed.id
+
+    with migrated_engine.begin() as connection:
+        users_ddl = connection.scalar(
+            text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'")
+        )
+        connection.execute(text("DELETE FROM users WHERE id = :user_id"), {"user_id": removed_id})
+    assert "AUTOINCREMENT" in str(users_ddl).upper()
+
+    with sessions.begin() as session:
+        created = Repository(session).create_user("Dritter")
+        assert created.id > removed_id
 
 
 def test_repository_persists_core_domain_and_calculates_amount(

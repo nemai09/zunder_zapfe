@@ -26,12 +26,16 @@ from zunder_zapfe.main import create_app
 from zunder_zapfe.persistence.database import create_database_engine, create_session_factory
 from zunder_zapfe.persistence.models import (
     AdminAuditEntry,
+    BookingCompletion,
+    BookingKind,
+    NfcCard,
+    TapBooking,
     TechnicalEvent,
     User,
     UserRole,
     WebAdminSession,
 )
-from zunder_zapfe.persistence.repository import Repository
+from zunder_zapfe.persistence.repository import NewTapBooking, Repository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADMIN_PASSWORD = "Alpha-Admin-2026"
@@ -336,6 +340,67 @@ def test_web_admin_can_assign_wristband_while_tap_is_safely_locked(
     assert cards[0]["uid_hint"] == "…C3D4"
 
 
+def test_zz_aut_004_assigned_wristband_must_be_removed_before_it_can_log_in(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    assert client.post(path, headers=headers).json()["state"] == "waiting"
+    client.post("/api/simulator/nfc/present", json={"uid": "A1B2C3D4"})
+    assert client.post(path, headers=headers).json()["state"] == "assigned"
+
+    still_present = client.post(
+        "/api/simulator/nfc/present",
+        json={"uid": "A1B2C3D4"},
+    )
+    assert still_present.json()["user_id"] is None
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+
+    assert client.post("/api/simulator/nfc/remove").status_code == 204
+    presented_again = client.post(
+        "/api/simulator/nfc/present",
+        json={"uid": "A1B2C3D4"},
+    )
+    assert presented_again.json()["user_id"] == str(ids["user_id"])
+
+
+def test_zz_aut_004_conflicting_remote_wristband_does_not_start_a_tap_session(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        repository.add_nfc_card(ids["user_id"], "A1B2C3D4")
+        other = repository.create_user("Nora", last_name="Neu")
+
+    path = f"/api/web-admin/users/{other.id}/nfc-cards/capture"
+    assert client.post(path, headers=headers).json()["state"] == "waiting"
+    client.post("/api/simulator/nfc/present", json={"uid": "A1B2C3D4"})
+
+    conflict = client.post(path, headers=headers)
+
+    assert conflict.status_code == 409
+    assert "already assigned" in conflict.json()["detail"]
+    still_present = client.post(
+        "/api/simulator/nfc/present",
+        json={"uid": "A1B2C3D4"},
+    )
+    assert still_present.json()["user_id"] is None
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+
+    assert client.post("/api/simulator/nfc/remove").status_code == 204
+    presented_again = client.post(
+        "/api/simulator/nfc/present",
+        json={"uid": "A1B2C3D4"},
+    )
+    assert presented_again.json()["user_id"] == str(ids["user_id"])
+
+
 def test_web_admin_can_cancel_remote_wristband_capture(
     web_admin_api: tuple[object, ...],
 ) -> None:
@@ -390,3 +455,100 @@ def test_remote_wristband_capture_times_out_and_releases_tap(
 
     assert client.get("/api/tap/status").json()["state"] == "idle"
     assert client.post(path, headers=headers).json()["state"] == "timed_out"
+
+
+def test_zz_aut_004_user_delete_preserves_bookings_and_never_reuses_id(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        target = repository.get_user(ids["user_id"])
+        target.role = UserRole.ADMIN
+        repository.add_nfc_card(ids["user_id"], "A1B2C3D4")
+        event = repository.create_event("Zunder 2026", 2026, active=True)
+        beverage = repository.create_beverage(
+            "Testbier",
+            default_keg_size_ml=50_000,
+            price_per_liter_cents=400,
+        )
+        keg = repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=50_000,
+        )
+        booking = repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=ids["user_id"],
+                beverage_id=beverage.id,
+                keg_id=keg.id,
+                occurred_at=datetime(2026, 7, 23, 12, 0, tzinfo=UTC),
+                target_volume_ml=None,
+                measured_volume_ml=400,
+                measured_pulses=200,
+                price_per_liter_cents=400,
+                kind=BookingKind.MANUAL,
+                completion=BookingCompletion.RELEASED,
+                chargeable=True,
+            )
+        )
+        booking_id = booking.id
+    target_auth = WebAuthService(sessions)
+    target_auth.set_initial_password(
+        user_id=ids["user_id"],
+        password=NEW_ADMIN_PASSWORD,
+    )
+    target_web_session_id = target_auth.login(
+        user_id=ids["user_id"],
+        password=NEW_ADMIN_PASSWORD,
+    ).identity.session_id
+
+    assert (
+        client.delete(
+            f"/api/web-admin/users/{ids['admin_id']}",
+            headers=headers,
+        ).status_code
+        == 409
+    )
+    capture_path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+    assert client.post(capture_path, headers=headers).json()["state"] == "waiting"
+    assert client.get("/api/tap/status").json()["state"] == "nfc_capture"
+    deleted = client.delete(
+        f"/api/web-admin/users/{ids['user_id']}",
+        headers=headers,
+    )
+    assert deleted.status_code == 204
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+    assert {user["id"] for user in client.get("/api/web-admin/users").json()} == {ids["admin_id"]}
+
+    with sessions() as session:
+        stored_user = session.get(User, ids["user_id"])
+        stored_booking = session.get(TapBooking, booking_id)
+        assert stored_user is not None
+        assert stored_user.deleted_at is not None
+        assert stored_user.active is False
+        assert stored_user.password_hash is None
+        assert stored_booking is not None
+        assert stored_booking.user_id == ids["user_id"]
+        assert session.scalar(select(NfcCard).where(NfcCard.user_id == ids["user_id"])) is None
+        target_web_session = session.get(WebAdminSession, target_web_session_id)
+        assert target_web_session is not None
+        assert target_web_session.revoked_at is not None
+        actions = list(session.scalars(select(AdminAuditEntry.action)))
+        assert "user.deleted" in actions
+
+    created = client.post(
+        "/api/web-admin/users",
+        json={
+            "first_name": "Später",
+            "last_name": None,
+            "note": None,
+            "is_admin": False,
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201
+    assert created.json()["id"] > ids["user_id"]

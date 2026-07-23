@@ -224,6 +224,7 @@ button.user-card { border: 1px solid var(--line); }
 .sheet-header h2 { margin-bottom: 0; }
 .icon-button { width: 2.7rem; height: 2.7rem; border: 0; border-radius: 50%; background: #eceeea; font-size: 1.6rem; }
 .editor-section { margin-top: 1.3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+.destructive-section .button { width: 100%; }
 .inline-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
 .card-list { display: grid; gap: .5rem; margin-top: .8rem; }
 .nfc-card { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .45rem; padding: .7rem; border-radius: .75rem; background: #f2f4f1; }

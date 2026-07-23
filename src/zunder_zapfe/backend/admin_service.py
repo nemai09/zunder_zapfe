@@ -173,6 +173,50 @@ class AdminService:
             )
             return self._user_snapshot(repository, user)
 
+    def delete_user(
+        self,
+        user_id: int,
+        *,
+        admin_user_id: int | None = None,
+    ) -> None:
+        admin_id = self._require_admin_id(admin_user_id)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            user = repository.get_user(user_id)
+            if user.id == admin_id:
+                raise AdminConflict("The active admin cannot delete itself")
+            if user.role is UserRole.ADMIN and user.active:
+                active_admins = session.scalar(
+                    select(func.count(User.id)).where(
+                        User.role == UserRole.ADMIN,
+                        User.active.is_(True),
+                        User.deleted_at.is_(None),
+                    )
+                )
+                if int(active_admins or 0) <= 1:
+                    raise AdminConflict("The last active admin cannot be deleted")
+            old_values = self._audited_user_values(user)
+            _user, removed_card_count = repository.soft_delete_user(
+                user_id,
+                deleted_at=datetime.now(UTC),
+            )
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="user.deleted",
+                entity_type="user",
+                entity_id=str(user.id),
+                old_values=old_values,
+                new_values={
+                    "active": False,
+                    "deleted": True,
+                    "removed_nfc_card_count": removed_card_count,
+                    "web_password_configured": False,
+                },
+            )
+        with self._mutex:
+            if self._capture is not None and self._capture.target_user_id == user_id:
+                self._cancel_capture_unlocked()
+
     def list_nfc_cards(
         self,
         user_id: int,

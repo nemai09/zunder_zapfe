@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.6
+Version: 0.7
 Stand: 2026-07-23
-Status: Milestone 7 geplant gemaess CR-002
+Status: Milestone 7 in Umsetzung gemaess CR-002
 
 1. ZWECK UND FORMAT
 ===================
@@ -100,10 +100,15 @@ am Geraet direkt dem ausgewaehlten Benutzer zugeordnet werden koennen; die UID
 darf dabei nicht manuell vom Webclient vorgegeben werden.
 Admins muessen eine bestehende Armbandzuordnung bewusst entfernen koennen,
 damit das Armband anschliessend einem anderen Benutzer zugewiesen werden kann.
+Admins muessen Benutzer loeschen koennen. Dabei muessen historische Buchungen
+und Protokollreferenzen erhalten bleiben. Eine einmal vergebene interne
+Benutzer-ID darf auch nach dem Loeschen niemals erneut vergeben werden.
 Abnahme: Ein Admin legt einen Benutzer an, startet die Zuordnung, legt ein
 bislang unbekanntes Armband kurz auf und kann den Benutzer danach damit
 anmelden. Nach bestaetigtem Entfernen der Zuordnung kann dasselbe Armband neu
-zugewiesen werden.
+zugewiesen werden. Nach dem Loeschen ist der Benutzer nicht mehr verwalt- oder
+anmeldbar, seine bisherigen Buchungen bleiben jedoch unter derselben internen
+ID erhalten und der naechste Benutzer erhaelt eine hoehere ID.
 
 [ZZ-AUT-005] Adminvergabe
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST

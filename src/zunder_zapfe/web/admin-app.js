@@ -40,6 +40,8 @@ const elements = {
   userIsAdmin: document.querySelector("#user-is-admin"),
   userActive: document.querySelector("#user-active"),
   userMessage: document.querySelector("#user-message"),
+  deleteUserSection: document.querySelector("#delete-user-section"),
+  deleteUserButton: document.querySelector("#delete-user-button"),
   passwordSection: document.querySelector("#password-section"),
   passwordState: document.querySelector("#password-state"),
   resetPasswordForm: document.querySelector("#reset-password-form"),
@@ -259,6 +261,12 @@ async function openUser(userId = null) {
   elements.userActive.checked = user ? user.active : true;
   elements.userActive.disabled = !user;
   elements.userMessage.textContent = "";
+  elements.deleteUserSection.hidden = !user;
+  elements.deleteUserButton.disabled = user?.id === model.session?.user_id;
+  elements.deleteUserButton.title =
+    user?.id === model.session?.user_id
+      ? "Der aktuell angemeldete Admin kann sich nicht selbst löschen."
+      : "";
   elements.passwordSection.hidden = !user?.is_admin;
   elements.cardsSection.hidden = !user;
   elements.passwordState.textContent = user?.has_password
@@ -311,6 +319,26 @@ async function loadCards() {
     renderCards();
   } catch (error) {
     elements.userMessage.textContent = error.message;
+  }
+}
+
+async function deleteUser() {
+  const user = selectedUser();
+  if (!user || user.id === model.session?.user_id) return;
+  const confirmed = window.confirm(
+    `${user.display_name} wirklich löschen?\n\n`
+      + "Armbandzuordnungen und Zugänge werden entfernt. "
+      + "Vorhandene Buchungen bleiben erhalten.",
+  );
+  if (!confirmed) return;
+  try {
+    await api(`/api/web-admin/users/${user.id}`, { method: "DELETE" });
+    closeUser();
+    model.selectedUserId = null;
+    await loadWorkspace();
+    showToast("Benutzer gelöscht. Vorhandene Buchungen bleiben erhalten.");
+  } catch (error) {
+    showToast(error.message, true);
   }
 }
 
@@ -489,6 +517,7 @@ document.querySelector("#logout-button").addEventListener("click", logout);
 document.querySelector("#new-user-button").addEventListener("click", () => openUser());
 document.querySelector("#close-user-sheet").addEventListener("click", closeUser);
 elements.userForm.addEventListener("submit", saveUser);
+elements.deleteUserButton.addEventListener("click", deleteUser);
 elements.resetPasswordForm.addEventListener("submit", resetPassword);
 elements.userSearch.addEventListener("input", renderUsers);
 elements.userFilter.addEventListener("change", renderUsers);

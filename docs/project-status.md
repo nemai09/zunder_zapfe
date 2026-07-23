@@ -34,6 +34,10 @@ Phase: Alpha-Entwicklung
   Passwort- und Armbandverwaltung
 - ventilgesperrte, zeitbegrenzte NFC-Live-Zuordnung vom Smartphone mit
   sichtbarem Kioskzustand
+- Capture-Armbänder bleiben nach Erfolg oder Konflikt bis zum Entfernen von
+  einer normalen Zapfanmeldung ausgeschlossen
+- fachliches Löschen von Benutzern bei erhaltenen Buchungen und dauerhaft
+  einmaligen internen Benutzer-IDs
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -45,7 +49,7 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
-Der lokale Stand nach `M7.4` umfasst 120 bestandene automatisierte Tests.
+Der lokale Stand nach `M7.4` umfasst 124 bestandene automatisierte Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 

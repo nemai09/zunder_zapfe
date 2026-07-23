@@ -23,6 +23,9 @@ Alle Personen bleiben Datensätze in `users`:
 - Admins: NFC-Armband für das Zapfen und eigenes Passwort für die WebUI;
 - Rolle und Aktivstatus gelten für beide Zugangswege gemeinsam;
 - eine Sperre oder Herabstufung beendet auch bestehende Websitzungen.
+- gelöschte Personen verschwinden aus der Verwaltung und verlieren
+  Armbänder, Passwort und Websitzungen; ihre interne Zeile bleibt für
+  historische Buchungen erhalten.
 
 Der Login zeigt die aktiven Admins als Auswahl und fordert das persönliche
 Passwort an. Damit ist kein zusätzliches dauerhaftes Login-Feld notwendig.
@@ -84,6 +87,9 @@ NFC-Leser:
    Backend.
 6. Das Backend ordnet das Armband zu, auditiert die Aktion ohne vollständige
    UID und hebt den Zuordnungszustand wieder auf.
+7. Das Armband muss vom Leser entfernt werden, bevor es durch erneutes Auflegen
+   eine normale Zapfsitzung beginnen kann. Das gilt auch nach einem
+   Zuordnungskonflikt.
 
 Der Smartphone-Client darf den Status dieses kurzlebigen Ablaufs abfragen. Das
 ist eine HTTP-Statusabfrage und kein erneutes Hardware-Polling. Timeout, Abbruch
@@ -110,7 +116,8 @@ Event, Fass, Störung und Summen werden mit den zugehörigen Fach-APIs in
 
 ### Benutzer und Armbänder (`M7.4`)
 
-- suchen, filtern, anlegen, bearbeiten, aktivieren und sperren;
+- suchen, filtern, anlegen, bearbeiten, aktivieren, sperren und fachlich
+  löschen;
 - Rolle vergeben oder entziehen;
 - NFC-Armband zuweisen, sperren und entfernen;
 - persönliches Adminpasswort setzen, ändern oder zurücksetzen;
@@ -119,6 +126,9 @@ Event, Fass, Störung und Summen werden mit den zugehörigen Fach-APIs in
 Die mobile Liste ist such- und filterbar und bleibt damit auch bei 20 bis 30
 Personen übersichtlich. Das Bearbeitungsformular erscheint als mobile
 Vollbreitenkarte und auf größeren Bildschirmen als begrenztes Dialogfenster.
+Beim Löschen weist eine Bestätigung darauf hin, dass vorhandene Buchungen
+erhalten bleiben. Der aktuell angemeldete Admin kann sich nicht selbst
+löschen.
 
 ### Veranstaltungen, Getränke und Fässer
 

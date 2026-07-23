@@ -120,12 +120,18 @@ class Repository:
 
     def get_user(self, user_id: int) -> User:
         user = self.session.get(User, user_id)
-        if user is None:
+        if user is None or user.deleted_at is not None:
             raise LookupError(f"User {user_id} does not exist")
         return user
 
     def list_users(self) -> list[User]:
-        return list(self.session.scalars(select(User).order_by(User.first_name, User.last_name)))
+        return list(
+            self.session.scalars(
+                select(User)
+                .where(User.deleted_at.is_(None))
+                .order_by(User.first_name, User.last_name)
+            )
+        )
 
     def list_web_admins(self) -> list[User]:
         return list(
@@ -135,6 +141,7 @@ class Repository:
                     User.role == UserRole.ADMIN,
                     User.active.is_(True),
                     User.password_hash.is_not(None),
+                    User.deleted_at.is_(None),
                 )
                 .order_by(User.first_name, User.last_name, User.id)
             )
@@ -160,6 +167,24 @@ class Repository:
         self.session.flush()
         return user
 
+    def soft_delete_user(
+        self,
+        user_id: int,
+        *,
+        deleted_at: datetime | None = None,
+    ) -> tuple[User, int]:
+        """Retire a user while preserving its immutable historical references."""
+        user = self.get_user(user_id)
+        cards = list(self.session.scalars(select(NfcCard).where(NfcCard.user_id == user_id)))
+        for card in cards:
+            self.session.delete(card)
+        user.active = False
+        user.password_hash = None
+        user.deleted_at = deleted_at or datetime.now(UTC)
+        self.revoke_web_admin_sessions(user.id, revoked_at=user.deleted_at)
+        self.session.flush()
+        return user, len(cards)
+
     def add_nfc_card(self, user_id: int, uid: str) -> NfcCard:
         self.get_user(user_id)
         card = NfcCard(user_id=user_id, uid=canonicalize_nfc_uid(uid), active=True)
@@ -174,7 +199,14 @@ class Repository:
         return card
 
     def find_nfc_card(self, uid: str) -> NfcCard | None:
-        return self.session.scalar(select(NfcCard).where(NfcCard.uid == canonicalize_nfc_uid(uid)))
+        return self.session.scalar(
+            select(NfcCard)
+            .join(User, User.id == NfcCard.user_id)
+            .where(
+                NfcCard.uid == canonicalize_nfc_uid(uid),
+                User.deleted_at.is_(None),
+            )
+        )
 
     def list_nfc_cards(self, user_id: int) -> list[NfcCard]:
         self.get_user(user_id)
@@ -203,6 +235,7 @@ class Repository:
                 NfcCard.uid == canonicalize_nfc_uid(uid),
                 NfcCard.active.is_(True),
                 User.active.is_(True),
+                User.deleted_at.is_(None),
             )
         )
         return self.session.scalar(statement)

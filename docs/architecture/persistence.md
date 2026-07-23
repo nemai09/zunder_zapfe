@@ -1,6 +1,6 @@
 # Persistenz und Datenmodell
 
-Stand: 2026-07-19
+Stand: 2026-07-23
 
 ## Ziel
 
@@ -19,8 +19,8 @@ Betroffen sind insbesondere `ZZ-SYS-003` bis `ZZ-SYS-006`, `ZZ-AUT-001` bis
 
 - `events` trennt Buchungen verschiedener Veranstaltungen und Jahre.
 - `users` speichert verpflichtenden Vornamen, optionalen Nachnamen und
-  Zusatztext sowie abgeleiteten Anzeigenamen, Status, Rolle und individuelle
-  Portionsgroesse.
+  Zusatztext sowie abgeleiteten Anzeigenamen, Status, Rolle, individuelle
+  Portionsgroesse und einen optionalen fachlichen Loeschzeitpunkt.
 - `nfc_cards` ordnet normalisierte Karten-UIDs aktiven Benutzern zu.
 - `beverages` speichert Sorte, Standard-Fassgroesse und Preis pro Liter.
 - `kegs` bildet einzelne angestochene Faesser und deren Startmenge ab.
@@ -51,6 +51,10 @@ Buchungen deshalb nicht.
 - Kostenfreie Buchungen besitzen den Betrag null.
 - Wartungsbuchungen sind nicht kostenpflichtig.
 - Abgeschlossene Zapfbuchungen koennen weder geaendert noch geloescht werden.
+- Benutzer werden nur fachlich geloescht: Die Benutzerzeile und historische
+  Referenzen bleiben erhalten, waehrend Karten und Zugangsmoeglichkeiten
+  entfernt werden.
+- Benutzer-IDs werden monoton vergeben und niemals wiederverwendet.
 - Schreibende Benutzer-, Armband- und Einstellungsaktionen erzeugen im selben
   fachlichen Ablauf einen `admin_audit_entries`-Datensatz. NFC-UIDs werden nicht
   in die Audit-JSON-Werte kopiert.

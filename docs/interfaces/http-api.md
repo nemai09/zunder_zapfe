@@ -117,6 +117,7 @@ ausführende Benutzer-ID.
 | `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
 | `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
 | `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
+| `DELETE /api/admin/users/{id}` | `204` | Benutzer fachlich löschen; historische Buchungen und ID bleiben erhalten |
 | `GET /api/admin/users/{id}/nfc-cards` | `AdminNfcCardResponse[]` | zugeordnete Armbänder mit maskiertem `uid_hint` |
 | `POST /api/admin/users/{id}/nfc-cards/capture` | `AdminNfcCaptureResponse` | `remove_card`, `waiting`, `reader_unavailable` oder `assigned` |
 | `DELETE /api/admin/nfc-capture` | `204` | laufende Live-Zuordnung abbrechen |
@@ -132,6 +133,9 @@ Admin-Armband nicht versehentlich zugeordnet werden. Vollständige UIDs werden
 weder in Adminantworten noch in Admin-Auditwerten ausgegeben.
 Eine entfernte UID darf danach neu zugeordnet werden. Das letzte aktive
 Armband eines aktiven Admins kann weder gesperrt noch entfernt werden.
+Ein zugeordnetes oder bereits anderweitig vergebenes Armband wird nach Ende
+des Capture-Ablaufs nicht als Anmeldung behandelt. Es muss zuerst physisch vom
+Leser entfernt und für eine spätere Anmeldung erneut aufgelegt werden.
 
 ## Smartphone-Webauthentifizierung
 
@@ -169,6 +173,7 @@ lokalen Verwaltungs-API.
 | `GET /api/web-admin/users` | Benutzer und maskierten Armbandstatus auflisten |
 | `POST /api/web-admin/users` | Benutzer anlegen |
 | `PATCH /api/web-admin/users/{id}` | Profil, Rolle und Aktivstatus ändern |
+| `DELETE /api/web-admin/users/{id}` | Benutzer fachlich löschen; Buchungen und interne ID erhalten |
 | `PUT /api/web-admin/users/{id}/password` | persönliches Passwort eines anderen aktiven Admins setzen oder zurücksetzen |
 | `GET /api/web-admin/users/{id}/nfc-cards` | maskierte Armbandzuordnungen lesen |
 | `POST /api/web-admin/users/{id}/nfc-cards/capture` | ventilgesperrte Live-Zuordnung starten oder deren Status lesen |
@@ -185,6 +190,15 @@ bis Erfolg, Abbruch oder serverseitigem Timeout ignoriert. Mögliche
 Antwortzustände sind `remove_card`, `waiting`, `reader_unavailable`,
 `assigned` und `timed_out`. Die Smartphone-Abfragen lesen nur diesen
 kurzlebigen Ablauf; der ACR122U selbst bleibt ereignisgesteuert.
+Nach Erfolg oder Zuordnungskonflikt bleibt die dabei aufgelegte Karte bis zum
+physischen Entfernen für die normale NFC-Anmeldung unterdrückt. Der
+Capture-Ablauf selbst kann daher niemals eine Zapfsitzung beginnen.
+
+Beim Löschen eines Benutzers entfernt die Fachlogik dessen Armbänder,
+Passwort und aktive Websitzungen. Die Benutzerzeile wird mit einem
+Löschzeitpunkt erhalten und aus der Verwaltung ausgeblendet, damit
+unveränderliche Buchungen weiterhin eindeutig referenzierbar bleiben. Der
+angemeldete Admin darf sich nicht selbst löschen.
 
 ## Wartung und Sicherheit
 
