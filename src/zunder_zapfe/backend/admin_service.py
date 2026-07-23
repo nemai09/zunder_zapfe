@@ -377,7 +377,8 @@ class AdminService:
             )
             grouped: dict[str, list[TapBooking]] = {}
             for booking in bookings:
-                grouped.setdefault(booking.login_session_id, []).append(booking)
+                group_key = booking.login_session_id or f"maintenance-{booking.id}"
+                grouped.setdefault(group_key, []).append(booking)
             return [
                 self._booking_session_snapshot(session, session_bookings)
                 for session_bookings in list(grouped.values())[:limit]
@@ -395,7 +396,9 @@ class AdminService:
             event = repository.get_event(event_id)
             bookings = repository.list_tap_bookings(event_id=event_id, limit=None)
             user_totals: dict[int, dict[str, Any]] = {}
-            booking_sessions = {booking.login_session_id for booking in bookings}
+            booking_sessions = {
+                booking.login_session_id or f"maintenance-{booking.id}" for booking in bookings
+            }
             for booking in bookings:
                 if not booking.chargeable:
                     continue
@@ -911,7 +914,13 @@ class AdminService:
             "event_name": event.name if event is not None else f"Event {booking.event_id}",
             "user_id": booking.user_id,
             "user_display_name": (
-                user.display_name if user is not None else f"Benutzer {booking.user_id}"
+                user.display_name
+                if user is not None
+                else (
+                    "Superadmin-Wartung"
+                    if booking.user_id is None
+                    else f"Benutzer {booking.user_id}"
+                )
             ),
             "beverage_id": booking.beverage_id,
             "beverage_name": (
@@ -942,13 +951,17 @@ class AdminService:
             booking.beverage_id: session.get(Beverage, booking.beverage_id) for booking in bookings
         }
         return {
-            "session_id": first.login_session_id,
+            "session_id": first.login_session_id or f"maintenance-{first.id}",
             "first_booking_id": first.id,
             "event_id": first.event_id,
             "event_name": event.name if event is not None else f"Event {first.event_id}",
             "user_id": first.user_id,
             "user_display_name": (
-                user.display_name if user is not None else f"Benutzer {first.user_id}"
+                user.display_name
+                if user is not None
+                else (
+                    "Superadmin-Wartung" if first.user_id is None else f"Benutzer {first.user_id}"
+                )
             ),
             "started_at": _iso_utc(min(booking.occurred_at for booking in bookings)),
             "ended_at": _iso_utc(max(booking.occurred_at for booking in bookings)),
@@ -976,13 +989,16 @@ class AdminService:
 
     @staticmethod
     def _audit_snapshot(session: Session, entry: AdminAuditEntry) -> dict[str, Any]:
-        admin = session.get(User, entry.admin_user_id)
+        admin = session.get(User, entry.admin_user_id) if entry.admin_user_id is not None else None
         return {
             "id": entry.id,
             "occurred_at": _iso_utc(entry.occurred_at),
+            "actor_kind": entry.actor_kind,
             "admin_user_id": entry.admin_user_id,
             "admin_display_name": (
-                admin.display_name if admin is not None else f"Admin {entry.admin_user_id}"
+                "Superadmin"
+                if entry.actor_kind == "superadmin"
+                else (admin.display_name if admin is not None else f"Admin {entry.admin_user_id}")
             ),
             "action": entry.action,
             "entity_type": entry.entity_type,

@@ -50,6 +50,7 @@ class BookingCompletion(StrEnum):
     LIMIT_REACHED = "limit_reached"
     FAULT = "fault"
     SHUTDOWN = "shutdown"
+    CARD_REMOVED = "card_removed"
 
 
 def enum_type(enum_class: type[StrEnum], name: str) -> Enum:
@@ -184,13 +185,19 @@ class TapBooking(Base):
             "kind != 'maintenance' OR chargeable = 0",
             name="ck_tap_bookings_maintenance_not_chargeable",
         ),
+        CheckConstraint(
+            "(user_id IS NOT NULL AND login_session_id IS NOT NULL) OR "
+            "(user_id IS NULL AND login_session_id IS NULL "
+            "AND kind = 'maintenance' AND chargeable = 0)",
+            name="ck_tap_bookings_actor_context",
+        ),
         Index("ix_tap_bookings_event_user", "event_id", "user_id"),
         Index("ix_tap_bookings_login_session", "login_session_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="RESTRICT"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
     beverage_id: Mapped[int] = mapped_column(ForeignKey("beverages.id", ondelete="RESTRICT"))
     keg_id: Mapped[int] = mapped_column(ForeignKey("kegs.id", ondelete="RESTRICT"), index=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
@@ -204,7 +211,7 @@ class TapBooking(Base):
         enum_type(BookingCompletion, "booking_completion")
     )
     chargeable: Mapped[bool] = mapped_column(Boolean)
-    login_session_id: Mapped[str] = mapped_column(String(64))
+    login_session_id: Mapped[str | None] = mapped_column(String(64))
 
 
 class Setting(Base):
@@ -222,10 +229,18 @@ class Setting(Base):
 
 class AdminAuditEntry(Base):
     __tablename__ = "admin_audit_entries"
+    __table_args__ = (
+        CheckConstraint(
+            "(actor_kind = 'user_admin' AND admin_user_id IS NOT NULL) OR "
+            "(actor_kind = 'superadmin' AND admin_user_id IS NULL)",
+            name="ck_admin_audit_entries_actor",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-    admin_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    actor_kind: Mapped[str] = mapped_column(String(20))
+    admin_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
     action: Mapped[str] = mapped_column(String(120))
     entity_type: Mapped[str] = mapped_column(String(80))
     entity_id: Mapped[str | None] = mapped_column(String(80))

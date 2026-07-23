@@ -68,7 +68,7 @@ class AuthenticatedUser:
 @dataclass(frozen=True)
 class _PendingBooking:
     event_id: int
-    user_id: int
+    user_id: int | None
     beverage_id: int
     keg_id: int
     target_volume_ml: int | None
@@ -217,7 +217,10 @@ class TapService:
     def process_nfc_snapshot(self) -> bool:
         controller_state = self._controller.snapshot().state
         nfc = self._hardware.nfc.snapshot()
-        if controller_state is TapState.SUPERADMIN:
+        if controller_state in {
+            TapState.SUPERADMIN,
+            TapState.SUPERADMIN_MAINTENANCE_POURING,
+        }:
             return self._process_superadmin_presence(nfc)
         if controller_state is TapState.NFC_CAPTURE:
             return False
@@ -256,7 +259,11 @@ class TapService:
     def require_superadmin_presence(self) -> None:
         status = self._controller.snapshot()
         nfc = self._hardware.nfc.snapshot()
-        if status.state is not TapState.SUPERADMIN or nfc.state != "card" or not nfc.uid:
+        if (
+            status.state not in {TapState.SUPERADMIN, TapState.SUPERADMIN_MAINTENANCE_POURING}
+            or nfc.state != "card"
+            or not nfc.uid
+        ):
             raise PermissionError("A presented superadmin card is required")
         try:
             canonical_uid = canonicalize_nfc_uid(nfc.uid)
@@ -393,6 +400,25 @@ class TapService:
     def exit_maintenance(self) -> None:
         self._controller.exit_maintenance()
 
+    def start_superadmin_maintenance_pour(self) -> dict[str, Any]:
+        self.require_superadmin_presence()
+        self._prepare_superadmin_maintenance_booking()
+        try:
+            self._controller.start_superadmin_maintenance_pour()
+        except Exception:
+            with self._mutex:
+                self._pending_booking = None
+            raise
+        return self.status_dict()
+
+    def stop_superadmin_maintenance_pour(self) -> PourRecord:
+        self.require_superadmin_presence()
+        return self._controller.stop_superadmin_maintenance_pour()
+
+    def superadmin_heartbeat(self) -> None:
+        self.require_superadmin_presence()
+        self._controller.heartbeat()
+
     def heartbeat(self) -> None:
         self._controller.heartbeat()
 
@@ -455,7 +481,11 @@ class TapService:
                     "last_booking": self._last_booking,
                     "nfc_feedback": nfc_feedback,
                     "registration_welcome": registration_welcome,
-                    "superadmin_active": status["state"] is TapState.SUPERADMIN,
+                    "superadmin_active": status["state"]
+                    in {
+                        TapState.SUPERADMIN,
+                        TapState.SUPERADMIN_MAINTENANCE_POURING,
+                    },
                     "measured_volume_ml": self._calibration.measured_volume_ml(
                         int(status["measured_pulses"])
                     ),
@@ -589,15 +619,44 @@ class TapService:
             self._pending_booking = pending
             return pending
 
+    def _prepare_superadmin_maintenance_booking(self) -> _PendingBooking:
+        with self._mutex:
+            if self._pending_booking is not None:
+                raise TapUnavailable("A booking is already pending")
+            with self._sessions() as session:
+                repository = Repository(session)
+                context = self._require_active_context(repository)
+                if repository.remaining_keg_volume_ml(context.keg_id) <= 0:
+                    raise TapUnavailable("The active keg has no calculated remaining volume")
+            pending = _PendingBooking(
+                event_id=context.event_id,
+                user_id=None,
+                beverage_id=context.beverage_id,
+                keg_id=context.keg_id,
+                target_volume_ml=None,
+                price_per_liter_cents=context.price_per_liter_cents,
+            )
+            self._pending_booking = pending
+            return pending
+
     def _persist_record(self, record: PourRecord) -> None:
         with self._mutex:
             pending = self._pending_booking
             login_session_id = self._login_session_id
-            if (
-                pending is None
-                or login_session_id is None
-                or record.user_id != str(pending.user_id)
-            ):
+            user_context_matches = pending is not None and (
+                (
+                    pending.user_id is not None
+                    and login_session_id is not None
+                    and record.user_id == str(pending.user_id)
+                )
+                or (
+                    pending.user_id is None
+                    and login_session_id is None
+                    and record.user_id is None
+                    and not record.chargeable
+                )
+            )
+            if not user_context_matches or pending is None:
                 self._persistence_error = "Persistent booking context is missing or inconsistent"
                 self._controller.lock_for_fault("Zapfbuchung konnte nicht zugeordnet werden")
                 return
@@ -605,7 +664,8 @@ class TapService:
             measured_volume_ml = self._calibration.measured_volume_ml(record.measured_pulses)
             try:
                 with self._sessions.begin() as session:
-                    booking = Repository(session).add_tap_booking(
+                    repository = Repository(session)
+                    booking = repository.add_tap_booking(
                         NewTapBooking(
                             event_id=pending.event_id,
                             user_id=pending.user_id,
@@ -622,6 +682,17 @@ class TapService:
                             login_session_id=login_session_id,
                         )
                     )
+                    if pending.user_id is None:
+                        repository.record_superadmin_action(
+                            action="maintenance.poured",
+                            entity_type="tap_booking",
+                            entity_id=str(booking.id),
+                            new_values={
+                                "measured_volume_ml": booking.measured_volume_ml,
+                                "completion": booking.completion.value,
+                                "keg_id": booking.keg_id,
+                            },
+                        )
                     booking_snapshot = {
                         "id": booking.id,
                         "measured_volume_ml": booking.measured_volume_ml,

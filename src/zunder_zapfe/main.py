@@ -174,7 +174,11 @@ def create_app(
 
     @application.middleware("http")
     async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
-        local_only = request.url.path == "/system" or request.url.path.startswith("/api/admin/")
+        local_only = (
+            request.url.path == "/system"
+            or request.url.path.startswith("/api/admin/")
+            or request.url.path.startswith("/api/system/")
+        )
         if local_only and not _is_loopback_request(request):
             return JSONResponse(
                 status_code=403,
@@ -1006,6 +1010,31 @@ def create_app(
     @application.post("/api/tap/heartbeat", status_code=204)
     async def heartbeat() -> Response:
         tap_service.heartbeat()
+        return Response(status_code=204)
+
+    @application.post(
+        "/api/system/maintenance/start",
+        response_model=TapStatusResponse,
+        responses=conflict_response,
+    )
+    async def start_superadmin_maintenance_pour() -> dict[str, Any]:
+        return tap_service.start_superadmin_maintenance_pour()
+
+    @application.post(
+        "/api/system/maintenance/stop",
+        response_model=PourRecordResponse,
+        responses=conflict_response,
+    )
+    async def stop_superadmin_maintenance_pour() -> dict[str, Any]:
+        return asdict(tap_service.stop_superadmin_maintenance_pour())
+
+    @application.post(
+        "/api/system/maintenance/heartbeat",
+        status_code=204,
+        responses=conflict_response,
+    )
+    async def superadmin_maintenance_heartbeat() -> Response:
+        tap_service.superadmin_heartbeat()
         return Response(status_code=204)
 
     @application.post("/api/tap/poll", response_model=TapStatusResponse)

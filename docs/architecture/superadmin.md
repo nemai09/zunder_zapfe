@@ -31,16 +31,16 @@ Das Einrichtungswerkzeug `zunder-zapfe-superadmin-card`:
 
 ## Laufzeitzustände
 
-Der Zustand `SUPERADMIN` ist seit M7.9 ausführbar. Die dargestellten
-Folgezustände für Wartung und Übergabe werden im nächsten Checkpoint ergänzt.
+Die Zustände `SUPERADMIN` und `SUPERADMIN_MAINTENANCE_POURING` sind seit M7.9
+ausführbar. Die dargestellte NFC-Übergabe wird in M7.10 ergänzt.
 
 ```mermaid
 stateDiagram-v2
     [*] --> IDLE
     IDLE --> SUPERADMIN: konfigurierte Karte liegt auf
-    SUPERADMIN --> SUPERADMIN_MAINTENANCE: Zapffläche gehalten
-    SUPERADMIN_MAINTENANCE --> SUPERADMIN: losgelassen
-    SUPERADMIN_MAINTENANCE --> IDLE: Karte oder Leser entfernt<br/>Ventil zuerst schließen
+    SUPERADMIN --> SUPERADMIN_MAINTENANCE_POURING: Zapffläche gehalten
+    SUPERADMIN_MAINTENANCE_POURING --> SUPERADMIN: losgelassen
+    SUPERADMIN_MAINTENANCE_POURING --> IDLE: Karte oder Leser entfernt<br/>Ventil zuerst schließen
     SUPERADMIN --> PROVISIONING_HANDOVER: Notfallanlage bewusst gestartet
     PROVISIONING_HANDOVER --> IDLE: Erfolg, Konflikt, Abbruch oder 15 s Timeout
     SUPERADMIN --> IDLE: Karte oder Leser entfernt
@@ -82,9 +82,11 @@ Damit gelten gleichzeitig:
 - unveränderlicher Messdatensatz,
 - nachvollziehbarer Abschluss bei Kartenentfernung oder Fehler.
 
-Das dafür notwendige Persistenz- und Auditmodell folgt in M7.9 per
-Alembic-Migration als nächster Teil dieses Arbeitspakets. Eine zweite
-Ventilsteuerung außerhalb des `TapController` ist unzulässig.
+Die Migration `f6b942d7183c` erlaubt ausschließlich nicht kostenpflichtige
+Wartungsentnahmen ohne `user_id` und `login_session_id`. Sie erweitert das
+Audit um den technischen Akteur `superadmin`, ohne eine Benutzer-ID zu
+erfinden. Eine zweite Ventilsteuerung außerhalb des `TapController` ist
+unzulässig.
 
 ## Notfallanlage
 
@@ -107,8 +109,8 @@ auditierte Fachoperationen.
 ## Implementierungsreihenfolge
 
 1. `M7.8 PLAN/FEAT`: CR-003, externe Identität, lokale Provisionierung.
-2. `M7.9 FEAT`: präsenzgebundener Backendzustand und beidseitige
-   Kartenkollisionssperre; anschließend actorfähiges Audit und
-   Wartungsentnahme ohne Benutzer.
+2. `M7.9 DB/FEAT`: präsenzgebundener Backendzustand, beidseitige
+   Kartenkollisionssperre, actorfähiges Audit und Wartungsentnahme ohne
+   Benutzer.
 3. `M7.10 UI`: Low-Level-Menü, Admin-Toast, Notfallanlage, Wartung, Diagnose.
 4. `M7.11 TEST`: Schnittstellen-, Safety-, Neustart- und Raspberry-Pi-Abnahme.

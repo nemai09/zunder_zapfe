@@ -285,9 +285,18 @@ Buchungsänderungs- oder Löschroute existiert bewusst nicht.
 | `POST /api/tap/maintenance/stop` | `maintenance_pouring` | Istmenge wird kostenfrei gebucht |
 | `POST /api/tap/maintenance/exit` | `maintenance` | `204`, zurück zu `authenticated` |
 | `POST /api/tap/safety/reset` | verriegelt, Ursache behoben, aktive Admin-Karte liegt auf | Zustand `idle`, keine Sitzung |
+| `POST /api/system/maintenance/start` | Loopback, Zustand `superadmin`, konfigurierte Karte liegt physisch auf | benutzerlose Wartungsmessung startet |
+| `POST /api/system/maintenance/heartbeat` | Loopback, laufende Superadmin-Wartung, Karte liegt physisch auf | Steuerungs-Watchdog aktualisieren |
+| `POST /api/system/maintenance/stop` | Loopback, laufende Superadmin-Wartung, Karte liegt physisch auf | Ventil schließen und kostenfrei ohne Benutzer buchen |
 
 Beim Sicherheitsreset werden weder UID, Benutzer-ID noch Admin-Flag im Request
 übergeben. Ein aktiver Not-Aus verhindert den Reset.
+
+Die drei `/api/system/maintenance/*`-Routen akzeptieren keine Identität im
+Request. Sie prüfen bei jedem Aufruf den Backendzustand und die aktuelle
+Hardwarepräsenz. Karten- oder Leserentfernung beendet eine laufende Messung
+nach einer Sekunde Entprellung serverseitig mit `card_removed`; das Ventil wird
+vor Persistenz und Zustandswechsel geschlossen.
 
 ## Verbrauch und Fass
 

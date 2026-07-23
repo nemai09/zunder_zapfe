@@ -1,6 +1,6 @@
 # Backend-Core-Integration
 
-Stand: 2026-07-19
+Stand: 2026-07-24
 
 ## Ziel
 
@@ -47,12 +47,18 @@ Superadmin-Identität. Eine Übereinstimmung erzeugt den benutzerlosen Zustand
 Armbandzuordnung verwenden dieselbe Identität als Reservierung und lehnen sie
 vor jedem Datenbankschreibzugriff ab.
 
+Aus `SUPERADMIN` darf ausschließlich die Wartungsentnahme in
+`SUPERADMIN_MAINTENANCE_POURING` wechseln. Sie verwendet denselben
+`TapController`, besitzt aber weder Benutzersitzung noch Loginzyklus.
+Kartenentfernung beendet den Vorgang nach kurzer Entprellung mit geschlossenem
+Ventil und dem Abschluss `card_removed`.
+
 ## Buchungssnapshot
 
 Beim Start jeder manuellen Zapfung, Portion, Nachfuellung oder Wartungszapfung werden folgende
 Werte festgehalten:
 
-- Benutzer-ID,
+- Benutzer-ID bei Benutzerzapfungen; `NULL` bei Superadmin-Wartung,
 - aktive Veranstaltung,
 - aktives Fass und Getraenk,
 - zu diesem Zeitpunkt gueltiger Preis,
@@ -95,8 +101,9 @@ Sitzung in `IDLE`; fuer eine Anmeldung muss die Karte erneut aufgelegt werden.
 
 ## Lokale API
 
-Die API bietet Sitzung, manuelles Zapfen, kompatible Portion und Nachfuellen, Wartung, Sicherheitsreset,
-Verbrauch und Fassstatus fuer die naechsten UI-Schritte. Der vollstaendige
+Die API bietet Sitzung, manuelles Zapfen, kompatible Portion und Nachfuellen,
+Benutzer- und Superadmin-Wartung, Sicherheitsreset, Verbrauch und Fassstatus
+fuer die naechsten UI-Schritte. Der vollstaendige
 menschlich lesbare Vertrag liegt unter
 [`docs/interfaces/http-api.md`](../interfaces/http-api.md), die aus der
 Anwendung generierte OpenAPI-Spezifikation unter

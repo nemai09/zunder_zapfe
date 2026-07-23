@@ -7,13 +7,24 @@
             "title": "Action",
             "type": "string"
           },
+          "actor_kind": {
+            "title": "Actor Kind",
+            "type": "string"
+          },
           "admin_display_name": {
             "title": "Admin Display Name",
             "type": "string"
           },
           "admin_user_id": {
-            "title": "Admin User Id",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admin User Id"
           },
           "entity_id": {
             "anyOf": [
@@ -61,6 +72,7 @@
         "required": [
           "id",
           "occurred_at",
+          "actor_kind",
           "admin_user_id",
           "admin_display_name",
           "action",
@@ -207,8 +219,15 @@
             "type": "string"
           },
           "login_session_id": {
-            "title": "Login Session Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Login Session Id"
           },
           "measured_pulses": {
             "title": "Measured Pulses",
@@ -243,8 +262,15 @@
             "type": "string"
           },
           "user_id": {
-            "title": "User Id",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
           }
         },
         "required": [
@@ -351,8 +377,15 @@
             "type": "string"
           },
           "user_id": {
-            "title": "User Id",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
           }
         },
         "required": [
@@ -1409,8 +1442,15 @@
             "title": "Target Pulses"
           },
           "user_id": {
-            "title": "User Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
           }
         },
         "required": [
@@ -2929,6 +2969,83 @@
           }
         },
         "summary": "Session Status"
+      }
+    },
+    "/api/system/maintenance/heartbeat": {
+      "post": {
+        "operationId": "superadmin_maintenance_heartbeat_api_system_maintenance_heartbeat_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Superadmin Maintenance Heartbeat"
+      }
+    },
+    "/api/system/maintenance/start": {
+      "post": {
+        "operationId": "start_superadmin_maintenance_pour_api_system_maintenance_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Start Superadmin Maintenance Pour"
+      }
+    },
+    "/api/system/maintenance/stop": {
+      "post": {
+        "operationId": "stop_superadmin_maintenance_pour_api_system_maintenance_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PourRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          }
+        },
+        "summary": "Stop Superadmin Maintenance Pour"
       }
     },
     "/api/tap/heartbeat": {

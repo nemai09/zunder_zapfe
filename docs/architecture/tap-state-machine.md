@@ -15,6 +15,7 @@ stateDiagram-v2
     state "Benutzer angemeldet<br/>AUTHENTICATED" as AUTHENTICATED
     state "Lokale Administration<br/>ADMIN" as ADMIN
     state "Superadmin-Karte präsent<br/>SUPERADMIN" as SUPERADMIN
+    state "Superadmin-Wartungszapfung<br/>SUPERADMIN_MAINTENANCE_POURING" as SUPERADMIN_MAINTENANCE_POURING
     state "Armbandzuordnung<br/>NFC_CAPTURE" as NFC_CAPTURE
     state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
@@ -33,6 +34,9 @@ stateDiagram-v2
     IDLE --> AUTHENTICATED: bekannte aktive Karte
     IDLE --> SUPERADMIN: externe Superadmin-Karte<br/>Ventil geschlossen
     SUPERADMIN --> IDLE: Karte oder Leser 1 s abwesend
+    SUPERADMIN --> SUPERADMIN_MAINTENANCE_POURING: Wartungszapffläche gehalten
+    SUPERADMIN_MAINTENANCE_POURING --> SUPERADMIN: losgelassen<br/>kostenfrei ohne Benutzer buchen
+    SUPERADMIN_MAINTENANCE_POURING --> IDLE: Karte oder Leser 1 s abwesend<br/>Ventil zuerst schließen
     AUTHENTICATED --> IDLE: Logout oder Inaktivität
     AUTHENTICATED --> ADMIN: Admin öffnet Verwaltung<br/>Ventil bleibt geschlossen
     ADMIN --> AUTHENTICATED: Zurück zum Zapfen
@@ -62,6 +66,7 @@ stateDiagram-v2
     MANUAL_POURING --> FAULT_LOCKED: Durchfluss- oder Watchdogfehler
     TOP_UP_POURING --> FAULT_LOCKED: Durchfluss- oder Watchdogfehler
     MAINTENANCE_POURING --> FAULT_LOCKED: Durchfluss-, Zeit- oder Watchdogfehler
+    SUPERADMIN_MAINTENANCE_POURING --> FAULT_LOCKED: Durchfluss-, Zeit- oder Watchdogfehler
     FAULT_LOCKED --> IDLE: Ursache behoben und Admin-Reset
     FAULT_LOCKED --> EMERGENCY_STOP: Not-Aus
 
@@ -69,6 +74,7 @@ stateDiagram-v2
     AUTHENTICATED --> EMERGENCY_STOP: Not-Aus
     ADMIN --> EMERGENCY_STOP: Not-Aus
     SUPERADMIN --> EMERGENCY_STOP: Not-Aus
+    SUPERADMIN_MAINTENANCE_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     NFC_CAPTURE --> EMERGENCY_STOP: Not-Aus
     MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
@@ -99,6 +105,9 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
 | `IDLE` | konfigurierte Superadmin-Karte | externe Identität stimmt | `SUPERADMIN` | keine Benutzersitzung; Ventil geschlossen halten |
 | `SUPERADMIN` | Karte oder Leser bestätigt abwesend | 1 s Entprellung | `IDLE` | lokale Berechtigung vollständig löschen |
+| `SUPERADMIN` | `start_superadmin_maintenance_pour` | Karte physisch präsent, aktiver Fasskontext | `SUPERADMIN_MAINTENANCE_POURING` | Messung nullen, Ventil öffnen |
+| `SUPERADMIN_MAINTENANCE_POURING` | `stop_superadmin_maintenance_pour` | Karte physisch präsent | `SUPERADMIN` | Ventil schließen, kostenfrei ohne Benutzer-/Loginreferenz buchen |
+| `SUPERADMIN_MAINTENANCE_POURING` | Karte oder Leser bestätigt abwesend | 1 s Entprellung | `IDLE` | Ventil zuerst schließen, Abschluss `card_removed` speichern, Berechtigung löschen |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
 | `AUTHENTICATED` | Touchaktivität | – | `AUTHENTICATED` | Inaktivitätszeit zurücksetzen |
 | `AUTHENTICATED` | `enter_admin_mode` | Admin | `ADMIN` | Ventil schließen, Admin-Timeout starten |
@@ -155,8 +164,9 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
    starten keine Kiosksitzung. Sein Ende hebt keinen Safety-Lock auf.
 9. `SUPERADMIN` besitzt weder Benutzer-ID noch normale Adminsitzung. Eine
    gleichlautende UID in der Benutzerdatenbank wird nicht zur Anmeldung
-   verwendet. Der Zustand hält das Ventil geschlossen; Wartungszapfung und
-   NFC-Übergabe werden erst als eigene kontrollierte Folgezustände ergänzt.
+   verwendet. Ausschließlich `SUPERADMIN_MAINTENANCE_POURING` darf das Ventil
+   öffnen; dabei bleiben alle Safety-Grenzen aktiv. Die NFC-Übergabe folgt als
+   eigener kontrollierter Zustand.
 
 ## Integration und verbleibende Grenzen
 

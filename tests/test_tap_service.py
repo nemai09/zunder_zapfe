@@ -34,6 +34,7 @@ from zunder_zapfe.persistence.database import (
     create_session_factory,
 )
 from zunder_zapfe.persistence.models import (
+    AdminAuditEntry,
     Beverage,
     BookingCompletion,
     BookingKind,
@@ -242,6 +243,53 @@ def test_zz_aut_013_014_superadmin_card_has_precedence_and_requires_presence(
             )
         assert "superadmin.session_started" in event_types
         assert "superadmin.session_ended" in event_types
+    finally:
+        stop_service(service, hardware)
+
+
+def test_zz_mnt_002_superadmin_maintenance_tracks_stock_without_user(
+    database: tuple[Engine, sessionmaker[Session]],
+    tmp_path: Path,
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    clock = ManualClock()
+    service, hardware, nfc, flow_meter = start_service(
+        sessions,
+        clock,
+        superadmin_identity=_superadmin_identity(tmp_path),
+    )
+    try:
+        nfc.present_card("D00DCAFE")
+        assert service.process_nfc_snapshot() is True
+        service.start_superadmin_maintenance_pour()
+        flow_meter.add_pulses(5)
+        record = service.stop_superadmin_maintenance_pour()
+
+        assert record.user_id is None
+        assert record.chargeable is False
+        assert service.status_dict()["state"] is TapState.SUPERADMIN
+        assert service.status_dict()["superadmin_active"] is True
+
+        service.start_superadmin_maintenance_pour()
+        flow_meter.add_pulses(3)
+        nfc.remove_card()
+        assert service.process_nfc_snapshot() is False
+        clock.advance(1.1)
+        assert service.process_nfc_snapshot() is True
+        assert hardware.valve.snapshot().is_open is False
+        assert service.status_dict()["state"] is TapState.IDLE
+
+        with sessions() as session:
+            bookings = list(session.scalars(select(TapBooking).order_by(TapBooking.id)))
+            audits = list(session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)))
+        assert [booking.user_id for booking in bookings] == [None, None]
+        assert [booking.login_session_id for booking in bookings] == [None, None]
+        assert [booking.measured_volume_ml for booking in bookings] == [10, 6]
+        assert [booking.amount_cents for booking in bookings] == [0, 0]
+        assert bookings[-1].completion is BookingCompletion.CARD_REMOVED
+        assert [entry.actor_kind for entry in audits] == ["superadmin", "superadmin"]
+        assert service.current_keg()["remaining_volume_ml"] == 49_984
     finally:
         stop_service(service, hardware)
 

@@ -32,7 +32,7 @@ from zunder_zapfe.persistence.models import (
 @dataclass(frozen=True)
 class NewTapBooking:
     event_id: int
-    user_id: int
+    user_id: int | None
     beverage_id: int
     keg_id: int
     occurred_at: datetime
@@ -43,7 +43,7 @@ class NewTapBooking:
     kind: BookingKind
     completion: BookingCompletion
     chargeable: bool
-    login_session_id: str = field(default_factory=lambda: uuid4().hex)
+    login_session_id: str | None = field(default_factory=lambda: uuid4().hex)
 
 
 @dataclass(frozen=True)
@@ -439,10 +439,24 @@ class Repository:
             raise LookupError(f"Keg {values.keg_id} does not exist")
         if keg.event_id != values.event_id or keg.beverage_id != values.beverage_id:
             raise ValueError("Booking event and beverage must match the selected keg")
-        if self.session.get(User, values.user_id) is None:
-            raise LookupError(f"User {values.user_id} does not exist")
-        if not values.login_session_id.strip() or len(values.login_session_id) > 64:
-            raise ValueError("Login session ID must contain between 1 and 64 characters")
+        if values.user_id is None:
+            if (
+                values.kind is not BookingKind.MAINTENANCE
+                or values.chargeable
+                or values.login_session_id is not None
+            ):
+                raise ValueError(
+                    "A userless booking must be non-chargeable maintenance without a login session"
+                )
+        else:
+            if self.session.get(User, values.user_id) is None:
+                raise LookupError(f"User {values.user_id} does not exist")
+            if (
+                values.login_session_id is None
+                or not values.login_session_id.strip()
+                or len(values.login_session_id) > 64
+            ):
+                raise ValueError("Login session ID must contain between 1 and 64 characters")
         amount_cents = (
             calculate_amount_cents(values.measured_volume_ml, values.price_per_liter_cents)
             if values.chargeable
@@ -582,7 +596,29 @@ class Repository:
     ) -> AdminAuditEntry:
         self._require_active_admin(admin_user_id)
         entry = AdminAuditEntry(
+            actor_kind="user_admin",
             admin_user_id=admin_user_id,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            old_values_json=_json(old_values) if old_values is not None else None,
+            new_values_json=_json(new_values) if new_values is not None else None,
+        )
+        self.session.add(entry)
+        return entry
+
+    def record_superadmin_action(
+        self,
+        *,
+        action: str,
+        entity_type: str,
+        entity_id: str | None,
+        old_values: Any = None,
+        new_values: Any = None,
+    ) -> AdminAuditEntry:
+        entry = AdminAuditEntry(
+            actor_kind="superadmin",
+            admin_user_id=None,
             action=action,
             entity_type=entity_type,
             entity_id=entity_id,

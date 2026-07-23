@@ -107,7 +107,14 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     booking_columns = {
         column["name"]: column for column in inspect(migrated_engine).get_columns("tap_bookings")
     }
-    assert booking_columns["login_session_id"]["nullable"] is False
+    assert booking_columns["user_id"]["nullable"] is True
+    assert booking_columns["login_session_id"]["nullable"] is True
+    audit_columns = {
+        column["name"]: column
+        for column in inspect(migrated_engine).get_columns("admin_audit_entries")
+    }
+    assert audit_columns["actor_kind"]["nullable"] is False
+    assert audit_columns["admin_user_id"]["nullable"] is True
     command.check(alembic_config(str(migrated_engine.url)))
 
 
@@ -189,6 +196,14 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
                 ),
                 {"timestamp": timestamp},
             )
+            connection.execute(
+                text(
+                    "INSERT INTO admin_audit_entries "
+                    "(id, occurred_at, admin_user_id, action, entity_type) "
+                    "VALUES (1, :timestamp, 1, 'legacy.action', 'legacy')"
+                ),
+                {"timestamp": timestamp},
+            )
         booking_id = 1
     finally:
         engine.dispose()
@@ -202,8 +217,26 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
             assert booking is not None
             assert booking.kind is BookingKind.PORTION
             assert booking.login_session_id == "legacy-1"
+            audit = session.get(AdminAuditEntry, 1)
+            assert audit is not None
+            assert audit.actor_kind == "user_admin"
+            assert audit.admin_user_id == 1
     finally:
         migrated.dispose()
+
+    command.downgrade(config, "e18c4f45a501")
+    downgraded = create_database_engine(url)
+    try:
+        assert "actor_kind" not in {
+            column["name"] for column in inspect(downgraded).get_columns("admin_audit_entries")
+        }
+        booking_columns = {
+            column["name"]: column for column in inspect(downgraded).get_columns("tap_bookings")
+        }
+        assert booking_columns["user_id"]["nullable"] is False
+        assert booking_columns["login_session_id"]["nullable"] is False
+    finally:
+        downgraded.dispose()
 
 
 def test_user_profile_migration_backfills_existing_display_name(tmp_path: Path) -> None:
@@ -304,6 +337,68 @@ def test_repository_persists_core_domain_and_calculates_amount(
         assert bookings[0].measured_volume_ml == 400
         assert bookings[0].amount_cents == 160
         assert repository.remaining_keg_volume_ml(keg_id) == 49_600
+
+
+def test_superadmin_maintenance_has_no_user_or_login_and_is_audited(
+    migrated_engine: Engine,
+) -> None:
+    event_id, _user_id, beverage_id, keg_id, _booking_id = seed_booking(migrated_engine)
+    sessions = create_session_factory(migrated_engine)
+
+    with sessions.begin() as session:
+        repository = Repository(session)
+        booking = repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event_id,
+                user_id=None,
+                beverage_id=beverage_id,
+                keg_id=keg_id,
+                occurred_at=datetime.now(UTC),
+                target_volume_ml=None,
+                measured_volume_ml=100,
+                measured_pulses=50,
+                price_per_liter_cents=400,
+                kind=BookingKind.MAINTENANCE,
+                completion=BookingCompletion.CARD_REMOVED,
+                chargeable=False,
+                login_session_id=None,
+            )
+        )
+        audit = repository.record_superadmin_action(
+            action="maintenance.poured",
+            entity_type="tap_booking",
+            entity_id=str(booking.id),
+        )
+        assert booking.user_id is None
+        assert booking.login_session_id is None
+        assert booking.amount_cents == 0
+        assert audit.actor_kind == "superadmin"
+        assert audit.admin_user_id is None
+
+
+def test_userless_chargeable_booking_is_rejected(migrated_engine: Engine) -> None:
+    event_id, _user_id, beverage_id, keg_id, _booking_id = seed_booking(migrated_engine)
+    sessions = create_session_factory(migrated_engine)
+
+    with sessions.begin() as session:
+        with pytest.raises(ValueError, match="userless booking"):
+            Repository(session).add_tap_booking(
+                NewTapBooking(
+                    event_id=event_id,
+                    user_id=None,
+                    beverage_id=beverage_id,
+                    keg_id=keg_id,
+                    occurred_at=datetime.now(UTC),
+                    target_volume_ml=None,
+                    measured_volume_ml=100,
+                    measured_pulses=50,
+                    price_per_liter_cents=400,
+                    kind=BookingKind.MANUAL,
+                    completion=BookingCompletion.RELEASED,
+                    chargeable=True,
+                    login_session_id=None,
+                )
+            )
 
 
 def test_only_one_event_and_keg_remain_active(migrated_engine: Engine) -> None:
@@ -419,6 +514,7 @@ def test_setting_changes_are_admin_only_and_audited(migrated_engine: Engine) -> 
 
         entries = list(session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)))
         assert len(entries) == 2
+        assert all(entry.actor_kind == "user_admin" for entry in entries)
         assert entries[0].old_values_json is None
         assert entries[0].new_values_json == "30"
         assert entries[1].old_values_json == "30"

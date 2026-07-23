@@ -1,6 +1,6 @@
 # Persistenz und Datenmodell
 
-Stand: 2026-07-23
+Stand: 2026-07-24
 
 ## Ziel
 
@@ -25,9 +25,10 @@ Betroffen sind insbesondere `ZZ-SYS-003` bis `ZZ-SYS-006`, `ZZ-AUT-001` bis
 - `beverages` speichert Sorte, Standard-Fassgroesse und Preis pro Liter.
 - `kegs` bildet einzelne angestochene Faesser und deren Startmenge ab.
 - `tap_bookings` speichert den vollstaendigen historischen Zapfdatensatz und
-  die gemeinsame Kennung der NFC-Anmeldesitzung.
+  bei Benutzerzapfungen die gemeinsame Kennung der NFC-Anmeldesitzung.
 - `settings` speichert konfigurierbare Betriebsparameter als JSON-Werte.
-- `admin_audit_entries` protokolliert alte und neue Werte von Adminaktionen.
+- `admin_audit_entries` protokolliert alte und neue Werte von Admin- und
+  Superadminaktionen samt technischer Akteurart.
 - `technical_events` protokolliert Fehler, Sperren und technische Ereignisse.
 
 ## Ganzzahlige Einheiten
@@ -51,6 +52,8 @@ Buchungen deshalb nicht.
 - Buchung, Veranstaltung und Getraenk muessen zum ausgewaehlten Fass passen.
 - Kostenfreie Buchungen besitzen den Betrag null.
 - Wartungsbuchungen sind nicht kostenpflichtig.
+- Ausschliesslich nicht kostenpflichtige Wartungsentnahmen duerfen ohne
+  Benutzer- und Loginreferenz gespeichert werden.
 - Abgeschlossene Zapfbuchungen koennen weder geaendert noch geloescht werden.
 - Jede Ventilfreigabe bleibt als eigener Rohdatensatz erhalten. Datensaetze
   desselben NFC-Loginzyklus tragen dieselbe `login_session_id` und werden in
@@ -62,6 +65,8 @@ Buchungen deshalb nicht.
 - Schreibende Benutzer-, Armband- und Einstellungsaktionen erzeugen im selben
   fachlichen Ablauf einen `admin_audit_entries`-Datensatz. NFC-UIDs werden nicht
   in die Audit-JSON-Werte kopiert.
+- Normale Auditeintraege referenzieren einen aktiven Admin. Superadminaktionen
+  verwenden `actor_kind=superadmin` und zwingend keine erfundene Benutzer-ID.
 
 Die Unveraenderlichkeit wird doppelt durch SQLAlchemy-Ereignisse und durch
 SQLite-Trigger abgesichert. Spaetere Korrekturen muessen als neue, separat
@@ -88,6 +93,10 @@ Sitzungskennung; Logout, Capture oder Verlust der Controllersitzung verwerfen
 sie. Mehrere Zapfungen innerhalb dieses Zyklus behalten dieselbe Kennung. Ein
 Persistenzfehler setzt eine Fehlersperre und verhindert weitere Zapfungen ohne
 bewusste Fehlerbehandlung.
+
+Superadmin-Wartungsentnahmen frieren denselben aktiven Fasskontext ein, besitzen
+aber weder Benutzer noch Loginzyklus. Jede physische Ventilfreigabe bleibt als
+eigener unveraenderlicher Datensatz erhalten und reduziert den Fassbestand.
 
 Die Impulsumrechnung und der vollstaendige Komponentenfluss sind unter
 [`backend-core-integration.md`](backend-core-integration.md) beschrieben.

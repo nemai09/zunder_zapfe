@@ -240,7 +240,7 @@ class AdminBookingResponse(BaseModel):
     id: int
     event_id: int
     event_name: str
-    user_id: int
+    user_id: int | None
     user_display_name: str
     beverage_id: int
     beverage_name: str
@@ -254,7 +254,7 @@ class AdminBookingResponse(BaseModel):
     kind: str
     completion: str
     chargeable: bool
-    login_session_id: str
+    login_session_id: str | None
 
 
 class AdminBookingSessionResponse(BaseModel):
@@ -262,7 +262,7 @@ class AdminBookingSessionResponse(BaseModel):
     first_booking_id: int
     event_id: int
     event_name: str
-    user_id: int
+    user_id: int | None
     user_display_name: str
     started_at: datetime
     ended_at: datetime
@@ -299,7 +299,8 @@ class AdminEventStatisticsResponse(BaseModel):
 class AdminAuditEntryResponse(BaseModel):
     id: int
     occurred_at: datetime
-    admin_user_id: int
+    actor_kind: str
+    admin_user_id: int | None
     admin_display_name: str
     action: str
     entity_type: str
@@ -346,7 +347,7 @@ class WebAdminPasswordResetRequest(BaseModel):
 class PourRecordResponse(BaseModel):
     sequence: int
     kind: str
-    user_id: str
+    user_id: str | None
     measured_pulses: int
     target_pulses: int | None
     completion: str

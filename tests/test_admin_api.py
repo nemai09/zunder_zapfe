@@ -25,7 +25,7 @@ from zunder_zapfe.hardware.simulators import (
 )
 from zunder_zapfe.main import create_app
 from zunder_zapfe.persistence.database import create_database_engine, create_session_factory
-from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, UserRole
+from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, TapBooking, UserRole
 from zunder_zapfe.persistence.repository import Repository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -318,3 +318,44 @@ def test_local_wifi_mode_switch_requires_admin_mode_and_is_audited(
     with sessions() as session:
         actions = list(session.scalars(select(AdminAuditEntry.action)))
     assert actions == ["wifi.mode_switch_requested", "wifi.mode_switched"]
+
+
+def test_superadmin_maintenance_api_requires_presence_and_stores_no_user(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    with sessions.begin() as session:
+        repository = Repository(session)
+        event = repository.create_event("Wartung", 2026, active=True)
+        beverage = repository.create_beverage(
+            "Testbier",
+            default_keg_size_ml=50_000,
+            price_per_liter_cents=450,
+        )
+        repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=beverage.id,
+            initial_volume_ml=50_000,
+        )
+
+    assert client.post("/api/system/maintenance/start").status_code == 403
+    present(client, SUPERADMIN_UID)
+    assert client.get("/api/tap/status").json()["state"] == "superadmin"
+
+    started = client.post("/api/system/maintenance/start")
+    assert started.status_code == 200
+    assert started.json()["state"] == "superadmin_maintenance_pouring"
+    assert started.json()["valve_open"] is True
+    assert client.post("/api/system/maintenance/heartbeat").status_code == 204
+    client.post("/api/simulator/flow/pulses", json={"count": 5})
+
+    stopped = client.post("/api/system/maintenance/stop")
+    assert stopped.status_code == 200
+    assert stopped.json()["user_id"] is None
+    assert stopped.json()["chargeable"] is False
+
+    with sessions() as session:
+        booking = session.scalar(select(TapBooking))
+        assert booking is not None
+        assert booking.user_id is None
+        assert booking.login_session_id is None

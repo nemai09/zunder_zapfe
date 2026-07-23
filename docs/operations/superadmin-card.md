@@ -2,10 +2,10 @@
 
 Stand: 2026-07-24
 
-> Experimenteller M7.9-Checkpoint: Credential, Kollisionsprüfung und
-> präsenzgebundener Backendzustand sind vorhanden. Das vollständige
-> Low-Level-Menü folgt in M7.10. Bis dahin ist noch kein produktiv nutzbarer
-> Wartungszugang freigegeben.
+> Experimenteller M7.9-Checkpoint: Credential, Kollisionsprüfung,
+> präsenzgebundener Backendzustand und benutzerlose Wartungsentnahme sind
+> vorhanden. Das bedienbare Low-Level-Menü folgt in M7.10; die Wartungs-API ist
+> bis dahin keine freigegebene Bedienoberfläche.
 
 Die Karte wird nicht über eine UID in der Shell eingerichtet. Das Werkzeug liest
 sie direkt am ACR122U und schreibt standardmäßig

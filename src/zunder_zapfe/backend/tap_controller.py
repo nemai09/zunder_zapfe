@@ -19,6 +19,7 @@ class TapState(StrEnum):
     AUTHENTICATED = "authenticated"
     ADMIN = "admin"
     SUPERADMIN = "superadmin"
+    SUPERADMIN_MAINTENANCE_POURING = "superadmin_maintenance_pouring"
     NFC_CAPTURE = "nfc_capture"
     MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
@@ -45,6 +46,7 @@ class PourCompletion(StrEnum):
     LIMIT_REACHED = "limit_reached"
     FAULT = "fault"
     SHUTDOWN = "shutdown"
+    CARD_REMOVED = "card_removed"
 
 
 class InvalidTransition(RuntimeError):
@@ -93,7 +95,7 @@ class UserSession:
 class PourRecord:
     sequence: int
     kind: PourKind
-    user_id: str
+    user_id: str | None
     measured_pulses: int
     target_pulses: int | None
     completion: PourCompletion
@@ -116,6 +118,7 @@ class TapStatus:
 @dataclass
 class _ActivePour:
     kind: PourKind
+    user_id: str | None
     target_pulses: int | None
     started_at: float
     last_seen_pulses: int = 0
@@ -126,6 +129,7 @@ ACTIVE_POUR_STATES = {
     TapState.PORTION_POURING,
     TapState.TOP_UP_POURING,
     TapState.MAINTENANCE_POURING,
+    TapState.SUPERADMIN_MAINTENANCE_POURING,
 }
 
 
@@ -249,19 +253,23 @@ class TapController:
             self._state = TapState.SUPERADMIN
             return True
 
-    def exit_superadmin_mode(self) -> None:
+    def exit_superadmin_mode(self) -> PourRecord | None:
         """End local maintenance access while preserving safety locks."""
         with self._mutex:
             self._hardware.valve.close()
             self._synchronize_emergency_stop()
             if self._state is TapState.SUPERADMIN:
                 self._state = TapState.IDLE
+                return None
+            if self._state is TapState.SUPERADMIN_MAINTENANCE_POURING:
+                return self._finish_active_pour(PourCompletion.CARD_REMOVED, TapState.IDLE)
             elif self._state not in {
                 TapState.FAULT_LOCKED,
                 TapState.EMERGENCY_STOP,
                 TapState.STOPPED,
             }:
                 raise InvalidTransition("No superadmin session is active")
+            return None
 
     def set_admin_session_timeout(self, timeout_seconds: float) -> None:
         with self._mutex:
@@ -358,6 +366,21 @@ class TapController:
             self._session_last_active_at = self._clock()
             self._state = TapState.AUTHENTICATED
 
+    def start_superadmin_maintenance_pour(self) -> None:
+        with self._mutex:
+            self._require_state(TapState.SUPERADMIN)
+            self._begin_pour(
+                PourKind.MAINTENANCE,
+                None,
+                TapState.SUPERADMIN_MAINTENANCE_POURING,
+                allow_userless=True,
+            )
+
+    def stop_superadmin_maintenance_pour(self) -> PourRecord:
+        with self._mutex:
+            self._require_state(TapState.SUPERADMIN_MAINTENANCE_POURING)
+            return self._finish_active_pour(PourCompletion.RELEASED, TapState.SUPERADMIN)
+
     def heartbeat(self) -> None:
         with self._mutex:
             if self._state in ACTIVE_POUR_STATES:
@@ -426,14 +449,27 @@ class TapController:
         with self._mutex:
             return tuple(self._records)
 
-    def _begin_pour(self, kind: PourKind, target_pulses: int | None, next_state: TapState) -> None:
+    def _begin_pour(
+        self,
+        kind: PourKind,
+        target_pulses: int | None,
+        next_state: TapState,
+        *,
+        allow_userless: bool = False,
+    ) -> None:
         self._synchronize_emergency_stop()
         if self._state in {TapState.EMERGENCY_STOP, TapState.FAULT_LOCKED}:
             raise InvalidTransition("Tap is safety-locked")
+        session = self._session
+        if session is None and not allow_userless:
+            raise InvalidTransition("Pour requires an authenticated user")
+        if allow_userless and kind is not PourKind.MAINTENANCE:
+            raise InvalidTransition("Only maintenance may run without a user")
         now = self._clock()
         self._hardware.flow_meter.begin_measurement()
         self._active_pour = _ActivePour(
             kind=kind,
+            user_id=session.user_id if session is not None else None,
             target_pulses=target_pulses,
             started_at=now,
         )
@@ -515,10 +551,9 @@ class TapController:
 
     def _finish_active_pour(self, completion: PourCompletion, next_state: TapState) -> PourRecord:
         active = self._active_pour
-        session = self._session
-        if active is None or session is None:
+        if active is None:
             self._hardware.valve.close()
-            raise RuntimeError("Cannot finish pour without active context and session")
+            raise RuntimeError("Cannot finish pour without active context")
 
         # Closing the valve always precedes measurement finalization and state changes.
         self._hardware.valve.close()
@@ -526,7 +561,7 @@ class TapController:
         record = PourRecord(
             sequence=len(self._records) + 1,
             kind=active.kind,
-            user_id=session.user_id,
+            user_id=active.user_id,
             measured_pulses=reading.pulse_count,
             target_pulses=active.target_pulses,
             completion=completion,
