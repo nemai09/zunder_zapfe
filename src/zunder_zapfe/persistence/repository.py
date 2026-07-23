@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -49,6 +50,7 @@ class NewTapBooking:
     kind: BookingKind
     completion: BookingCompletion
     chargeable: bool
+    login_session_id: str = field(default_factory=lambda: uuid4().hex)
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,9 @@ class Repository:
                 select(Event).order_by(Event.active.desc(), Event.year.desc(), Event.name)
             )
         )
+
+    def active_event(self) -> Event | None:
+        return self.session.scalar(select(Event).where(Event.active.is_(True)))
 
     def activate_event(self, event_id: int) -> Event:
         event = self.get_event(event_id)
@@ -426,6 +431,15 @@ class Repository:
             )
         )
 
+    def close_active_keg(self, *, closed_at: datetime | None = None) -> Keg | None:
+        keg = self.session.scalar(select(Keg).where(Keg.active.is_(True)))
+        if keg is None:
+            return None
+        keg.active = False
+        keg.closed_at = closed_at or datetime.now(UTC)
+        self.session.flush()
+        return keg
+
     def add_tap_booking(self, values: NewTapBooking) -> TapBooking:
         keg = self.session.get(Keg, values.keg_id)
         if keg is None:
@@ -434,6 +448,8 @@ class Repository:
             raise ValueError("Booking event and beverage must match the selected keg")
         if self.session.get(User, values.user_id) is None:
             raise LookupError(f"User {values.user_id} does not exist")
+        if not values.login_session_id.strip() or len(values.login_session_id) > 64:
+            raise ValueError("Login session ID must contain between 1 and 64 characters")
         amount_cents = (
             calculate_amount_cents(values.measured_volume_ml, values.price_per_liter_cents)
             if values.chargeable
@@ -493,7 +509,7 @@ class Repository:
             raise LookupError(f"User {user_id} does not exist")
         booking_count, measured_volume_ml, amount_cents = self.session.execute(
             select(
-                func.count(TapBooking.id),
+                func.count(func.distinct(TapBooking.login_session_id)),
                 func.coalesce(func.sum(TapBooking.measured_volume_ml), 0),
                 func.coalesce(func.sum(TapBooking.amount_cents), 0),
             ).where(

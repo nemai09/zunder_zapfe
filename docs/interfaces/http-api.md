@@ -59,6 +59,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `persistence_error` | `str | null` | letzter Buchungsfehler |
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
 | `nfc_feedback` | `"unknown" | "blocked" | null` | kurzlebige Ablehnungsursache für die Idle-WebUI |
+| `registration_welcome` | `str | null` | kurzlebiger Anzeigename nach erfolgreicher Armbandzuordnung; keine Anmeldung |
 
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
@@ -225,14 +226,18 @@ Liter übertragen.
 | `PATCH /api/web-admin/beverages/{id}` | Getränk, Standardfassgröße, Preis oder Aktivstatus ändern |
 | `GET /api/web-admin/kegs` | Fasshistorie mit rechnerischer Restmenge auflisten |
 | `POST /api/web-admin/kegs/switch` | bisherigen Fasskontext schließen und ausgewähltes neues Fass aktivieren |
+| `POST /api/web-admin/kegs/detach` | aktives Fass schließen; danach ist kein Fass am Hahn aktiv |
 
-Der Fasswechsel erwartet `event_id`, `beverage_id` und
-`initial_volume_ml`. Er aktiviert die gewählte Veranstaltung, beendet das
-bisher aktive Fass und legt das neue Fass atomar an. Ein inaktives Getränk
-oder eine ungültige Menge wird abgelehnt. Eine aktive Veranstaltung mit
-laufendem Fass kann nicht unabhängig vom geführten Fasswechsel deaktiviert
-oder ausgetauscht werden. Änderungen an Veranstaltungen, Getränken und Fässern
-werden mit alten und neuen Werten auditiert.
+Der operative Fasswechsel erwartet `beverage_id`. `initial_volume_ml` ist
+optional; ohne Angabe wird die Standardfassgröße des Getränks verwendet.
+`event_id` bleibt für kompatible Clients optional möglich, die
+Smartphone-WebUI übernimmt jedoch die bereits aktive Veranstaltung aus dem
+Abrechnungskontext. Fehlt sie, wird das Anzapfen abgelehnt und auf die
+allgemeinen Einstellungen verwiesen. Der Wechsel beendet ein bisher aktives
+Fass und legt das neue Fass atomar an. Ein inaktives Getränk oder eine
+ungültige Menge wird abgelehnt. `detach` schließt nur das aktive Fass und
+überträgt keinen Restbestand. Änderungen an Veranstaltungen, Getränken und
+Fässern werden mit alten und neuen Werten auditiert.
 
 ## Smartphone-Buchungen und Protokolle
 
@@ -241,20 +246,23 @@ Websitzung. Sie verändern weder Buchungen noch Audit- oder Technikprotokolle.
 
 | Methode und Pfad | Wirkung |
 | --- | --- |
-| `GET /api/web-admin/bookings` | Zapfbuchungen kombiniert filtern und neueste zuerst auflisten |
+| `GET /api/web-admin/bookings` | unveränderliche Zapf-Rohdatensätze kombiniert filtern und neueste zuerst auflisten |
+| `GET /api/web-admin/booking-sessions` | Rohdatensätze je NFC-Anmeldesitzung summiert als fachliche Buchungen auflisten |
 | `GET /api/web-admin/statistics?event_id={id}` | Veranstaltungs-, Wartungs- und Abrechnungssummen je Benutzer liefern |
 | `GET /api/web-admin/audit` | Adminaktionen mit Admin, Objekt sowie alten und neuen Werten auflisten |
 | `GET /api/web-admin/technical-events` | technische Ereignisse mit Schweregrad und Details auflisten |
 
-`bookings` akzeptiert optional `event_id`, `user_id`, `keg_id`, `kind`,
-`completion`, `occurred_from` und `occurred_to`. `audit` kann nach
+`bookings` und `booking-sessions` akzeptieren optional `event_id`, `user_id`,
+`keg_id`, `kind`, `completion`, `occurred_from` und `occurred_to`. `audit` kann nach
 `entity_type` und `action`, `technical-events` nach `severity` und
 `event_type` filtern. Alle Listen akzeptieren `limit` von 1 bis 500; die
-Smartphone-WebUI verwendet 100 Buchungen und jeweils 50 Protokolleinträge.
+Smartphone-WebUI verwendet 100 zusammengefasste Anmeldebuchungen und jeweils
+50 Protokolleinträge.
 Zeitwerte sind ISO-8601-Zeitpunkte. Mengen und Preise bleiben ganzzahlige
 Milliliter beziehungsweise Centwerte.
 
-Die Statistik zählt alle Vorgänge und weist kostenpflichtige Istmenge,
+Die Statistik zählt NFC-Anmeldesitzungen als Buchungen und weist die über alle
+zugehörigen Rohdatensätze summierte kostenpflichtige Istmenge,
 Wartungsmenge sowie den gespeicherten Betrag getrennt aus. Benutzersummen
 enthalten ausschließlich kostenpflichtige Buchungen. Historische Namen bleiben
 auch nach dem fachlichen Löschen eines Benutzers auflösbar. Eine

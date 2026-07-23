@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -27,6 +28,7 @@ from zunder_zapfe.persistence.repository import (
 )
 
 NFC_FEEDBACK_SECONDS = 2.5
+REGISTRATION_WELCOME_SECONDS = 3.0
 
 
 class TapUnavailable(RuntimeError):
@@ -105,11 +107,14 @@ class TapService:
         self._background_stop = threading.Event()
         self._background_thread: threading.Thread | None = None
         self._authenticated_user: AuthenticatedUser | None = None
+        self._login_session_id: str | None = None
         self._pending_booking: _PendingBooking | None = None
         self._last_presented_uid: str | None = None
         self._nfc_login_suppressed_until_removal = False
         self._nfc_feedback: str | None = None
         self._nfc_feedback_until: float | None = None
+        self._registration_welcome: str | None = None
+        self._registration_welcome_until: float | None = None
         self._last_state = TapState.STARTING
         self._last_background_error: str | None = None
         self._persistence_error: str | None = None
@@ -148,6 +153,7 @@ class TapService:
         with self._mutex:
             self._controller.shutdown()
             self._authenticated_user = None
+            self._login_session_id = None
             self._pending_booking = None
 
     def authenticate_card(self, uid: str) -> bool:
@@ -176,6 +182,7 @@ class TapService:
             self._clear_nfc_feedback()
             if accepted:
                 self._authenticated_user = authenticated
+                self._login_session_id = uuid4().hex
                 self._persistence_error = None
             return accepted
 
@@ -215,6 +222,7 @@ class TapService:
         self._controller.logout()
         with self._mutex:
             self._authenticated_user = None
+            self._login_session_id = None
 
     def enter_admin_mode(self, timeout_seconds: float) -> dict[str, Any]:
         user = self._require_authenticated_user()
@@ -235,18 +243,26 @@ class TapService:
         self._controller.begin_nfc_capture()
         with self._mutex:
             self._authenticated_user = None
+            self._login_session_id = None
             self._last_presented_uid = None
             self._nfc_login_suppressed_until_removal = False
             self._clear_nfc_feedback()
+            self._clear_registration_welcome()
         return self.status_dict()
 
-    def end_remote_nfc_capture(self) -> dict[str, Any]:
+    def end_remote_nfc_capture(
+        self,
+        *,
+        registration_welcome: str | None = None,
+    ) -> dict[str, Any]:
         with self._mutex:
             self._controller.end_nfc_capture()
             nfc = self._hardware.nfc.snapshot()
             self._last_presented_uid = None
             self._nfc_login_suppressed_until_removal = nfc.state == "card"
             self._clear_nfc_feedback()
+            if registration_welcome:
+                self._set_registration_welcome(registration_welcome)
         return self.status_dict()
 
     def require_admin_user_id(self) -> int:
@@ -381,6 +397,7 @@ class TapService:
             user = self._authenticated_user
             pending = self._pending_booking
             nfc_feedback = self._active_nfc_feedback()
+            registration_welcome = self._active_registration_welcome()
             status.update(
                 {
                     "user_display_name": user.display_name if user else None,
@@ -388,6 +405,7 @@ class TapService:
                     "persistence_error": self._persistence_error,
                     "last_booking": self._last_booking,
                     "nfc_feedback": nfc_feedback,
+                    "registration_welcome": registration_welcome,
                     "measured_volume_ml": self._calibration.measured_volume_ml(
                         int(status["measured_pulses"])
                     ),
@@ -412,6 +430,22 @@ class TapService:
         ):
             self._clear_nfc_feedback()
         return self._nfc_feedback
+
+    def _set_registration_welcome(self, display_name: str) -> None:
+        self._registration_welcome = display_name
+        self._registration_welcome_until = self._monotonic_clock() + REGISTRATION_WELCOME_SECONDS
+
+    def _clear_registration_welcome(self) -> None:
+        self._registration_welcome = None
+        self._registration_welcome_until = None
+
+    def _active_registration_welcome(self) -> str | None:
+        if (
+            self._registration_welcome_until is not None
+            and self._monotonic_clock() >= self._registration_welcome_until
+        ):
+            self._clear_registration_welcome()
+        return self._registration_welcome
 
     def portion_options(self) -> dict[str, Any]:
         status = self._controller.snapshot()
@@ -475,7 +509,12 @@ class TapService:
     def _persist_record(self, record: PourRecord) -> None:
         with self._mutex:
             pending = self._pending_booking
-            if pending is None or record.user_id != str(pending.user_id):
+            login_session_id = self._login_session_id
+            if (
+                pending is None
+                or login_session_id is None
+                or record.user_id != str(pending.user_id)
+            ):
                 self._persistence_error = "Persistent booking context is missing or inconsistent"
                 self._controller.lock_for_fault("Zapfbuchung konnte nicht zugeordnet werden")
                 return
@@ -497,6 +536,7 @@ class TapService:
                             kind=BookingKind(record.kind.value),
                             completion=BookingCompletion(record.completion.value),
                             chargeable=record.chargeable,
+                            login_session_id=login_session_id,
                         )
                     )
                     booking_snapshot = {
@@ -528,6 +568,7 @@ class TapService:
             user = self._authenticated_user
             if user is None or status.user_id != str(user.id):
                 self._authenticated_user = None
+                self._login_session_id = None
                 raise TapUnavailable("No active authenticated user")
             return user
 
@@ -542,6 +583,7 @@ class TapService:
         with self._mutex:
             if controller_user_id is None:
                 self._authenticated_user = None
+                self._login_session_id = None
 
     def _observe_state(self, state: TapState, reason: str | None) -> None:
         with self._mutex:

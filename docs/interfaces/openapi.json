@@ -206,6 +206,10 @@
             "title": "Kind",
             "type": "string"
           },
+          "login_session_id": {
+            "title": "Login Session Id",
+            "type": "string"
+          },
           "measured_pulses": {
             "title": "Measured Pulses",
             "type": "integer"
@@ -260,9 +264,117 @@
           "amount_cents",
           "kind",
           "completion",
-          "chargeable"
+          "chargeable",
+          "login_session_id"
         ],
         "title": "AdminBookingResponse",
+        "type": "object"
+      },
+      "AdminBookingSessionResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "beverage_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Beverage Names",
+            "type": "array"
+          },
+          "chargeable": {
+            "title": "Chargeable",
+            "type": "boolean"
+          },
+          "completions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Completions",
+            "type": "array"
+          },
+          "ended_at": {
+            "format": "date-time",
+            "title": "Ended At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_name": {
+            "title": "Event Name",
+            "type": "string"
+          },
+          "first_booking_id": {
+            "title": "First Booking Id",
+            "type": "integer"
+          },
+          "keg_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Keg Ids",
+            "type": "array"
+          },
+          "kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kinds",
+            "type": "array"
+          },
+          "measured_pulses": {
+            "title": "Measured Pulses",
+            "type": "integer"
+          },
+          "measured_volume_ml": {
+            "title": "Measured Volume Ml",
+            "type": "integer"
+          },
+          "pour_count": {
+            "title": "Pour Count",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "first_booking_id",
+          "event_id",
+          "event_name",
+          "user_id",
+          "user_display_name",
+          "started_at",
+          "ended_at",
+          "pour_count",
+          "measured_volume_ml",
+          "measured_pulses",
+          "amount_cents",
+          "chargeable",
+          "beverage_names",
+          "keg_ids",
+          "kinds",
+          "completions"
+        ],
+        "title": "AdminBookingSessionResponse",
         "type": "object"
       },
       "AdminEventCreateRequest": {
@@ -547,20 +659,32 @@
             "type": "integer"
           },
           "event_id": {
-            "exclusiveMinimum": 0.0,
-            "title": "Event Id",
-            "type": "integer"
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
           },
           "initial_volume_ml": {
-            "exclusiveMinimum": 0.0,
-            "title": "Initial Volume Ml",
-            "type": "integer"
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Volume Ml"
           }
         },
         "required": [
-          "event_id",
-          "beverage_id",
-          "initial_volume_ml"
+          "beverage_id"
         ],
         "title": "AdminKegSwitchRequest",
         "type": "object"
@@ -1449,6 +1573,17 @@
             ],
             "title": "Persistence Error"
           },
+          "registration_welcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Welcome"
+          },
           "safety_reason": {
             "anyOf": [
               {
@@ -1562,7 +1697,8 @@
           "special_portion_ml",
           "persistence_error",
           "last_booking",
-          "nfc_feedback"
+          "nfc_feedback",
+          "registration_welcome"
         ],
         "title": "TapStatusResponse",
         "type": "object"
@@ -3484,6 +3620,199 @@
         "summary": "Update Web Admin Beverage"
       }
     },
+    "/api/web-admin/booking-sessions": {
+      "get": {
+        "operationId": "list_web_admin_booking_sessions_api_web_admin_booking_sessions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "keg_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Keg Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "completion",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Completion"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminBookingSessionResponse"
+                  },
+                  "title": "Response List Web Admin Booking Sessions Api Web Admin Booking Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "List Web Admin Booking Sessions"
+      }
+    },
     "/api/web-admin/bookings": {
       "get": {
         "operationId": "list_web_admin_bookings_api_web_admin_bookings_get",
@@ -3944,6 +4273,64 @@
           }
         },
         "summary": "List Web Admin Kegs"
+      }
+    },
+    "/api/web-admin/kegs/detach": {
+      "post": {
+        "operationId": "detach_web_admin_keg_api_web_admin_kegs_detach_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminKegResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Detach Web Admin Keg"
       }
     },
     "/api/web-admin/kegs/switch": {

@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.6` implementiert; Diagnose und Einstellungen geplant
+Status: `M7.2` bis `M7.7` in Umsetzung; Diagnose und technische Einstellungen geplant
 
 ## Ziel und Abgrenzung
 
@@ -87,7 +87,8 @@ NFC-Leser:
 5. Der ereignisgesteuerte NFC-Adapter liefert die UID ausschließlich an das
    Backend.
 6. Das Backend ordnet das Armband zu, auditiert die Aktion ohne vollständige
-   UID und hebt den Zuordnungszustand wieder auf.
+   UID und hebt den Zuordnungszustand wieder auf. Der Kiosk begrüßt den
+   zugeordneten Benutzer für drei Sekunden, ohne ihn anzumelden.
 7. Das Armband muss vom Leser entfernt werden, bevor es durch erneutes Auflegen
    eine normale Zapfsitzung beginnen kann. Das gilt auch nach einem
    Zuordnungskonflikt.
@@ -132,24 +133,29 @@ Beim Löschen weist eine Bestätigung darauf hin, dass vorhandene Buchungen
 erhalten bleiben. Der aktuell angemeldete Admin kann sich nicht selbst
 löschen.
 
-### Veranstaltungen, Getränke und Fässer (`M7.5`)
+### Fass am Hahn und allgemeine Einstellungen (`M7.5` und `M7.7`)
 
-- Veranstaltungen anlegen, auswählen und aktivieren;
-- Getränke mit Fassgröße und Preis anlegen und pflegen;
+- eigener, direkt erreichbarer Fassbereich für den häufigen Betriebsablauf;
+- Getränk auswählen und optional aktuellen Füllstand angeben;
+- ohne Füllstandsangabe das Standardfass als voll annehmen;
+- aktives Fass bewusst abzapfen und einen Zustand ohne aktives Getränk
+  herstellen;
 - Fasshistorie und rechnerischen Restbestand anzeigen;
-- geführter Fasswechsel mit bewusstem Abschluss des bisherigen Fasses.
+- Veranstaltungen sowie Getränke mit Fassgröße und Preis unter allgemeinen
+  Einstellungen anlegen und pflegen.
 
-Der geführte Fasswechsel wählt Veranstaltung, Getränk und Anfangsvolumen
-gemeinsam aus. Er schließt ein bisher aktives Fass, aktiviert die gewählte
-Veranstaltung und legt das neue Fass in einer Transaktion an. Die API lehnt
-inaktive Getränke, nichtpositive Volumen und widersprüchliche
-Aktivierungswechsel ab. Alle Änderungen werden mit dem angemeldeten Admin
-auditiert.
+Der operative Fasswechsel verwendet die bereits aktive Veranstaltung als
+Abrechnungskontext, schließt ein bisher aktives Fass und legt das neue Fass in
+einer Transaktion an. Die Veranstaltung ist deshalb im häufigen Ablauf nicht
+erneut auszuwählen. Fehlt eine aktive Veranstaltung, verweist die WebUI auf die
+allgemeinen Einstellungen. Die API lehnt inaktive Getränke, nichtpositive
+Volumen und widersprüchliche Aktivierungswechsel ab. An- und Abzapfen werden
+mit dem angemeldeten Admin auditiert.
 
 ### Buchungen und Abrechnung (`M7.6`)
 
-- Buchungen nach Veranstaltung, Benutzer, Fass, Zeitraum, Art und Abschluss
-  filtern;
+- nach NFC-Anmeldesitzung zusammengefasste Buchungen nach Veranstaltung,
+  Benutzer, Fass, Zeitraum, Art und Abschluss filtern;
 - Buchungsdetails und Summen pro Benutzer und Veranstaltung anzeigen;
 - Einzelabrechnung als nachvollziehbare Bildschirmansicht vorbereiten.
 
@@ -158,7 +164,9 @@ kostenpflichtige Mengen und Beträge je Benutzer, Gesamtmengen,
 Wartungsentnahmen sowie die neuesten Buchungen. Kombinierbare Filter umfassen
 Benutzer, Fass, Buchungsart, Abschluss und Zeitraum. Die Abfragen sind
 ausschließlich lesend und auf höchstens 500, in der WebUI auf 100,
-Buchungszeilen begrenzt.
+Buchungszeilen begrenzt. Mehrere Zapfungen zwischen Anmeldung und Logout
+erscheinen als eine summierte Buchung; die unveränderlichen Rohdatensätze
+bleiben für Diagnose, Fassbestand und Nachvollziehbarkeit erhalten.
 
 Abgeschlossene Zapfbuchungen bleiben unveränderlich. Bearbeiten und Löschen
 werden nicht angeboten. Storno, Korrektur und ein verbindliches Exportformat
@@ -190,6 +198,8 @@ Die WebUI zeigt jeweils die letzten 50 Audit- und technischen Ereignisse.
 Auditwerte enthalten den konkreten Admin und die gespeicherten alten
 beziehungsweise neuen Werte. Passwörter, Hashes und vollständige NFC-UIDs
 werden durch die schreibenden Fachservices weiterhin nicht protokolliert.
+Mehrzeilige Details umbrechen innerhalb ihrer Karten und erzeugen auch bei
+langen Auditwerten kein horizontales Seitenlayout.
 
 ## Schnittstellen- und Datenarbeit
 
@@ -216,6 +226,7 @@ Adminänderung.
 
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
-`ZZ-KEG-004`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`, `ZZ-MNT-002`,
-`ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`,
-`ZZ-NET-002`, `ZZ-NET-003` und `ZZ-DAT-001` bis `ZZ-DAT-007`.
+`ZZ-KEG-004`, `ZZ-KEG-006`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`,
+`ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
+`ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
+und `ZZ-DAT-009`.

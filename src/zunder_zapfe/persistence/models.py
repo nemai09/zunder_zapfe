@@ -185,6 +185,7 @@ class TapBooking(Base):
             name="ck_tap_bookings_maintenance_not_chargeable",
         ),
         Index("ix_tap_bookings_event_user", "event_id", "user_id"),
+        Index("ix_tap_bookings_login_session", "login_session_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -203,6 +204,7 @@ class TapBooking(Base):
         enum_type(BookingCompletion, "booking_completion")
     )
     chargeable: Mapped[bool] = mapped_column(Boolean)
+    login_session_id: Mapped[str] = mapped_column(String(64))
 
 
 class Setting(Base):

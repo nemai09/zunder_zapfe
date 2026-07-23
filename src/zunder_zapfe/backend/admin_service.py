@@ -341,6 +341,45 @@ class AdminService:
             )
             return [self._booking_snapshot(session, booking) for booking in bookings]
 
+    def list_booking_sessions(
+        self,
+        *,
+        event_id: int | None = None,
+        user_id: int | None = None,
+        keg_id: int | None = None,
+        kind: str | None = None,
+        completion: str | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int = 100,
+        admin_user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        occurred_from = _as_utc(occurred_from)
+        occurred_to = _as_utc(occurred_to)
+        if occurred_from is not None and occurred_to is not None and occurred_to < occurred_from:
+            raise ValueError("Booking end must not be before its start")
+        booking_kind = BookingKind(kind) if kind is not None else None
+        booking_completion = BookingCompletion(completion) if completion is not None else None
+        with self._sessions() as session:
+            bookings = Repository(session).list_tap_bookings(
+                event_id=event_id,
+                user_id=user_id,
+                keg_id=keg_id,
+                kind=booking_kind,
+                completion=booking_completion,
+                occurred_from=occurred_from,
+                occurred_to=occurred_to,
+                limit=None,
+            )
+            grouped: dict[str, list[TapBooking]] = {}
+            for booking in bookings:
+                grouped.setdefault(booking.login_session_id, []).append(booking)
+            return [
+                self._booking_session_snapshot(session, session_bookings)
+                for session_bookings in list(grouped.values())[:limit]
+            ]
+
     def event_statistics(
         self,
         event_id: int,
@@ -353,6 +392,7 @@ class AdminService:
             event = repository.get_event(event_id)
             bookings = repository.list_tap_bookings(event_id=event_id, limit=None)
             user_totals: dict[int, dict[str, Any]] = {}
+            booking_sessions = {booking.login_session_id for booking in bookings}
             for booking in bookings:
                 if not booking.chargeable:
                     continue
@@ -369,13 +409,15 @@ class AdminService:
                         "amount_cents": 0,
                     },
                 )
-                summary["booking_count"] += 1
+                summary.setdefault("_session_ids", set()).add(booking.login_session_id)
                 summary["measured_volume_ml"] += booking.measured_volume_ml
                 summary["amount_cents"] += booking.amount_cents
+            for summary in user_totals.values():
+                summary["booking_count"] = len(summary.pop("_session_ids", set()))
             return {
                 "event_id": event.id,
                 "event_name": event.name,
-                "booking_count": len(bookings),
+                "booking_count": len(booking_sessions),
                 "measured_volume_ml": sum(booking.measured_volume_ml for booking in bookings),
                 "chargeable_volume_ml": sum(
                     booking.measured_volume_ml for booking in bookings if booking.chargeable
@@ -429,25 +471,36 @@ class AdminService:
     def switch_keg(
         self,
         *,
-        event_id: int,
+        event_id: int | None,
         beverage_id: int,
-        initial_volume_ml: int,
+        initial_volume_ml: int | None,
         admin_user_id: int | None = None,
     ) -> dict[str, Any]:
         admin_id = self._require_admin_id(admin_user_id)
         with self._sessions.begin() as session:
             repository = Repository(session)
-            event = repository.get_event(event_id)
+            event = (
+                repository.get_event(event_id)
+                if event_id is not None
+                else repository.active_event()
+            )
+            if event is None:
+                raise AdminConflict(
+                    "Vor dem Anzapfen muss unter Einstellungen eine Veranstaltung aktiv sein"
+                )
             beverage = repository.get_beverage(beverage_id)
             if not beverage.active:
                 raise AdminConflict("Only an active beverage can be assigned to a new keg")
+            volume_ml = (
+                beverage.default_keg_size_ml if initial_volume_ml is None else initial_volume_ml
+            )
             old_keg = session.scalar(select(Keg).where(Keg.active.is_(True)))
             old_values = self._keg_snapshot(repository, old_keg) if old_keg is not None else None
             repository.activate_event(event.id)
             keg = repository.activate_new_keg(
                 event_id=event.id,
                 beverage_id=beverage.id,
-                initial_volume_ml=initial_volume_ml,
+                initial_volume_ml=volume_ml,
             )
             snapshot = self._keg_snapshot(repository, keg)
             repository.record_admin_action(
@@ -456,6 +509,24 @@ class AdminService:
                 entity_type="keg",
                 entity_id=str(keg.id),
                 old_values=old_values,
+                new_values=snapshot,
+            )
+            return snapshot
+
+    def detach_keg(self, *, admin_user_id: int | None = None) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            keg = repository.close_active_keg()
+            if keg is None:
+                raise AdminConflict("Es ist kein aktives Fass am Hahn")
+            snapshot = self._keg_snapshot(repository, keg)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="keg.detached",
+                entity_type="keg",
+                entity_id=str(keg.id),
+                old_values={**snapshot, "active": True, "closed_at": None},
                 new_values=snapshot,
             )
             return snapshot
@@ -659,6 +730,7 @@ class AdminService:
 
             with self._sessions.begin() as session:
                 repository = Repository(session)
+                target_user = repository.get_user(user_id)
                 existing = repository.find_nfc_card(uid)
                 if existing is not None and existing.user_id != user_id:
                     self._cancel_capture_unlocked()
@@ -677,7 +749,8 @@ class AdminService:
                     new_values={"user_id": user_id, "active": True},
                 )
                 snapshot = self._card_snapshot(card)
-            self._cancel_capture_unlocked()
+                welcome_name = target_user.display_name
+            self._cancel_capture_unlocked(registration_welcome=welcome_name)
             return {"state": "assigned", "card": snapshot}
 
     def cancel_nfc_capture(self, *, admin_user_id: int | None = None) -> None:
@@ -848,6 +921,51 @@ class AdminService:
             "kind": booking.kind.value,
             "completion": booking.completion.value,
             "chargeable": booking.chargeable,
+            "login_session_id": booking.login_session_id,
+        }
+
+    @staticmethod
+    def _booking_session_snapshot(
+        session: Session,
+        bookings: list[TapBooking],
+    ) -> dict[str, Any]:
+        first = min(bookings, key=lambda booking: (booking.occurred_at, booking.id))
+        event = session.get(Event, first.event_id)
+        user = session.get(User, first.user_id)
+        beverages = {
+            booking.beverage_id: session.get(Beverage, booking.beverage_id) for booking in bookings
+        }
+        return {
+            "session_id": first.login_session_id,
+            "first_booking_id": first.id,
+            "event_id": first.event_id,
+            "event_name": event.name if event is not None else f"Event {first.event_id}",
+            "user_id": first.user_id,
+            "user_display_name": (
+                user.display_name if user is not None else f"Benutzer {first.user_id}"
+            ),
+            "started_at": _iso_utc(min(booking.occurred_at for booking in bookings)),
+            "ended_at": _iso_utc(max(booking.occurred_at for booking in bookings)),
+            "pour_count": len(bookings),
+            "measured_volume_ml": sum(booking.measured_volume_ml for booking in bookings),
+            "measured_pulses": sum(booking.measured_pulses for booking in bookings),
+            "amount_cents": sum(booking.amount_cents for booking in bookings),
+            "chargeable": any(booking.chargeable for booking in bookings),
+            "beverage_names": list(
+                dict.fromkeys(
+                    (
+                        beverages[booking.beverage_id].name
+                        if beverages[booking.beverage_id] is not None
+                        else f"Getränk {booking.beverage_id}"
+                    )
+                    for booking in reversed(bookings)
+                )
+            ),
+            "keg_ids": list(dict.fromkeys(booking.keg_id for booking in reversed(bookings))),
+            "kinds": list(dict.fromkeys(booking.kind.value for booking in reversed(bookings))),
+            "completions": list(
+                dict.fromkeys(booking.completion.value for booking in reversed(bookings))
+            ),
         }
 
     @staticmethod
@@ -912,14 +1030,14 @@ class AdminService:
             self._expired_capture = None
             self._cancel_capture_unlocked()
 
-    def _cancel_capture_unlocked(self) -> None:
+    def _cancel_capture_unlocked(self, *, registration_welcome: str | None = None) -> None:
         capture = self._capture
         self._capture = None
         if self._capture_timer is not None:
             self._capture_timer.cancel()
             self._capture_timer = None
         if capture is not None and capture.remote:
-            self._tap_service.end_remote_nfc_capture()
+            self._tap_service.end_remote_nfc_capture(registration_welcome=registration_welcome)
 
     def _start_capture_timer(self, capture: _NfcCapture) -> None:
         timer = threading.Timer(

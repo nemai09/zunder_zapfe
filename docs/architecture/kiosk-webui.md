@@ -11,6 +11,7 @@ zulässig ist.
 | Backendzustand | Kioskansicht | Primäre Aktion |
 | --- | --- | --- |
 | `idle` | NFC-Aufforderung und Leserstatus | Karte auflegen |
+| `idle` mit `registration_welcome` | kurze Begrüßung nach Armbandzuordnung | keine; Rückkehr nach drei Sekunden |
 | `authenticated` | Benutzer, Verbrauch, Getränk und große Zapffläche | gedrückt halten |
 | `manual_pouring` | laufende Istmenge auf der Zapffläche | loslassen |
 | `admin` | lokales Low-Level-Systemmenü | vorhandenen WLAN-Modus wechseln |
@@ -68,7 +69,9 @@ ist keine Rückmeldung eines physischen Ventils und muss zusammen mit dem
 temporären Flow-Debugmodus vor Produktivbetrieb entfernt werden.
 Zwischen Ventil- und Steuerungsstatus zeigt ein weiterer Indikator den vom
 Systemhelfer erkannten WLAN-Modus `AP`, `Client` oder einen Fehlerzustand.
+Er besteht nur aus Statuspunkt und Text ohne eigene Umrandung; die Umrandung
+der temporären Ventil-Debuganzeige bleibt davon unberührt.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
 `ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und
-`ZZ-NFR-005`, `ZZ-UI-007` und `ZZ-NET-003`.
+`ZZ-NFR-005`, `ZZ-UI-007`, `ZZ-UI-009` und `ZZ-NET-003`.

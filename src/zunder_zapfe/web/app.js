@@ -50,6 +50,7 @@ const elements = {
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
   buildVersion: document.querySelector("#build-version"),
+  registrationName: document.querySelector("#registration-name"),
   clock: document.querySelector("#clock"),
   userName: document.querySelector("#user-name"),
   logoutButton: document.querySelector("#logout-button"),
@@ -131,6 +132,7 @@ function currentScreen() {
   if (!model.connected) return "offline";
   const state = model.tap?.state || "starting";
   if (["fault_locked", "emergency_stop"].includes(state)) return "locked";
+  if (state === "idle" && model.tap?.registration_welcome) return "registration";
   if (state === "admin") return "admin";
   if (["authenticated", "manual_pouring"].includes(state)) return "tap";
   if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring", "nfc_capture"].includes(state)) {
@@ -180,6 +182,7 @@ function render() {
     elements.wifiStatus.classList.add("is-error");
   }
   if (model.health?.build) elements.buildVersion.textContent = model.health.build;
+  elements.registrationName.textContent = model.tap?.registration_welcome || "Zapfer";
 
   elements.readerStatus.classList.remove("is-unknown", "is-blocked");
   if (model.nfc) {

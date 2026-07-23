@@ -103,6 +103,10 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     }
     user_columns = {column["name"] for column in inspect(migrated_engine).get_columns("users")}
     assert "deleted_at" in user_columns
+    booking_columns = {
+        column["name"]: column for column in inspect(migrated_engine).get_columns("tap_bookings")
+    }
+    assert booking_columns["login_session_id"]["nullable"] is False
     command.check(alembic_config(str(migrated_engine.url)))
 
 
@@ -178,6 +182,7 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
             booking = session.get(TapBooking, booking_id)
             assert booking is not None
             assert booking.kind is BookingKind.PORTION
+            assert booking.login_session_id == "legacy-1"
     finally:
         migrated.dispose()
 

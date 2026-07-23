@@ -42,10 +42,13 @@ Phase: Alpha-Entwicklung
   auditierten Stammdatenänderungen
 - geführter Fasswechsel mit atomarem Abschluss des bisherigen Fasses,
   Aktivierung der Veranstaltung und Anlage des neuen Fasses
+- eigener Smartphone-Fassbereich mit optionalem Anfangsfüllstand,
+  Standardfüllung und bewusstem Abzapfen in einen Zustand ohne aktives Fass
 - Fasshistorie, rechnerischer Restbestand sowie aktiver Veranstaltungs- und
   Fasskontext in der Smartphone-Übersicht
-- filterbare, ausschließlich lesende Smartphone-Buchungsansicht mit
-  Veranstaltungs-, Benutzer-, Fass-, Zeitraum-, Art- und Abschlussfilter
+- filterbare, ausschließlich lesende Smartphone-Buchungsansicht, die alle
+  Zapfungen eines NFC-Loginzyklus zusammenfasst und die unveränderlichen
+  Einzelvorgänge für Diagnose und Bestand erhält
 - Veranstaltungs- und Benutzersummen für kostenpflichtige Istmengen und
   Beträge mit getrennt ausgewiesener Wartungsentnahme
 - Smartphone-Ansichten für auditierte Adminaktionen und technische Ereignisse
@@ -53,6 +56,8 @@ Phase: Alpha-Entwicklung
   `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
   Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
+- kurze persönliche Kiosk-Begrüßung nach erfolgreicher Live-Zuordnung eines
+  Armbands ohne automatische Anmeldung
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -65,7 +70,8 @@ Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
-einschließlich des lokalen WLAN-Systemmenüs in `M7.7` bestehen 132 Tests.
+einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe
+und der Loginbuchungen in `M7.7` bestehen 134 Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -76,7 +82,7 @@ auf dem Raspberry Pi demonstriert werden.
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
-| Abrechnung | unveränderliche Buchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
+| Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
 
 ## Nicht implementiert
 

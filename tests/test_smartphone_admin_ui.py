@@ -18,8 +18,12 @@ def test_zz_ui_008_smartphone_admin_assets_are_offline_and_responsive() -> None:
     assert "env(safe-area-inset-bottom)" in styles
     assert 'id="login-form"' in html
     assert 'data-view="users"' in html
+    assert 'data-view="kegs"' in html
+    assert 'data-view="settings"' in html
     assert 'id="capture-dialog"' in html
     assert 'id="own-password-form"' in html
+    assert 'id="keg-detach-button"' in html
+    assert "optional" in html
 
 
 def test_smartphone_admin_uses_only_the_protected_web_api() -> None:
@@ -35,6 +39,8 @@ def test_smartphone_admin_uses_only_the_protected_web_api() -> None:
         "/nfc-cards/capture",
         "/api/web-admin/nfc-capture",
         "/api/web-admin/nfc-cards/",
+        "/api/web-admin/booking-sessions",
+        "/api/web-admin/kegs/detach",
     ):
         assert route in script
     assert "X-CSRF-Token" in script
@@ -44,6 +50,18 @@ def test_smartphone_admin_uses_only_the_protected_web_api() -> None:
     assert "/api/simulator/" not in script
     assert "localStorage" not in script
     assert "sessionStorage" not in script
+
+
+def test_reporting_wraps_audit_text_and_groups_login_bookings() -> None:
+    html = (WEB_ROOT / "admin.html").read_text(encoding="utf-8")
+    script = (WEB_ROOT / "admin-app.js").read_text(encoding="utf-8")
+    styles = (WEB_ROOT / "admin-styles.css").read_text(encoding="utf-8")
+
+    assert "eines NFC-Logins zusammengefasst" in html
+    assert "/api/web-admin/booking-sessions" in script
+    assert "booking.pour_count" in script
+    assert "white-space: pre-wrap" in styles
+    assert "overflow-wrap: anywhere" in styles
 
 
 def test_smartphone_user_list_supports_event_sized_collections() -> None:

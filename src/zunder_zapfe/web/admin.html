@@ -75,17 +75,21 @@
               <strong>Benutzer &amp; Armbänder</strong>
               <small>Anlegen, sperren und live zuweisen</small>
             </button>
-            <button class="area-card is-ready" type="button" data-open-view="operations">
+            <button class="area-card is-ready" type="button" data-open-view="kegs">
               <span>Jetzt verfügbar</span>
-              <strong>Veranstaltung &amp; Fass</strong>
-              <small>Stammdaten pflegen und Fass wechseln</small>
+              <strong>Fass am Hahn</strong>
+              <small>Anzapfen, Bestand prüfen und abzapfen</small>
             </button>
             <button class="area-card is-ready" type="button" data-open-view="data">
               <span>Jetzt verfügbar</span>
               <strong>Buchungen &amp; Statistik</strong>
               <small>Abrechnung, Audit und technische Ereignisse</small>
             </button>
-            <article class="area-card"><span>M7.7</span><strong>Diagnose &amp; Einstellungen</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+            <button class="area-card is-ready" type="button" data-open-view="settings">
+              <span>Stammdaten</span>
+              <strong>Einstellungen</strong>
+              <small>Veranstaltungen, Getränke und eigenes Konto</small>
+            </button>
           </div>
         </section>
 
@@ -111,9 +115,48 @@
           <p class="empty-state" id="user-empty" hidden>Keine passenden Benutzer gefunden.</p>
         </section>
 
-        <section class="view" data-view="operations" aria-labelledby="operations-title">
-          <p class="eyebrow">Betrieb</p>
-          <h1 id="operations-title">Veranstaltung &amp; Fass</h1>
+        <section class="view" data-view="kegs" aria-labelledby="kegs-title">
+          <p class="eyebrow">Häufiger Betriebsablauf</p>
+          <h1 id="kegs-title">Fass am Hahn</h1>
+          <div class="keg-management-grid">
+            <section class="panel">
+              <h2>Aktueller Zustand</h2>
+              <article class="active-context" id="active-keg-card">
+                <span>Aktuell am Hahn</span>
+                <strong id="operations-active-keg">Kein aktives Fass</strong>
+                <small id="operations-active-keg-detail">Vor dem Zapfen ein Fass anzapfen.</small>
+              </article>
+              <button class="button button-danger keg-detach-button" id="keg-detach-button" type="button">
+                Aktives Fass abzapfen
+              </button>
+              <p class="muted operational-note">
+                Danach ist bewusst kein Getränk am Hahn aktiv. Historie und Buchungen bleiben erhalten.
+              </p>
+            </section>
+
+            <section class="panel">
+              <h2>Fass anzapfen</h2>
+              <p class="muted">Das Getränk ist erforderlich. Ohne Füllstand wird ein volles Standardfass angenommen.</p>
+              <form class="form-stack" id="keg-switch-form">
+                <label for="keg-beverage">Getränk</label>
+                <select id="keg-beverage" required></select>
+                <label for="keg-volume-liters">Aktueller Füllstand in Liter <small>optional</small></label>
+                <input id="keg-volume-liters" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="Standardfass voll">
+                <small id="keg-volume-hint">Leer lassen für den Standardfüllstand.</small>
+                <button class="button button-primary" type="submit">Fass anzapfen</button>
+              </form>
+            </section>
+
+            <section class="panel keg-history">
+              <h2>Fasshistorie</h2>
+              <div class="record-list" id="keg-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view="settings" aria-labelledby="settings-title">
+          <p class="eyebrow">Seltene Verwaltung</p>
+          <h1 id="settings-title">Allgemeine Einstellungen</h1>
           <div class="management-grid">
             <section class="panel management-section">
               <div class="section-heading">
@@ -142,7 +185,7 @@
               <div class="section-heading">
                 <div>
                   <h2>Getränke</h2>
-                  <p class="muted">Fassgröße und Preis werden ganzzahlig gespeichert.</p>
+                  <p class="muted">Standardfass und Preis für das Anzapfen.</p>
                 </div>
                 <button class="button button-quiet button-small" id="reset-beverage-button" type="button">+ Neu</button>
               </div>
@@ -170,28 +213,18 @@
             </section>
 
             <section class="panel management-section management-wide">
-              <div class="section-heading">
-                <div>
-                  <h2>Geführter Fasswechsel</h2>
-                  <p class="muted">Das bisherige Fass wird geschlossen. Restbestand wird nicht übertragen.</p>
-                </div>
-              </div>
-              <article class="active-context" id="active-keg-card">
-                <span>Aktuell am Hahn</span>
-                <strong id="operations-active-keg">Kein aktives Fass</strong>
-                <small id="operations-active-keg-detail">Vor dem Zapfen ein Fass aktivieren.</small>
-              </article>
-              <form class="form-stack" id="keg-switch-form">
-                <label for="keg-event">Veranstaltung</label>
-                <select id="keg-event" required></select>
-                <label for="keg-beverage">Getränk</label>
-                <select id="keg-beverage" required></select>
-                <label for="keg-volume-liters">Fassinhalt in Liter</label>
-                <input id="keg-volume-liters" type="number" min="0.001" step="0.001" inputmode="decimal" required>
-                <button class="button button-primary" type="submit">Neues Fass aktivieren</button>
+              <h2>Eigenes Passwort ändern</h2>
+              <p class="muted">Nach der Änderung wirst du auf allen Geräten abgemeldet.</p>
+              <form class="form-stack" id="own-password-form">
+                <label for="current-password">Aktuelles Passwort</label>
+                <input id="current-password" type="password" autocomplete="current-password" maxlength="128" required>
+                <label for="new-own-password">Neues Passwort</label>
+                <input id="new-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+                <label for="confirm-own-password">Neues Passwort wiederholen</label>
+                <input id="confirm-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+                <button class="button button-primary" type="submit">Passwort ändern</button>
+                <p class="message" id="account-message" role="status"></p>
               </form>
-              <h3 class="subheading">Fasshistorie</h3>
-              <div class="record-list" id="keg-list"></div>
             </section>
           </div>
         </section>
@@ -242,7 +275,7 @@
               <div class="section-heading">
                 <div>
                   <h2>Buchungen</h2>
-                  <p class="muted">Unveränderliche Vorgänge, neueste zuerst.</p>
+                  <p class="muted">Alle Zapfungen eines NFC-Logins zusammengefasst, neueste zuerst.</p>
                 </div>
                 <small class="muted">max. 100</small>
               </div>
@@ -302,29 +335,14 @@
           </div>
         </section>
 
-        <section class="view" data-view="account" aria-labelledby="account-title">
-          <p class="eyebrow">Persönliches Konto</p>
-          <h1 id="account-title">Passwort ändern</h1>
-          <p class="muted">Nach der Änderung wirst du auf allen Geräten abgemeldet.</p>
-          <form class="panel form-stack" id="own-password-form">
-            <label for="current-password">Aktuelles Passwort</label>
-            <input id="current-password" type="password" autocomplete="current-password" maxlength="128" required>
-            <label for="new-own-password">Neues Passwort</label>
-            <input id="new-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
-            <label for="confirm-own-password">Neues Passwort wiederholen</label>
-            <input id="confirm-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
-            <button class="button button-primary" type="submit">Passwort ändern</button>
-            <p class="message" id="account-message" role="status"></p>
-          </form>
-        </section>
       </main>
 
       <nav class="bottom-nav" aria-label="Admin-Navigation">
         <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
         <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
-        <button type="button" data-nav-view="operations"><span>●</span>Betrieb</button>
+        <button type="button" data-nav-view="kegs"><span>●</span>Fass</button>
         <button type="button" data-nav-view="data"><span>●</span>Daten</button>
-        <button type="button" data-nav-view="account"><span>●</span>Konto</button>
+        <button type="button" data-nav-view="settings"><span>●</span>Mehr</button>
       </nav>
     </div>
 

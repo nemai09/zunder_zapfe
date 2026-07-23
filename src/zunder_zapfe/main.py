@@ -23,6 +23,7 @@ from zunder_zapfe.api_models import (
     AdminBeverageResponse,
     AdminBeverageUpdateRequest,
     AdminBookingResponse,
+    AdminBookingSessionResponse,
     AdminEventCreateRequest,
     AdminEventResponse,
     AdminEventStatisticsResponse,
@@ -661,6 +662,15 @@ def create_app(
             admin_user_id=identity.user_id,
         )
 
+    @application.post(
+        "/api/web-admin/kegs/detach",
+        response_model=AdminKegResponse,
+        responses=web_admin_responses,
+    )
+    async def detach_web_admin_keg(request: Request) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.detach_keg(admin_user_id=identity.user_id)
+
     @application.get(
         "/api/web-admin/bookings",
         response_model=list[AdminBookingResponse],
@@ -679,6 +689,35 @@ def create_app(
     ) -> list[dict[str, Any]]:
         identity = require_web_admin(request)
         return admin_service.list_bookings(
+            event_id=event_id,
+            user_id=user_id,
+            keg_id=keg_id,
+            kind=kind,
+            completion=completion,
+            occurred_from=occurred_from,
+            occurred_to=occurred_to,
+            limit=limit,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/booking-sessions",
+        response_model=list[AdminBookingSessionResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_booking_sessions(
+        request: Request,
+        event_id: int | None = Query(default=None, gt=0),
+        user_id: int | None = Query(default=None, gt=0),
+        keg_id: int | None = Query(default=None, gt=0),
+        kind: str | None = None,
+        completion: str | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int = Query(default=100, ge=1, le=500),
+    ) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_booking_sessions(
             event_id=event_id,
             user_id=user_id,
             keg_id=keg_id,

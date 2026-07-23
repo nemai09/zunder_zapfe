@@ -334,6 +334,9 @@ def test_web_admin_can_assign_wristband_while_tap_is_safely_locked(
     assert assigned.status_code == 200
     assert assigned.json()["state"] == "assigned"
     assert assigned.json()["card"]["uid_hint"] == "…C3D4"
+    tap_status = client.get("/api/tap/status").json()
+    assert tap_status["state"] == "idle"
+    assert tap_status["registration_welcome"] == "Uli User"
     assert client.get("/api/tap/status").json()["state"] == "idle"
     cards = client.get(f"/api/web-admin/users/{ids['user_id']}/nfc-cards").json()
     assert len(cards) == 1

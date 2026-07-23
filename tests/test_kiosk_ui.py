@@ -44,16 +44,25 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "session_remaining_ms" in script
     assert "session_timeout_seconds" in script
     assert 'id="valve-status"' in html
+    assert 'id="wifi-status"' in html
     assert "valve_open" in script
     assert "DEBUG · Ventil" in script
     assert 'id="portion-grid"' not in html
     assert 'id="top-up-button"' not in html
+    assert "border: 1px solid var(--line)" not in styles_for_rule(
+        (WEB_ROOT / "styles.css").read_text(encoding="utf-8"),
+        ".wifi-status",
+    )
 
 
 def test_kiosk_does_not_render_nfc_uid() -> None:
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
 
     assert "nfc.uid" not in script
+
+
+def styles_for_rule(styles: str, selector: str) -> str:
+    return styles.split(f"{selector} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
 
 
 def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
@@ -78,6 +87,8 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert "/api/admin/wifi/mode" in system_script
     assert '"nfc_capture"' in script
     assert "Armband wird zugeordnet." in script
+    assert 'data-screen="registration"' in html
+    assert "registration_welcome" in script
     for route in (
         "/api/admin/session/exit",
         "/api/admin/users",

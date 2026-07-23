@@ -96,13 +96,15 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
-| `M7.7 OPS` | lokales WLAN-Systemmenü und Kiosk-Status implementiert; Einstellungen, Diagnose, Wartung und Safety-Reset folgen |
+| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen und Registrierungsbegrüßung implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
 | `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
 Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
 wird erst nach wirksamer Webauthentifizierung aktiviert. Abgeschlossene
-Buchungen bleiben unveränderlich. Storno, verbindlicher Export, Backup,
+Zapfvorgänge bleiben als unveränderliche Rohdatensätze erhalten und werden
+über ihre NFC-Anmeldesitzung fachlich zusammengefasst. Storno, verbindlicher
+Export, Backup,
 Happy-Hour-Regeln und lokaler Notzugang bleiben entsprechend ihrem
 Anforderungsstatus außerhalb des verbindlichen Milestone-7-Umfangs.
 
@@ -112,6 +114,7 @@ Technische Details stehen unter
 
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
-`ZZ-KEG-004`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`, `ZZ-MNT-002`,
-`ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`,
-`ZZ-NET-002`, `ZZ-NET-003` und `ZZ-DAT-001` bis `ZZ-DAT-007`.
+`ZZ-KEG-004`, `ZZ-KEG-006`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`,
+`ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
+`ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
+und `ZZ-DAT-009`.

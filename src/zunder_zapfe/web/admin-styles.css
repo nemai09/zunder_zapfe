@@ -29,6 +29,7 @@ body {
 
 button, input, select { font: inherit; }
 button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .45; }
 [hidden] { display: none !important; }
 
 .eyebrow {
@@ -219,13 +220,24 @@ button.user-card { border: 1px solid var(--line); }
   border-radius: .8rem;
   background: var(--surface);
 }
+.record-row > div { min-width: 0; }
 .record-row strong, .record-row small { display: block; }
-.record-row small { margin-top: .2rem; color: var(--muted); line-height: 1.35; }
+.record-row small {
+  margin-top: .2rem;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
 .record-row.is-inactive { opacity: .65; }
 .active-context { margin: 1rem 0; padding: 1rem; border-radius: .9rem; background: var(--green-soft); }
 .active-context span, .active-context small { display: block; color: var(--muted); font-size: .78rem; }
 .active-context strong { display: block; margin: .25rem 0; }
 .subheading { margin-top: 1.5rem; }
+.keg-management-grid { display: grid; gap: 1rem; }
+.keg-detach-button { width: 100%; }
+.operational-note { margin: .8rem 0 0; font-size: .82rem; }
+.keg-history { max-width: none; }
 
 .reporting-heading { margin-bottom: 1rem; }
 .reporting-context { margin-bottom: 1rem; }
@@ -330,6 +342,8 @@ button.user-card { border: 1px solid var(--line); }
   .area-grid { grid-template-columns: repeat(2, 1fr); }
   .user-list { grid-template-columns: repeat(2, 1fr); }
   .management-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .keg-management-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .keg-history { grid-column: 1 / -1; }
   .management-wide { grid-column: 1 / -1; }
   .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .report-wide { grid-column: 1 / -1; }

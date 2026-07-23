@@ -1,5 +1,5 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.8
+Version: 0.9
 Stand: 2026-07-23
 Status: Milestone 7 in Umsetzung gemaess CR-002
 
@@ -218,6 +218,19 @@ Bestandsueberwachung ueber eine austauschbare Schnittstelle erlauben.
 MQTT ist der derzeit bevorzugte, aber noch nicht verbindliche Transport.
 Abnahme: Die Architektur definiert eine vom konkreten Waagentyp unabhaengige
 Fuellstandsschnittstelle.
+
+[ZZ-KEG-006] Operatives An- und Abzapfen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Die Smartphone-Adminoberflaeche muss den haeufigen Fassablauf in einem eigenen
+Bereich anbieten. Beim Anzapfen waehlt der Admin das Getraenk und kann den
+aktuellen Fuellstand optional angeben; ohne Angabe gilt die Standardfassgroesse
+des Getraenks als voll. Die aktive Veranstaltung wird aus dem bestehenden
+Abrechnungskontext uebernommen und ist im operativen Ablauf nicht auszuwaehlen.
+Ein aktives Fass muss bewusst abgezapft werden koennen, sodass anschliessend
+kein Getraenk und kein Fass am Hahn aktiv ist.
+Abnahme: Ein volles Standardfass kann allein durch Getraenkeauswahl angezapft
+werden, ein abweichender Fuellstand wird uebernommen und "Abzapfen" hinterlaesst
+einen zapfgesperrten Kontext ohne aktives Fass.
 
 
 5. PORTIONSWAHL UND ZAPFVORGANG
@@ -576,6 +589,16 @@ Smartphone-Breite ohne horizontales Scrollen bedienbar. Vertagte oder noch nicht
 ausreichend spezifizierte Funktionen werden nicht als bereits verfuegbar
 dargestellt.
 
+[ZZ-UI-009] Rueckmeldung nach Armbandzuordnung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Nach einer erfolgreichen Live-Zuordnung eines NFC-Armbands muss der Kiosk vor
+der normalen Sperrbildschirmansicht kurz eine positive Rueckmeldung mit dem
+Anzeigenamen des zugeordneten Benutzers zeigen. Die Rueckmeldung darf keine
+Zapfsitzung starten.
+Abnahme: Ein erfolgreich zugeordnetes Armband fuehrt fuer kurze Zeit zu einer
+Begruessungsansicht und anschliessend zum Sperrbildschirm; der Benutzer ist
+nicht angemeldet und das Ventil bleibt geschlossen.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
@@ -668,6 +691,19 @@ Prioritaet: SOLL | Status: VERTAGT | Pruefung: DEMONSTRATION
 Das System soll Backup, Export und Wiederherstellung der relevanten Daten
 unterstuetzen. Verfahren, Frequenz und Zielmedium werden spaeter festgelegt.
 Abnahme: Wird nach spaeterer Spezifikation ergaenzt.
+
+[ZZ-DAT-009] Zusammenfassung einer NFC-Anmeldesitzung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Alle kostenpflichtigen Zapfvorgaenge zwischen einer erfolgreichen
+NFC-Authentifizierung und dem manuellen oder automatischen Logout muessen in
+der Buchungsansicht, Statistik und persoenlichen Verbrauchszaehlung als eine
+Buchung zusammengefasst werden. Die einzelnen gemessenen Zapfvorgaenge bleiben
+als unveraenderliche Rohdatensaetze erhalten und muessen ueber eine gemeinsame
+Sitzungskennung nachvollziehbar sein. Eine erneute NFC-Authentifizierung
+erzeugt immer eine neue Sitzungskennung.
+Abnahme: Zwei Zapfungen ohne zwischenzeitlichen Logout erscheinen als eine
+summierte Buchung; nach Logout und erneuter Anmeldung entsteht eine weitere
+Buchung. Rohmengen, Betraege und Fasszuordnungen bleiben vollstaendig erhalten.
 
 
 12. ZEITBASIS UND OPTIONALE ERWEITERUNGEN

@@ -104,7 +104,7 @@ def test_zz_keg_001_002_admin_manages_events_beverages_and_keg_switch(
 
     first_event = client.post(
         "/api/web-admin/events",
-        json={"name": "Zunder 2026", "year": 2026},
+        json={"name": "Zunder 2026", "year": 2026, "active": True},
         headers=headers,
     )
     second_event = client.post(
@@ -138,9 +138,7 @@ def test_zz_keg_001_002_admin_manages_events_beverages_and_keg_switch(
     first_keg = client.post(
         "/api/web-admin/kegs/switch",
         json={
-            "event_id": first_event.json()["id"],
             "beverage_id": first_beverage.json()["id"],
-            "initial_volume_ml": 50_000,
         },
         headers=headers,
     )
@@ -159,16 +157,6 @@ def test_zz_keg_001_002_admin_manages_events_beverages_and_keg_switch(
     assert second_keg.json()["event_name"] == "Zunder 2027"
     assert second_keg.json()["remaining_volume_ml"] == 30_000
 
-    kegs = client.get("/api/web-admin/kegs").json()
-    assert [keg["id"] for keg in kegs] == [
-        second_keg.json()["id"],
-        first_keg.json()["id"],
-    ]
-    assert kegs[1]["active"] is False
-    assert kegs[1]["closed_at"] is not None
-    events = client.get("/api/web-admin/events").json()
-    assert next(event for event in events if event["id"] == second_event.json()["id"])["active"]
-
     disable_active_beverage = client.patch(
         f"/api/web-admin/beverages/{second_beverage.json()['id']}",
         json={
@@ -179,20 +167,35 @@ def test_zz_keg_001_002_admin_manages_events_beverages_and_keg_switch(
     )
     assert disable_active_beverage.status_code == 409
 
+    detached = client.post("/api/web-admin/kegs/detach", headers=headers)
+    assert detached.status_code == 200
+    assert detached.json()["active"] is False
+
+    kegs = client.get("/api/web-admin/kegs").json()
+    assert [keg["id"] for keg in kegs] == [
+        second_keg.json()["id"],
+        first_keg.json()["id"],
+    ]
+    assert all(keg["active"] is False for keg in kegs)
+    assert all(keg["closed_at"] is not None for keg in kegs)
+    events = client.get("/api/web-admin/events").json()
+    assert next(event for event in events if event["id"] == second_event.json()["id"])["active"]
+
     with sessions() as session:
         assert (
             session.scalar(select(Event).where(Event.active.is_(True))).id
             == second_event.json()["id"]
         )
-        assert session.scalar(select(Keg).where(Keg.active.is_(True))).id == second_keg.json()["id"]
+        assert session.scalar(select(Keg).where(Keg.active.is_(True))) is None
         actions = list(session.scalars(select(AdminAuditEntry.action).order_by(AdminAuditEntry.id)))
-    assert actions[-6:] == [
+    assert actions[-7:] == [
         "event.created",
         "event.created",
         "beverage.created",
         "beverage.created",
         "keg.switched",
         "keg.switched",
+        "keg.detached",
     ]
 
 
@@ -251,6 +254,7 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
                 kind=BookingKind.MANUAL,
                 completion=BookingCompletion.RELEASED,
                 chargeable=True,
+                login_session_id="berta-login",
             )
         )
         repository.add_tap_booking(
@@ -267,6 +271,7 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
                 kind=BookingKind.PORTION,
                 completion=BookingCompletion.TARGET_REACHED,
                 chargeable=True,
+                login_session_id="admin-login",
             )
         )
         repository.add_tap_booking(
@@ -283,6 +288,7 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
                 kind=BookingKind.MAINTENANCE,
                 completion=BookingCompletion.RELEASED,
                 chargeable=False,
+                login_session_id="admin-login",
             )
         )
         repository.record_admin_action(
@@ -336,15 +342,29 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
         "kind": "manual",
         "completion": "released",
         "chargeable": True,
+        "login_session_id": "berta-login",
     }
     assert client.get("/api/web-admin/bookings", params={"kind": "unbekannt"}).status_code == 422
+
+    grouped = client.get(
+        "/api/web-admin/booking-sessions",
+        params={"event_id": event_id},
+    )
+    assert grouped.status_code == 200
+    assert len(grouped.json()) == 2
+    admin_session = grouped.json()[0]
+    assert admin_session["session_id"] == "admin-login"
+    assert admin_session["pour_count"] == 2
+    assert admin_session["measured_volume_ml"] == 750
+    assert admin_session["amount_cents"] == 225
+    assert admin_session["kinds"] == ["portion", "maintenance"]
 
     statistics = client.get(
         "/api/web-admin/statistics",
         params={"event_id": event_id},
     )
     assert statistics.status_code == 200
-    assert statistics.json()["booking_count"] == 3
+    assert statistics.json()["booking_count"] == 2
     assert statistics.json()["measured_volume_ml"] == 2_000
     assert statistics.json()["chargeable_volume_ml"] == 1_750
     assert statistics.json()["maintenance_volume_ml"] == 250

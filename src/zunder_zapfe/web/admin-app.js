@@ -72,9 +72,10 @@ const elements = {
   beverageActive: document.querySelector("#beverage-active"),
   beverageList: document.querySelector("#beverage-list"),
   kegSwitchForm: document.querySelector("#keg-switch-form"),
-  kegEvent: document.querySelector("#keg-event"),
   kegBeverage: document.querySelector("#keg-beverage"),
   kegVolumeLiters: document.querySelector("#keg-volume-liters"),
+  kegVolumeHint: document.querySelector("#keg-volume-hint"),
+  kegDetachButton: document.querySelector("#keg-detach-button"),
   kegList: document.querySelector("#keg-list"),
   operationsActiveKeg: document.querySelector("#operations-active-keg"),
   operationsActiveKegDetail: document.querySelector("#operations-active-keg-detail"),
@@ -239,7 +240,8 @@ async function loadWorkspace() {
     elements.backendStatus.textContent = "Bereit";
     elements.buildVersion.textContent = health.build;
     renderUsers();
-    renderOperations();
+    renderSettings();
+    renderKegs();
     renderReportingOptions();
     renderMetrics();
   } catch (error) {
@@ -586,10 +588,9 @@ function recordRow(title, detail, buttonLabel, onClick, inactive = false) {
   return row;
 }
 
-function renderOperations() {
+function renderSettings() {
   renderEvents();
   renderBeverages();
-  renderKegs();
 }
 
 function renderReportingOptions() {
@@ -655,7 +656,7 @@ async function loadReporting() {
   try {
     const [statistics, bookings, auditEntries, technicalEvents] = await Promise.all([
       api(`/api/web-admin/statistics?event_id=${eventId}`),
-      api(`/api/web-admin/bookings?${params.toString()}`),
+      api(`/api/web-admin/booking-sessions?${params.toString()}`),
       api("/api/web-admin/audit?limit=50"),
       api("/api/web-admin/technical-events?limit=50"),
     ]);
@@ -741,13 +742,25 @@ function renderReporting() {
     shutdown: "Shutdown",
   };
   for (const booking of model.bookings) {
+    const timeRange = booking.started_at === booking.ended_at
+      ? formatDateTime(booking.started_at)
+      : `${formatDateTime(booking.started_at)} bis ${formatDateTime(booking.ended_at)}`;
+    const beverages = booking.beverage_names.join(", ");
+    const kegs = booking.keg_ids.map((kegId) => `#${kegId}`).join(", ");
     elements.bookingList.append(
       dataRow(
         `${booking.user_display_name} · ${formatLiters(booking.measured_volume_ml)} L`,
-        `${formatDateTime(booking.occurred_at)} · ${booking.beverage_name} · Fass #${booking.keg_id}`,
+        `${timeRange}\n${booking.pour_count} Zapfung${booking.pour_count === 1 ? "" : "en"}`
+          + ` · ${beverages} · Fass ${kegs}`,
         [
-          { text: kindLabels[booking.kind] || booking.kind },
-          { text: completionLabels[booking.completion] || booking.completion },
+          {
+            text: booking.kinds.map((kind) => kindLabels[kind] || kind).join(", "),
+          },
+          {
+            text: booking.completions
+              .map((completion) => completionLabels[completion] || completion)
+              .join(", "),
+          },
           {
             text: booking.chargeable ? formatEuros(booking.amount_cents) : "kostenfrei",
             className: booking.chargeable ? "admin" : "",
@@ -766,8 +779,8 @@ function renderReporting() {
     elements.auditList.append(
       dataRow(
         entry.action,
-        `${formatDateTime(entry.occurred_at)} · ${entry.admin_display_name} · `
-          + `${entry.entity_type}${entry.entity_id ? ` #${entry.entity_id}` : ""} · `
+        `${formatDateTime(entry.occurred_at)} · ${entry.admin_display_name}\n`
+          + `${entry.entity_type}${entry.entity_id ? ` #${entry.entity_id}` : ""}\n`
           + compactJson(values),
       ),
     );
@@ -783,7 +796,7 @@ function renderReporting() {
     elements.technicalEventList.append(
       dataRow(
         entry.message,
-        `${formatDateTime(entry.occurred_at)} · ${entry.event_type}`,
+        `${formatDateTime(entry.occurred_at)}\n${entry.event_type}`,
         [{ text: entry.severity, className: entry.severity.toLowerCase() }],
       ),
     );
@@ -807,17 +820,6 @@ function renderEvents() {
       ),
     );
   }
-  const currentId = Number(elements.kegEvent.value);
-  elements.kegEvent.replaceChildren(new Option("Veranstaltung wählen", ""));
-  for (const event of model.events) {
-    elements.kegEvent.add(new Option(`${event.name} (${event.year})`, String(event.id)));
-  }
-  const activeEvent = model.events.find((event) => event.active);
-  elements.kegEvent.value = String(
-    model.events.some((event) => event.id === currentId)
-      ? currentId
-      : activeEvent?.id || "",
-  );
 }
 
 function resetEventForm() {
@@ -940,12 +942,13 @@ function renderKegs() {
   elements.kegList.replaceChildren();
   const activeKeg = model.kegs.find((keg) => keg.active);
   elements.operationsActiveKeg.textContent = activeKeg
-    ? `${activeKeg.beverage_name} · ${activeKeg.event_name}`
+    ? activeKeg.beverage_name
     : "Kein aktives Fass";
   elements.operationsActiveKegDetail.textContent = activeKeg
     ? `${formatLiters(activeKeg.remaining_volume_ml)} von `
       + `${formatLiters(activeKeg.initial_volume_ml)} L rechnerisch übrig`
     : "Vor dem Zapfen ein Fass aktivieren.";
+  elements.kegDetachButton.disabled = !activeKeg;
   if (!model.kegs.length) {
     elements.kegList.append(recordRow("Noch keine Fasshistorie", "Der erste Wechsel legt sie an."));
   }
@@ -968,29 +971,57 @@ function applyBeverageDefaultVolume() {
   const beverageId = Number(elements.kegBeverage.value);
   const beverage = model.beverages.find((item) => item.id === beverageId);
   if (beverage) {
-    elements.kegVolumeLiters.value = String(beverage.default_keg_size_ml / 1000);
+    const liters = formatLiters(beverage.default_keg_size_ml);
+    elements.kegVolumeLiters.placeholder = `${liters} L (voll)`;
+    elements.kegVolumeHint.textContent =
+      `Leer lassen für ein volles Standardfass mit ${liters} L.`;
+  } else {
+    elements.kegVolumeLiters.placeholder = "Standardfass voll";
+    elements.kegVolumeHint.textContent = "Leer lassen für den Standardfüllstand.";
   }
 }
 
 async function switchKeg(event) {
   event.preventDefault();
   const activeKeg = model.kegs.find((keg) => keg.active);
+  const beverage = model.beverages.find(
+    (item) => item.id === Number(elements.kegBeverage.value),
+  );
   const confirmation = activeKeg
-    ? `${activeKeg.beverage_name} schließen und das neue Fass aktivieren? `
+    ? `${activeKeg.beverage_name} abzapfen und ${beverage?.name || "das neue Fass"} anzapfen? `
       + "Ein rechnerischer Restbestand wird nicht übertragen."
-    : "Dieses Fass als erstes aktives Fass verwenden?";
+    : `${beverage?.name || "Dieses Fass"} jetzt anzapfen?`;
   if (!window.confirm(confirmation)) return;
   try {
     await api("/api/web-admin/kegs/switch", {
       method: "POST",
       body: JSON.stringify({
-        event_id: Number(elements.kegEvent.value),
         beverage_id: Number(elements.kegBeverage.value),
-        initial_volume_ml: Math.round(Number(elements.kegVolumeLiters.value) * 1000),
+        initial_volume_ml: elements.kegVolumeLiters.value
+          ? Math.round(Number(elements.kegVolumeLiters.value) * 1000)
+          : null,
       }),
     });
     await loadWorkspace();
-    showToast("Neues Fass ist aktiv.");
+    elements.kegVolumeLiters.value = "";
+    showToast("Fass ist angezapft und aktiv.");
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function detachKeg() {
+  const activeKeg = model.kegs.find((keg) => keg.active);
+  if (!activeKeg) return;
+  if (
+    !window.confirm(
+      `${activeKeg.beverage_name} wirklich abzapfen? Danach ist kein Getränk aktiv.`,
+    )
+  ) return;
+  try {
+    await api("/api/web-admin/kegs/detach", { method: "POST" });
+    await loadWorkspace();
+    showToast("Fass wurde abgezapft. Der Hahn ist jetzt ohne aktives Getränk.");
   } catch (error) {
     showToast(error.message, true);
   }
@@ -1048,6 +1079,7 @@ elements.beverageForm.addEventListener("submit", saveBeverage);
 document.querySelector("#reset-beverage-button").addEventListener("click", resetBeverageForm);
 elements.kegBeverage.addEventListener("change", applyBeverageDefaultVolume);
 elements.kegSwitchForm.addEventListener("submit", switchKeg);
+elements.kegDetachButton.addEventListener("click", detachKeg);
 elements.reportEvent.addEventListener("change", () => {
   renderReportingOptions();
   loadReporting();

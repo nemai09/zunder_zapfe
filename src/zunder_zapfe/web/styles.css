@@ -164,9 +164,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  padding: 0.35rem 0;
   color: var(--muted);
   font-size: clamp(0.65rem, 1.1vw, 0.8rem);
 }
@@ -180,7 +178,6 @@ button {
 
 .wifi-status.is-ap {
   color: #9dc5ff;
-  border-color: rgb(63 140 255 / 40%);
 }
 
 .wifi-status.is-ap .wifi-dot {
@@ -190,7 +187,6 @@ button {
 
 .wifi-status.is-client {
   color: var(--success);
-  border-color: rgb(97 217 145 / 35%);
 }
 
 .wifi-status.is-client .wifi-dot {
@@ -201,6 +197,29 @@ button {
 .wifi-status.is-error .wifi-dot {
   background: var(--danger);
 }
+
+.welcome-screen {
+  align-content: center;
+  text-align: center;
+  place-items: center;
+}
+
+.welcome-symbol {
+  display: grid;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1.2rem;
+  border-radius: 50%;
+  color: #0e2d20;
+  background: var(--success);
+  font-size: 2.4rem;
+  font-weight: 900;
+  box-shadow: 0 0 2rem rgb(97 217 145 / 35%);
+  place-items: center;
+}
+
+.welcome-screen h1 { margin: 0.2rem 0 0.8rem; }
+.welcome-screen p:last-child { margin: 0; color: var(--muted); }
 
 .screen {
   position: relative;

@@ -109,6 +109,7 @@ class TapStatusResponse(BaseModel):
     persistence_error: str | None
     last_booking: BookingSummaryResponse | None
     nfc_feedback: str | None
+    registration_welcome: str | None
 
 
 class SessionStatusResponse(BaseModel):
@@ -216,9 +217,9 @@ class AdminBeverageResponse(BaseModel):
 
 
 class AdminKegSwitchRequest(BaseModel):
-    event_id: int = Field(gt=0)
+    event_id: int | None = Field(default=None, gt=0)
     beverage_id: int = Field(gt=0)
-    initial_volume_ml: int = Field(gt=0)
+    initial_volume_ml: int | None = Field(default=None, gt=0)
 
 
 class AdminKegResponse(BaseModel):
@@ -252,6 +253,27 @@ class AdminBookingResponse(BaseModel):
     kind: str
     completion: str
     chargeable: bool
+    login_session_id: str
+
+
+class AdminBookingSessionResponse(BaseModel):
+    session_id: str
+    first_booking_id: int
+    event_id: int
+    event_name: str
+    user_id: int
+    user_display_name: str
+    started_at: datetime
+    ended_at: datetime
+    pour_count: int
+    measured_volume_ml: int
+    measured_pulses: int
+    amount_cents: int
+    chargeable: bool
+    beverage_names: list[str]
+    keg_ids: list[int]
+    kinds: list[str]
+    completions: list[str]
 
 
 class AdminUserStatisticsResponse(BaseModel):
