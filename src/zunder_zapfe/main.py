@@ -39,10 +39,23 @@ from zunder_zapfe.api_models import (
     SimulatedPulsesRequest,
     TapOptionsResponse,
     TapStatusResponse,
+    WebAdminLoginOptionResponse,
+    WebAdminLoginRequest,
+    WebAdminPasswordChangeRequest,
+    WebAdminPasswordResetRequest,
+    WebAdminSessionResponse,
 )
 from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
+from zunder_zapfe.backend.web_auth_service import (
+    WebAdminIdentity,
+    WebAuthenticationError,
+    WebAuthorizationError,
+    WebAuthService,
+    WebCsrfError,
+    WebLoginRateLimited,
+)
 from zunder_zapfe.build_info import current_build_info
 from zunder_zapfe.configuration import KioskSettings, load_kiosk_settings
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
@@ -51,6 +64,9 @@ from zunder_zapfe.hardware.simulators import SimulatedFlowMeter, SimulatedNfcRea
 from zunder_zapfe.persistence import create_database_engine, create_session_factory
 
 WEB_ROOT = Path(__file__).resolve().parent / "web"
+WEB_ADMIN_SESSION_COOKIE = "zz_admin_session"
+WEB_ADMIN_CSRF_COOKIE = "zz_admin_csrf"
+WEB_ADMIN_CSRF_HEADER = "X-CSRF-Token"
 
 
 BUILD_INFO = current_build_info(WEB_ROOT.parents[2])
@@ -99,6 +115,7 @@ def create_app(
         tap_service,
         default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
     )
+    web_auth_service = WebAuthService(sessions)
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
@@ -150,6 +167,23 @@ def create_app(
     async def admin_forbidden(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=403, content={"detail": str(error)})
 
+    @application.exception_handler(WebAuthenticationError)
+    async def web_authentication_failed(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=401, content={"detail": str(error)})
+
+    @application.exception_handler(WebAuthorizationError)
+    @application.exception_handler(WebCsrfError)
+    async def web_authorization_failed(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=403, content={"detail": str(error)})
+
+    @application.exception_handler(WebLoginRateLimited)
+    async def web_login_rate_limited(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": str(error)},
+            headers={"Retry-After": "60"},
+        )
+
     @application.exception_handler(LookupError)
     async def entity_not_found(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": str(error)})
@@ -163,6 +197,110 @@ def create_app(
         return FileResponse(WEB_ROOT / "index.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
+
+    def require_web_admin(request: Request, *, write: bool = False) -> WebAdminIdentity:
+        return web_auth_service.authenticate(
+            request.cookies.get(WEB_ADMIN_SESSION_COOKIE),
+            csrf_token=request.headers.get(WEB_ADMIN_CSRF_HEADER),
+            require_csrf=write,
+        )
+
+    def web_session_response(identity: WebAdminIdentity) -> dict[str, object]:
+        return {
+            "user_id": identity.user_id,
+            "display_name": identity.display_name,
+            "idle_expires_at": identity.idle_expires_at,
+            "absolute_expires_at": identity.absolute_expires_at,
+        }
+
+    def clear_web_admin_cookies(response: Response) -> None:
+        response.delete_cookie(WEB_ADMIN_SESSION_COOKIE, path="/")
+        response.delete_cookie(WEB_ADMIN_CSRF_COOKIE, path="/")
+
+    @application.get(
+        "/api/web-auth/admins",
+        response_model=list[WebAdminLoginOptionResponse],
+    )
+    async def web_login_admins() -> list[dict[str, object]]:
+        return web_auth_service.list_login_admins()
+
+    @application.post(
+        "/api/web-auth/login",
+        response_model=WebAdminSessionResponse,
+        responses={
+            401: {"model": ErrorResponse, "description": "Invalid credentials"},
+            429: {"model": ErrorResponse, "description": "Too many attempts"},
+        },
+    )
+    async def web_admin_login(
+        request: WebAdminLoginRequest,
+        response: Response,
+    ) -> dict[str, object]:
+        issued = web_auth_service.login(user_id=request.user_id, password=request.password)
+        max_age = max(
+            1,
+            int((issued.absolute_expires_at - datetime.now(UTC)).total_seconds()),
+        )
+        response.set_cookie(
+            WEB_ADMIN_SESSION_COOKIE,
+            issued.token,
+            max_age=max_age,
+            httponly=True,
+            secure=False,
+            samesite="strict",
+            path="/",
+        )
+        response.set_cookie(
+            WEB_ADMIN_CSRF_COOKIE,
+            issued.csrf_token,
+            max_age=max_age,
+            httponly=False,
+            secure=False,
+            samesite="strict",
+            path="/",
+        )
+        return web_session_response(issued.identity)
+
+    @application.get(
+        "/api/web-auth/session",
+        response_model=WebAdminSessionResponse,
+        responses={401: {"model": ErrorResponse, "description": "No valid session"}},
+    )
+    async def web_admin_session(request: Request) -> dict[str, object]:
+        return web_session_response(require_web_admin(request))
+
+    @application.post(
+        "/api/web-auth/logout",
+        status_code=204,
+        responses={401: {"model": ErrorResponse, "description": "No valid session"}},
+    )
+    async def web_admin_logout(request: Request) -> Response:
+        web_auth_service.logout(
+            request.cookies.get(WEB_ADMIN_SESSION_COOKIE),
+            csrf_token=request.headers.get(WEB_ADMIN_CSRF_HEADER),
+        )
+        response = Response(status_code=204)
+        clear_web_admin_cookies(response)
+        return response
+
+    @application.post(
+        "/api/web-auth/password",
+        status_code=204,
+        responses={401: {"model": ErrorResponse, "description": "Invalid password"}},
+    )
+    async def change_web_admin_password(
+        request_body: WebAdminPasswordChangeRequest,
+        request: Request,
+    ) -> Response:
+        web_auth_service.change_own_password(
+            request.cookies.get(WEB_ADMIN_SESSION_COOKIE),
+            csrf_token=request.headers.get(WEB_ADMIN_CSRF_HEADER),
+            current_password=request_body.current_password,
+            new_password=request_body.new_password,
+        )
+        response = Response(status_code=204)
+        clear_web_admin_cookies(response)
+        return response
 
     @application.get("/api/health", response_model=HealthResponse)
     async def health() -> dict[str, str]:
@@ -321,6 +459,136 @@ def create_app(
     )
     async def remove_admin_nfc_card(card_id: int) -> Response:
         admin_service.remove_nfc_card(card_id)
+        return Response(status_code=204)
+
+    web_admin_responses = {
+        401: {"model": ErrorResponse, "description": "Valid web admin session required"},
+        403: {"model": ErrorResponse, "description": "Admin authorization failed"},
+        409: {"model": ErrorResponse, "description": "Domain conflict"},
+        422: {"model": ErrorResponse, "description": "Invalid value"},
+    }
+
+    @application.get(
+        "/api/web-admin/settings",
+        response_model=AdminSettingsResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_settings(request: Request) -> dict[str, int]:
+        identity = require_web_admin(request)
+        return admin_service.settings(admin_user_id=identity.user_id)
+
+    @application.patch(
+        "/api/web-admin/settings",
+        response_model=AdminSettingsResponse,
+        responses=web_admin_responses,
+    )
+    async def update_web_admin_settings(
+        request_body: AdminSettingsUpdateRequest,
+        request: Request,
+    ) -> dict[str, int]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.update_settings(
+            admin_session_timeout_seconds=request_body.admin_session_timeout_seconds,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/users",
+        response_model=list[AdminUserResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_users(request: Request) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_users(admin_user_id=identity.user_id)
+
+    @application.post(
+        "/api/web-admin/users",
+        response_model=AdminUserResponse,
+        status_code=201,
+        responses=web_admin_responses,
+    )
+    async def create_web_admin_user(
+        request_body: AdminUserCreateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.create_user(
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.patch(
+        "/api/web-admin/users/{user_id}",
+        response_model=AdminUserResponse,
+        responses=web_admin_responses,
+    )
+    async def update_web_admin_user(
+        user_id: int,
+        request_body: AdminUserUpdateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.update_user(
+            user_id,
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.put(
+        "/api/web-admin/users/{user_id}/password",
+        status_code=204,
+        responses=web_admin_responses,
+    )
+    async def reset_web_admin_password(
+        user_id: int,
+        request_body: WebAdminPasswordResetRequest,
+        request: Request,
+    ) -> Response:
+        identity = require_web_admin(request, write=True)
+        web_auth_service.reset_password(
+            actor_user_id=identity.user_id,
+            target_user_id=user_id,
+            new_password=request_body.new_password,
+        )
+        return Response(status_code=204)
+
+    @application.get(
+        "/api/web-admin/users/{user_id}/nfc-cards",
+        response_model=list[AdminNfcCardResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_user_nfc_cards(
+        user_id: int,
+        request: Request,
+    ) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_nfc_cards(user_id, admin_user_id=identity.user_id)
+
+    @application.patch(
+        "/api/web-admin/nfc-cards/{card_id}",
+        response_model=AdminNfcCardResponse,
+        responses=web_admin_responses,
+    )
+    async def update_web_admin_nfc_card(
+        card_id: int,
+        request_body: AdminNfcCardStatusRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.set_nfc_card_active(
+            card_id,
+            active=request_body.active,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.delete(
+        "/api/web-admin/nfc-cards/{card_id}",
+        status_code=204,
+        responses=web_admin_responses,
+    )
+    async def remove_web_admin_nfc_card(card_id: int, request: Request) -> Response:
+        identity = require_web_admin(request, write=True)
+        admin_service.remove_nfc_card(card_id, admin_user_id=identity.user_id)
         return Response(status_code=204)
 
     @application.post("/api/session/logout", status_code=204, responses=conflict_response)

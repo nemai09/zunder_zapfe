@@ -2,7 +2,7 @@
 
 Status: Alpha-Vertrag
 
-Basis-URL: `http://127.0.0.1:8000`
+Interne Basis-URL: `http://127.0.0.1:8000`
 Maschinenlesbar: [`openapi.json`](openapi.json)
 
 ## Geltungsbereich
@@ -23,9 +23,10 @@ Laufzeit kein Netzwerk. Die Alpha-API besitzt noch keinen Versionspräfix;
 - `422`: Request-JSON verletzt das Schema.
 - `500`: unerwarteter interner Fehler; nicht als normaler Ablauf behandeln.
 
-Die API übernimmt Benutzer- und Adminidentität ausschließlich aus der lokalen
-NFC-Sitzung. Clients dürfen keine fremde Benutzer-ID oder ein Admin-Flag
-einspeisen.
+Die Kiosk-API übernimmt die Benutzeridentität ausschließlich aus der lokalen
+NFC-Sitzung. Die Smartphone-Administration verwendet eine davon getrennte,
+persönliche Passwortsitzung. Clients dürfen bei Fachoperationen weder eine
+ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 
 ## Diagnose und Status
 
@@ -131,6 +132,52 @@ Admin-Armband nicht versehentlich zugeordnet werden. Vollständige UIDs werden
 weder in Adminantworten noch in Admin-Auditwerten ausgegeben.
 Eine entfernte UID darf danach neu zugeordnet werden. Das letzte aktive
 Armband eines aktiven Admins kann weder gesperrt noch entfernt werden.
+
+## Smartphone-Webauthentifizierung
+
+Normale Benutzer besitzen kein Passwort und erscheinen nicht in der
+Loginauswahl. Jeder aktive Admin mit gesetztem Passwort kann eine persönliche,
+von NFC unabhängige Websitzung eröffnen.
+
+| Methode und Pfad | Request/Ergebnis | Wirkung |
+| --- | --- | --- |
+| `GET /api/web-auth/admins` | `WebAdminLoginOptionResponse[]` | aktive Admins mit gesetztem Passwort für die Loginauswahl |
+| `POST /api/web-auth/login` | `user_id`, `password` | prüft Argon2id-Hash und setzt Sitzungs- sowie CSRF-Cookie |
+| `GET /api/web-auth/session` | `WebAdminSessionResponse` | aktuelle persönliche Websitzung |
+| `POST /api/web-auth/logout` | `204` | widerruft die Sitzung und entfernt Cookies |
+| `POST /api/web-auth/password` | bisheriges und neues Passwort | ändert das eigene Passwort und beendet bestehende Sitzungen |
+
+Das opake Sitzungstoken liegt ausschließlich in einem `HttpOnly`-Cookie mit
+`SameSite=Strict`; die Datenbank speichert nur seinen SHA-256-Hash. Schreibende
+Requests benötigen zusätzlich den Wert des nicht-`HttpOnly`-CSRF-Cookies im
+Header `X-CSRF-Token`. Die Alpha-Defaults sind 30 Minuten Inaktivität und
+12 Stunden absolute Dauer. Fünf fehlgeschlagene Loginversuche innerhalb einer
+Minute sperren weitere Versuche vorübergehend.
+
+Webpasswort und Hash erscheinen weder in Antworten noch in Logs oder
+Auditwerten. Da die isolierte Alpha-Ausbaustufe HTTP verwendet, besitzt das
+Sitzungscookie noch kein `Secure`-Attribut.
+
+## Smartphone-Benutzerverwaltung
+
+Die folgenden Routen benötigen eine gültige Websitzung; schreibende Methoden
+zusätzlich den CSRF-Header. Die Fachlogik und Auditregeln entsprechen der
+lokalen Verwaltungs-API.
+
+| Methode und Pfad | Wirkung |
+| --- | --- |
+| `GET /api/web-admin/users` | Benutzer und maskierten Armbandstatus auflisten |
+| `POST /api/web-admin/users` | Benutzer anlegen |
+| `PATCH /api/web-admin/users/{id}` | Profil, Rolle und Aktivstatus ändern |
+| `PUT /api/web-admin/users/{id}/password` | persönliches Passwort eines anderen aktiven Admins setzen oder zurücksetzen |
+| `GET /api/web-admin/users/{id}/nfc-cards` | maskierte Armbandzuordnungen lesen |
+| `PATCH /api/web-admin/nfc-cards/{id}` | Armband sperren oder reaktivieren |
+| `DELETE /api/web-admin/nfc-cards/{id}` | Armbandzuordnung entfernen |
+| `GET /api/web-admin/settings` | bestehenden lokalen Admin-Timeout lesen |
+| `PATCH /api/web-admin/settings` | bestehenden lokalen Admin-Timeout ändern |
+
+Die hardwaregebundene Live-Zuordnung wird erst mit dem sicheren
+Zuordnungszustand aus `M7.4` über die Smartphone-API freigegeben.
 
 ## Wartung und Sicherheit
 

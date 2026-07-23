@@ -99,6 +99,7 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
         "tap_bookings",
         "technical_events",
         "users",
+        "web_admin_sessions",
     }
     command.check(alembic_config(str(migrated_engine.url)))
 
@@ -206,6 +207,37 @@ def test_user_profile_migration_backfills_existing_display_name(tmp_path: Path) 
             .one()
         )
         assert row == ("Legacy Name", None, None)
+    finally:
+        migrated.dispose()
+
+
+def test_web_admin_session_migration_preserves_existing_admin(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path / "upgrade-web-admin-session.db")
+    config = alembic_config(url)
+    command.upgrade(config, "a91f5e7c2d10")
+    engine = create_database_engine(url)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO users "
+                    "(id, display_name, first_name, role, active, password_hash, "
+                    "created_at, updated_at) "
+                    "VALUES (1, 'Ada Admin', 'Ada', 'admin', 1, 'existing-hash', "
+                    ":timestamp, :timestamp)"
+                ),
+                {"timestamp": "2026-07-23 12:00:00"},
+            )
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, "head")
+    migrated = create_database_engine(url)
+    try:
+        with migrated.connect() as connection:
+            password_hash = connection.scalar(text("SELECT password_hash FROM users WHERE id = 1"))
+        assert password_hash == "existing-hash"
+        assert "web_admin_sessions" in inspect(migrated).get_table_names()
     finally:
         migrated.dispose()
 

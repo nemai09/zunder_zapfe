@@ -24,6 +24,10 @@ Phase: Alpha-Entwicklung
 - Live-Zuordnung, Sperre und Entfernen von NFC-Armbändern ohne UID-Eingabe im Webclient
 - eindeutige Lockscreen-Rückmeldung für unbekannte und gesperrte Armbänder
 - kompakte, durchsuch- und filterbare Benutzerliste für typische Veranstaltungen
+- persönliche Admin-Webpasswörter mit Argon2id sowie widerrufbare,
+  CSRF-geschützte Websitzungen
+- getrennte, geschützte Smartphone-API für Benutzer-, Armband- und
+  Passwortverwaltung
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -40,15 +44,14 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Benutzer-/Armbandverwaltung und Sicherheitsreset | Smartphone-WebUI, Webauthentifizierung und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Webauthentifizierung, Benutzer-/Armbandverwaltung und Sicherheitsreset | Smartphone-WebUI und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
 
 ## Nicht implementiert
 
-- Access Point `ZUNDER_ZAPFE`, persönliche Passwortsitzungen und vollständige
-  Smartphone-Admin-WebUI
+- Access Point `ZUNDER_ZAPFE` und vollständige Smartphone-Admin-WebUI
 - Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer, Buchungen,
   Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter

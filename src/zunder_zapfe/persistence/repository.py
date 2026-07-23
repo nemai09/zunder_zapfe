@@ -24,6 +24,7 @@ from zunder_zapfe.persistence.models import (
     TechnicalEvent,
     User,
     UserRole,
+    WebAdminSession,
 )
 
 
@@ -125,6 +126,19 @@ class Repository:
 
     def list_users(self) -> list[User]:
         return list(self.session.scalars(select(User).order_by(User.first_name, User.last_name)))
+
+    def list_web_admins(self) -> list[User]:
+        return list(
+            self.session.scalars(
+                select(User)
+                .where(
+                    User.role == UserRole.ADMIN,
+                    User.active.is_(True),
+                    User.password_hash.is_not(None),
+                )
+                .order_by(User.first_name, User.last_name, User.id)
+            )
+        )
 
     def update_user(
         self,
@@ -394,6 +408,35 @@ class Repository:
         self.session.add(entry)
         self.session.flush()
         return entry
+
+    def find_web_admin_session(self, token_hash: str) -> WebAdminSession | None:
+        return self.session.scalar(
+            select(WebAdminSession).where(WebAdminSession.token_hash == token_hash)
+        )
+
+    def revoke_web_admin_sessions(
+        self,
+        user_id: int,
+        *,
+        revoked_at: datetime,
+        except_session_id: int | None = None,
+    ) -> int:
+        sessions = list(
+            self.session.scalars(
+                select(WebAdminSession).where(
+                    WebAdminSession.user_id == user_id,
+                    WebAdminSession.revoked_at.is_(None),
+                )
+            )
+        )
+        revoked = 0
+        for web_session in sessions:
+            if except_session_id is not None and web_session.id == except_session_id:
+                continue
+            web_session.revoked_at = revoked_at
+            revoked += 1
+        self.session.flush()
+        return revoked
 
     def _require_active_admin(self, user_id: int) -> User:
         user = self.session.get(User, user_id)

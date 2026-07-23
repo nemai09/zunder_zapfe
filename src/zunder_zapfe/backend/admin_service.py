@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -56,12 +57,17 @@ class AdminService:
         self._cancel_capture()
         return self._tap_service.exit_admin_mode()
 
-    def settings(self) -> dict[str, int]:
-        self._require_admin_id()
+    def settings(self, *, admin_user_id: int | None = None) -> dict[str, int]:
+        self._require_admin_id(admin_user_id)
         return {"admin_session_timeout_seconds": self._configured_timeout()}
 
-    def update_settings(self, *, admin_session_timeout_seconds: int) -> dict[str, int]:
-        admin_id = self._require_admin_id()
+    def update_settings(
+        self,
+        *,
+        admin_session_timeout_seconds: int,
+        admin_user_id: int | None = None,
+    ) -> dict[str, int]:
+        admin_id = self._require_admin_id(admin_user_id)
         timeout_seconds = self._validate_timeout(admin_session_timeout_seconds)
         with self._sessions.begin() as session:
             Repository(session).set_setting(
@@ -72,8 +78,8 @@ class AdminService:
         self._tap_service.set_admin_session_timeout(timeout_seconds)
         return {"admin_session_timeout_seconds": timeout_seconds}
 
-    def list_users(self) -> list[dict[str, Any]]:
-        self._require_admin_id()
+    def list_users(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
         with self._sessions() as session:
             repository = Repository(session)
             return [self._user_snapshot(repository, user) for user in repository.list_users()]
@@ -85,8 +91,9 @@ class AdminService:
         last_name: str | None,
         note: str | None,
         is_admin: bool,
+        admin_user_id: int | None = None,
     ) -> dict[str, Any]:
-        admin_id = self._require_admin_id()
+        admin_id = self._require_admin_id(admin_user_id)
         with self._sessions.begin() as session:
             repository = Repository(session)
             user = repository.create_user(
@@ -113,8 +120,9 @@ class AdminService:
         note: str | None,
         is_admin: bool,
         active: bool,
+        admin_user_id: int | None = None,
     ) -> dict[str, Any]:
-        admin_id = self._require_admin_id()
+        admin_id = self._require_admin_id(admin_user_id)
         with self._sessions.begin() as session:
             repository = Repository(session)
             user = repository.get_user(user_id)
@@ -143,6 +151,12 @@ class AdminService:
                 role=next_role,
                 active=active,
             )
+            if not active or next_role is not UserRole.ADMIN:
+                user.password_hash = None
+                repository.revoke_web_admin_sessions(
+                    user.id,
+                    revoked_at=datetime.now(UTC),
+                )
             repository.record_admin_action(
                 admin_user_id=admin_id,
                 action="user.updated",
@@ -153,15 +167,25 @@ class AdminService:
             )
             return self._user_snapshot(repository, user)
 
-    def list_nfc_cards(self, user_id: int) -> list[dict[str, Any]]:
-        self._require_admin_id()
+    def list_nfc_cards(
+        self,
+        user_id: int,
+        *,
+        admin_user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
         with self._sessions() as session:
             repository = Repository(session)
             return [self._card_snapshot(card) for card in repository.list_nfc_cards(user_id)]
 
-    def capture_nfc_card(self, user_id: int) -> dict[str, Any]:
+    def capture_nfc_card(
+        self,
+        user_id: int,
+        *,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
         """Capture only a UID observed by the local reader after an empty-reader phase."""
-        admin_id = self._require_admin_id()
+        admin_id = self._require_admin_id(admin_user_id)
         with self._sessions() as session:
             Repository(session).get_user(user_id)
 
@@ -219,12 +243,18 @@ class AdminService:
             self._capture = None
             return {"state": "assigned", "card": snapshot}
 
-    def cancel_nfc_capture(self) -> None:
-        self._require_admin_id()
+    def cancel_nfc_capture(self, *, admin_user_id: int | None = None) -> None:
+        self._require_admin_id(admin_user_id)
         self._cancel_capture()
 
-    def set_nfc_card_active(self, card_id: int, *, active: bool) -> dict[str, Any]:
-        admin_id = self._require_admin_id()
+    def set_nfc_card_active(
+        self,
+        card_id: int,
+        *,
+        active: bool,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
         with self._sessions.begin() as session:
             repository = Repository(session)
             card = repository.get_nfc_card(card_id)
@@ -249,8 +279,8 @@ class AdminService:
             )
             return self._card_snapshot(card)
 
-    def remove_nfc_card(self, card_id: int) -> None:
-        admin_id = self._require_admin_id()
+    def remove_nfc_card(self, card_id: int, *, admin_user_id: int | None = None) -> None:
+        admin_id = self._require_admin_id(admin_user_id)
         with self._sessions.begin() as session:
             repository = Repository(session)
             card = repository.get_nfc_card(card_id)
@@ -276,8 +306,10 @@ class AdminService:
             )
             repository.delete_nfc_card(card_id)
 
-    def _require_admin_id(self) -> int:
-        admin_id = self._tap_service.require_admin_user_id()
+    def _require_admin_id(self, admin_user_id: int | None = None) -> int:
+        admin_id = (
+            self._tap_service.require_admin_user_id() if admin_user_id is None else admin_user_id
+        )
         with self._sessions() as session:
             user = session.get(User, admin_id)
             if user is None or not user.active or user.role is not UserRole.ADMIN:
@@ -325,6 +357,7 @@ class AdminService:
             "note": user.note,
             "is_admin": user.role is UserRole.ADMIN,
             "active": user.active,
+            "has_password": user.password_hash is not None,
             "nfc_card_count": len(cards),
             "active_nfc_card_count": sum(card.active for card in cards),
         }

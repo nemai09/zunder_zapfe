@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -131,6 +133,7 @@ class AdminUserResponse(BaseModel):
     note: str | None
     is_admin: bool
     active: bool
+    has_password: bool
     nfc_card_count: int
     active_nfc_card_count: int
 
@@ -157,6 +160,32 @@ class AdminSettingsResponse(BaseModel):
 
 class AdminSettingsUpdateRequest(BaseModel):
     admin_session_timeout_seconds: int = Field(ge=10, le=3600)
+
+
+class WebAdminLoginOptionResponse(BaseModel):
+    id: int
+    display_name: str
+
+
+class WebAdminLoginRequest(BaseModel):
+    user_id: int = Field(gt=0)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class WebAdminSessionResponse(BaseModel):
+    user_id: int
+    display_name: str
+    idle_expires_at: datetime
+    absolute_expires_at: datetime
+
+
+class WebAdminPasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=10, max_length=128)
+
+
+class WebAdminPasswordResetRequest(BaseModel):
+    new_password: str = Field(min_length=10, max_length=128)
 
 
 class PourRecordResponse(BaseModel):

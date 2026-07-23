@@ -17,7 +17,8 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 | Bereich | Operation | Wesentliche Bedingung |
 | --- | --- | --- |
 | Veranstaltung | `create_event`, `activate_event` | höchstens eine aktive Veranstaltung |
-| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `update_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
+| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `list_web_admins`, `update_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
+| Websitzung | `find_web_admin_session`, `revoke_web_admin_sessions` | nur Token-Hash persistent; Widerruf bei Passwort- oder Rollenänderung |
 | Getränk/Fass | `create_beverage`, `activate_new_keg`, `active_tap_context` | höchstens ein aktives Fass und passender Kontext |
 | Buchung | `add_tap_booking`, `list_user_bookings` | Event und Getränk passen zum Fass |
 | Summen | `user_consumption`, `remaining_keg_volume_ml` | ausschließlich persistierte Istmengen |
@@ -33,6 +34,10 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 - Benutzer besitzen einen verpflichtenden `first_name`, optionalen `last_name`
   und optionalen `note`; `display_name` wird daraus für bestehende Clients
   abgeleitet.
+- `users.password_hash` bleibt für normale Benutzer `NULL`. Adminpasswörter
+  werden ausschließlich als individuell gesalzene Argon2id-Hashes gespeichert.
+- `web_admin_sessions` speichert SHA-256-Hashes zufälliger Sitzungs- und
+  CSRF-Token sowie Inaktivitäts-, Absolut- und Widerrufszeit.
 - Volumen: Milliliter als `int`.
 - Preis: Cent pro Liter als `int`.
 - Betrag: Cent als `int`, ganzzahlig auf den nächsten Cent gerundet.

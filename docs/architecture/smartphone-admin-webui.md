@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: Zielarchitektur für Milestone 7 gemäß CR-002
+Status: M7.2 Authentifizierungsgrundlage implementiert; weitere Bereiche geplant
 
 ## Ziel und Abgrenzung
 

@@ -229,6 +229,20 @@ class AdminAuditEntry(Base):
     new_values_json: Mapped[str | None] = mapped_column(Text)
 
 
+class WebAdminSession(Base):
+    __tablename__ = "web_admin_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    csrf_token_hash: Mapped[str] = mapped_column(String(64))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    idle_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    absolute_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class TechnicalEvent(Base):
     __tablename__ = "technical_events"
 

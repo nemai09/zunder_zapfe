@@ -163,6 +163,18 @@ Health-Endpunkt:
 curl http://127.0.0.1:8000/api/health
 ```
 
+Initiales oder lokal zurückgesetztes Admin-Webpasswort:
+
+```bash
+sudo -u zapfe /home/zapfe/sw/zunder_zapfe/.venv/bin/zunder-zapfe-admin-password
+```
+
+Das Kommando listet aktive Admins auf und fragt das Passwort verdeckt zweimal
+ab. Ein Passwort darf niemals als Kommandozeilenargument, in `web.env` oder im
+Repository hinterlegt werden. Der tatsächliche Desktop-Benutzer und
+Repositorypfad sind bei einer abweichenden Installation entsprechend
+anzupassen.
+
 Dienst neu starten:
 
 ```bash
