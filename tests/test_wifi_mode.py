@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from zunder_zapfe.backend import wifi_mode_service
 from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
 
 
@@ -58,6 +59,28 @@ def test_wifi_status_is_parsed_and_cached_without_credentials() -> None:
     assert first.ssid == "ZUNDER_ZAPFE"
     assert first.client_profile_available is True
     assert runner.commands == [[str(Path("/test/wifi-mode")), "status"]]
+
+
+def test_wifi_status_uses_thirty_second_default_cache(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = RecordingRunner(
+        [
+            result("mode=ap\nclient_profile_available=true\n"),
+            result("mode=client\nclient_profile_available=true\n"),
+        ]
+    )
+    moments = iter([100.0, 129.9, 130.0])
+    monkeypatch.setattr(wifi_mode_service.time, "monotonic", lambda: next(moments))
+    service = WifiModeService(Path("/test/wifi-mode"), command_runner=runner)
+
+    assert service.status().mode == "ap"
+    assert service.status().mode == "ap"
+    assert service.status().mode == "client"
+    assert runner.commands == [
+        [str(Path("/test/wifi-mode")), "status"],
+        [str(Path("/test/wifi-mode")), "status"],
+    ]
 
 
 def test_wifi_switch_only_accepts_explicit_modes_and_reports_helper_errors() -> None:

@@ -56,6 +56,9 @@ Phase: Alpha-Entwicklung
   `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
   Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
+- reduzierte Pi-Laufzeitlast durch gecachten WLAN-Systemstatus, getrennte
+  Kiosk-Abfrageintervalle, fachlich inkrementelles Rendering und ruhiges
+  HTTP-Access-Log
 - kurze persönliche Kiosk-Begrüßung nach erfolgreicher Live-Zuordnung eines
   Armbands ohne automatische Anmeldung
 
@@ -70,8 +73,8 @@ Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
-einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe
-und der Loginbuchungen in `M7.7` bestehen 134 Tests.
+einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe,
+der Loginbuchungen und der Laufzeitoptimierung in `M7.7` bestehen 136 Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 

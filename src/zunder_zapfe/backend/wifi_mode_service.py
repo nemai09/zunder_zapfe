@@ -41,7 +41,7 @@ class WifiModeService:
         helper_path: Path = WIFI_HELPER_PATH,
         *,
         command_runner: CommandRunner | None = None,
-        cache_seconds: float = 2.0,
+        cache_seconds: float = 30.0,
     ) -> None:
         self._helper_path = helper_path
         self._command_runner = command_runner or self._run_command

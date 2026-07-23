@@ -45,6 +45,30 @@ Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das
 Backend; eine laufende Zapfung hält die Sitzung ebenfalls aktiv.
 
+## Laufzeitverhalten auf dem Raspberry Pi
+
+Der sicherheits- und bedienrelevante Zapfstatus bleibt mit `300 ms` kurz
+abgefragt. Sekundäre Informationen werden unabhängig davon gedrosselt:
+
+- NFC-Hardwarestatus höchstens alle `2 s` im Idle-Zustand;
+- Verbrauch, Fass und Optionen bei Kontextänderung, ansonsten alle `15 s`;
+- Health- und WLAN-Status alle `30 s`.
+
+Der WLAN-Endpunkt hält sein Ergebnis ebenfalls `30 s` im Prozessspeicher.
+Ein bewusster AP-/Client-Wechsel aktualisiert den Cache sofort. Dadurch startet
+die Kiosk-Anzeige den aus mehreren `nmcli`-Abfragen bestehenden Systemhelfer
+nicht mehr alle zwei Sekunden.
+
+Nach jeder Statusantwort wird der sichtbare Timeout fortgeschrieben. Die
+übrige Oberfläche wird nur neu gerendert, wenn sich ein fachlich sichtbarer
+Wert geändert hat. Der Timeout-Balken verwendet `transform: scaleX()` statt
+einer layoutauslösenden Breitenänderung. Datums-, Volumen- und Geldformatierer
+werden einmalig wiederverwendet. Die Abfrageschleife plant den nächsten Lauf
+erst nach Abschluss des vorherigen und kann daher keine Requests aufstauen.
+
+Diese Optimierungen verändern weder den `650 ms`-Heartbeat während einer
+Ventilfreigabe noch die unabhängige Backendüberwachung und ihre Safety-Grenzen.
+
 ## Touch- und Sicherheitsverhalten
 
 Eine konfigurierbare Aktivierungsentprellung unterdrückt sehr kurze

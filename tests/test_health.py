@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+import zunder_zapfe.main as main_module
 from zunder_zapfe.hardware.layer import HardwareLayer
 from zunder_zapfe.hardware.simulators import (
     SimulatedEmergencyStop,
@@ -103,3 +104,22 @@ def test_tap_starts_idle_with_closed_valve(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json()["state"] == "idle"
     assert response.json()["valve_open"] is False
+
+
+def test_server_access_log_is_disabled_by_default_and_can_be_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        main_module.uvicorn,
+        "run",
+        lambda _app, **options: calls.append(options),
+    )
+    monkeypatch.delenv("ZUNDER_ZAPFE_ACCESS_LOG", raising=False)
+
+    main_module.run()
+    monkeypatch.setenv("ZUNDER_ZAPFE_ACCESS_LOG", "1")
+    main_module.run()
+
+    assert calls[0]["access_log"] is False
+    assert calls[1]["access_log"] is True

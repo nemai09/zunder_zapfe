@@ -1085,7 +1085,8 @@ def run() -> None:
     """Run the local-only web server used by the kiosk browser."""
     host = os.environ.get("ZUNDER_ZAPFE_HOST", "127.0.0.1")
     port = int(os.environ.get("ZUNDER_ZAPFE_PORT", "8000"))
-    uvicorn.run(app, host=host, port=port, access_log=True)
+    access_log = os.environ.get("ZUNDER_ZAPFE_ACCESS_LOG", "0") == "1"
+    uvicorn.run(app, host=host, port=port, access_log=access_log)
 
 
 if __name__ == "__main__":

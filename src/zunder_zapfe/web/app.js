@@ -6,6 +6,20 @@ const ACTIVE_POUR_STATES = new Set([
   "top_up_pouring",
   "maintenance_pouring",
 ]);
+const STATUS_REFRESH_MS = 300;
+const NFC_REFRESH_MS = 2000;
+const CONTEXT_REFRESH_MS = 15000;
+const HEALTH_REFRESH_MS = 30000;
+const WIFI_REFRESH_MS = 30000;
+const volumeFormatter = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
+const moneyFormatter = new Intl.NumberFormat("de-DE", {
+  style: "currency",
+  currency: "EUR",
+});
+const clockFormatter = new Intl.DateTimeFormat("de-DE", {
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
 
 const model = {
   connected: false,
@@ -26,8 +40,11 @@ const model = {
   redirecting: false,
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
+  lastNfcRefresh: 0,
   lastWifiRefresh: 0,
   lastActivitySentAt: 0,
+  lastRenderSignature: null,
+  lastTimeoutSignature: null,
   adminUsers: [],
   adminCards: [],
   userSearch: "",
@@ -144,16 +161,58 @@ function currentScreen() {
 function formatVolume(volumeMl) {
   if (!Number.isFinite(volumeMl)) return "–";
   return volumeMl >= 1000
-    ? `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(volumeMl / 1000)} l`
+    ? `${volumeFormatter.format(volumeMl / 1000)} l`
     : `${volumeMl} ml`;
 }
 
 function formatMoney(amountCents) {
   if (!Number.isFinite(amountCents)) return "–";
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amountCents / 100);
+  return moneyFormatter.format(amountCents / 100);
+}
+
+function renderSessionTimeout() {
+  const sessionRemainingMs = model.tap?.session_remaining_ms;
+  const sessionTimeoutSeconds = model.tap?.state === "admin"
+    ? model.adminSettings?.admin_session_timeout_seconds
+      ?? model.options?.admin_session_timeout_seconds
+      ?? 30
+    : model.options?.session_timeout_seconds ?? 15;
+  const sessionTimeoutMs = sessionTimeoutSeconds * 1000;
+  const sessionBarActive =
+    Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
+  const sessionProgress = sessionBarActive
+    ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
+    : 0;
+  const timeoutSignature = `${sessionBarActive}:${sessionProgress}`;
+  if (timeoutSignature === model.lastTimeoutSignature) return;
+  model.lastTimeoutSignature = timeoutSignature;
+  elements.sessionTimeout.classList.toggle("is-active", sessionBarActive);
+  elements.sessionTimeoutFill.style.transform = `scaleX(${sessionProgress})`;
+}
+
+function renderSignature() {
+  let tap = model.tap;
+  if (tap) {
+    const { session_remaining_ms: _sessionRemainingMs, ...stableTap } = tap;
+    tap = stableTap;
+  }
+  return JSON.stringify({
+    connected: model.connected,
+    tap,
+    nfc: model.nfc,
+    options: model.options,
+    consumption: model.consumption,
+    keg: model.keg,
+    health: model.health,
+    wifi: model.wifi,
+  });
+}
+
+function renderIfChanged() {
+  renderSessionTimeout();
+  const signature = renderSignature();
+  if (signature === model.lastRenderSignature) return;
+  render();
 }
 
 function render() {
@@ -246,19 +305,7 @@ function render() {
   elements.sessionActions.classList.toggle("has-admin", adminEntryVisible);
   elements.adminButton.disabled = manualPouring;
 
-  const sessionRemainingMs = model.tap?.session_remaining_ms;
-  const sessionTimeoutSeconds = model.tap?.state === "admin"
-    ? model.adminSettings?.admin_session_timeout_seconds
-      ?? model.options?.admin_session_timeout_seconds
-      ?? 30
-    : model.options?.session_timeout_seconds ?? 15;
-  const sessionTimeoutMs = sessionTimeoutSeconds * 1000;
-  const sessionBarActive = Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
-  const sessionProgress = sessionBarActive
-    ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
-    : 0;
-  elements.sessionTimeout.classList.toggle("is-active", sessionBarActive);
-  elements.sessionTimeoutFill.style.width = `${sessionProgress * 100}%`;
+  renderSessionTimeout();
 
   elements.legacyState.textContent = model.tap?.state || "unbekannt";
   const nfcCapture = model.tap?.state === "nfc_capture";
@@ -281,11 +328,12 @@ function render() {
   elements.diagnosticConnection.textContent = model.connected ? "bereit" : "offline";
   elements.diagnosticNfc.textContent = readerState;
   elements.diagnosticValve.textContent = valveState;
+  model.lastRenderSignature = renderSignature();
 }
 
 async function refreshContext(force = false) {
   const now = Date.now();
-  if (!force && now - model.lastContextRefresh < 2000) return;
+  if (!force && now - model.lastContextRefresh < CONTEXT_REFRESH_MS) return;
   model.lastContextRefresh = now;
   const authenticated = Boolean(model.tap?.user_id);
   try {
@@ -312,11 +360,18 @@ async function refresh() {
     const previousBooking = model.tap?.last_booking?.id;
     const now = Date.now();
     const requests = [api("/api/tap/status")];
-    if (!model.health || now - model.lastHealthRefresh >= 3000) requests.push(api("/api/health"));
-    if (!model.wifi || now - model.lastWifiRefresh >= 2000) {
+    if (!model.health || now - model.lastHealthRefresh >= HEALTH_REFRESH_MS) {
+      requests.push(api("/api/health"));
+    }
+    if (!model.wifi || now - model.lastWifiRefresh >= WIFI_REFRESH_MS) {
       requests.push(api("/api/wifi/status"));
     }
-    if (!model.tap || model.tap.state === "idle") requests.push(api("/api/nfc/status"));
+    if (
+      (!model.tap || model.tap.state === "idle")
+      && (!model.nfc || now - model.lastNfcRefresh >= NFC_REFRESH_MS)
+    ) {
+      requests.push(api("/api/nfc/status"));
+    }
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
     for (const result of secondary) {
@@ -328,7 +383,10 @@ async function refresh() {
         model.health = result;
         model.lastHealthRefresh = now;
       }
-      if (result?.state && "simulated" in result) model.nfc = result;
+      if (result?.state && "simulated" in result) {
+        model.nfc = result;
+        model.lastNfcRefresh = now;
+      }
       if (result?.mode && "client_profile_available" in result) {
         model.wifi = result;
         model.lastWifiRefresh = now;
@@ -347,7 +405,7 @@ async function refresh() {
     model.connected = false;
   } finally {
     model.refreshRunning = false;
-    if (!model.redirecting) render();
+    if (!model.redirecting) renderIfChanged();
   }
 }
 
@@ -775,10 +833,7 @@ document.addEventListener("visibilitychange", () => {
 document.addEventListener("contextmenu", (event) => event.preventDefault());
 
 window.setInterval(() => {
-  elements.clock.textContent = new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  }).format(new Date());
+  elements.clock.textContent = clockFormatter.format(new Date());
 }, 1000);
 
 window.setInterval(() => {
@@ -790,5 +845,9 @@ window.setInterval(() => {
   }
 }, 650);
 
-window.setInterval(refresh, 300);
-refresh();
+async function refreshLoop() {
+  await refresh();
+  window.setTimeout(refreshLoop, STATUS_REFRESH_MS);
+}
+
+refreshLoop();

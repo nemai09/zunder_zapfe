@@ -43,6 +43,13 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert 'id="session-timeout-fill"' in html
     assert "session_remaining_ms" in script
     assert "session_timeout_seconds" in script
+    assert "WIFI_REFRESH_MS = 30000" in script
+    assert "NFC_REFRESH_MS = 2000" in script
+    assert "CONTEXT_REFRESH_MS = 15000" in script
+    assert "HEALTH_REFRESH_MS = 30000" in script
+    assert "renderIfChanged()" in script
+    assert "window.setTimeout(refreshLoop, STATUS_REFRESH_MS)" in script
+    assert "window.setInterval(refresh" not in script
     assert 'id="valve-status"' in html
     assert 'id="wifi-status"' in html
     assert "valve_open" in script
@@ -52,6 +59,14 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "border: 1px solid var(--line)" not in styles_for_rule(
         (WEB_ROOT / "styles.css").read_text(encoding="utf-8"),
         ".wifi-status",
+    )
+    assert "transform: scaleX(1)" in styles_for_rule(
+        (WEB_ROOT / "styles.css").read_text(encoding="utf-8"),
+        ".session-timeout-fill",
+    )
+    assert "transition: width" not in styles_for_rule(
+        (WEB_ROOT / "styles.css").read_text(encoding="utf-8"),
+        ".session-timeout-fill",
     )
 
 

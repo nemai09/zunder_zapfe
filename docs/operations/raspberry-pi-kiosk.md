@@ -175,11 +175,38 @@ Live-Protokoll:
 journalctl -u zunder-zapfe-web.service -f
 ```
 
+Das HTTP-Access-Log ist im Normalbetrieb deaktiviert, weil die lokale
+Kioskseite regelmäßig Statusendpunkte abfragt. Für eine kurze Diagnose kann in
+`/etc/zunder-zapfe/web.env` vorübergehend
+`ZUNDER_ZAPFE_ACCESS_LOG=1` gesetzt und der Dienst neu gestartet werden. Danach
+muss der Wert wieder auf `0`, damit Journal und Datenträger nicht mit
+erwartbaren Polling-Zugriffen belastet werden.
+
 Health-Endpunkt:
 
 ```bash
 curl http://127.0.0.1:8000/api/health
 ```
+
+### Laufzeitlast prüfen
+
+Für einen vergleichbaren Schnappschuss die Anlage zunächst mindestens eine
+Minute ohne Bedienung im Sperrbildschirm laufen lassen:
+
+```bash
+ps -eo pid,pcpu,pmem,rss,time,comm,args --sort=-pcpu | head -n 15
+```
+
+Danach einmal anmelden, einige Sekunden angemeldet warten und eine simulierte
+oder reale Zapfung durchführen. Die Messung jeweils wiederholen. Hohe
+Chromium-`VIRT`-Werte bezeichnen reservierten virtuellen Adressraum; für den
+physischen Speicher sind `RSS` beziehungsweise `RES` maßgeblich.
+
+Im ruhenden Sperrbildschirm sollen insbesondere `NetworkManager` und
+`dbus-daemon` keine durch die Kioskseite verursachte zweisekündliche
+Lastspitze mehr zeigen. Der schnelle Zapfstatus bleibt absichtlich aktiv, damit
+NFC-Anmeldung und Safety-Rückmeldungen ohne spürbare Zusatzverzögerung
+erscheinen.
 
 Initiales oder lokal zurückgesetztes Admin-Webpasswort:
 

@@ -23,7 +23,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
-| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status und lokales Systemmenü |
+| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
 | Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer, eigener Fassbereich, zusammengefasste Buchungen, Abrechnung und Protokolle implementiert; Pi-Abnahme offen |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil implementiert; Pi-Abnahme offen |
 | Reale Zapfhardware | Noch nicht implementiert |
