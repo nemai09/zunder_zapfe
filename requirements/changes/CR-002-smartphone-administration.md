@@ -1,10 +1,10 @@
 # CR-002: Smartphone statt lokaler Administration
 
-Status: angenommen; lokaler Notzugang bleibt offen
+Status: angenommen; um begrenztes lokales Systemmenü ergänzt
 
 Datum: 2026-07-23
 
-Anforderungskatalog: Version 0.6
+Anforderungskatalog: Version 0.8
 
 ## Anlass
 
@@ -25,10 +25,9 @@ Hauptzugang zur Administration ausgerichtet werden.
 2. Der vorhandene Entwicklungsstand aus Milestone 6 bleibt im Repository
    erhalten. Datenmodell, Verwaltungs-API, Auditlogik, Adminzustand und
    Benutzer-/Armbandverwaltung werden weder gelöscht noch zurückgebaut.
-3. Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Beim
-   Betätigen erscheint vorübergehend ein Hinweis, dass die lokale
-   Adminoberfläche deaktiviert ist; ein Wechsel in den Adminmodus findet nicht
-   statt.
+3. Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Er
+   öffnet nicht die vertagte vollständige Adminoberfläche, sondern
+   ausschließlich ein lokales Low-Level-Systemmenü für den WLAN-Moduswechsel.
 4. Die weitere Verwaltung wird vorrangig als einfache, übersichtliche und
    smartphone-kompatible WebUI geplant.
 5. Die Smartphone-Administration funktioniert ohne Internet über das lokale
@@ -42,8 +41,12 @@ Hauptzugang zur Administration ausgerichtet werden.
 - Jeder Admin setzt ein eigenes Passwort. Dadurch kann jede Webaktion weiterhin
   der vorhandenen Benutzer-ID zugeordnet und gemäß `ZZ-DAT-003` auditiert
   werden.
-- Der Raspberry Pi stellt den eigenständigen Access Point mit der SSID
-  `ZUNDER_ZAPFE` bereit. Die Anlage wird offline und standalone betrieben.
+- Der Raspberry Pi stellt standardmäßig den eigenständigen Access Point mit der
+  SSID `ZUNDER_ZAPFE` bereit. Ein Admin kann ihn am Touchscreen vorübergehend
+  zugunsten eines bereits bekannten WLAN-Clientprofils deaktivieren.
+- Das lokale Systemmenü richtet keine neuen WLANs ein und verarbeitet keine
+  WLAN-Zugangsdaten. Neue Clientprofile werden außerhalb der Anwendung
+  vorbereitet.
 - HTTPS ist für diese physisch isolierte Alpha-Ausbaustufe nicht erforderlich.
   Eine spätere Freigabe in andere Netze erfordert eine neue Bewertung.
 - Der eigene Passwortwechsel wird in das Benutzermenü der Admin-WebUI
@@ -59,10 +62,10 @@ Hauptzugang zur Administration ausgerichtet werden.
 
 - `ZZ-AUT-011` und der lokale Verwaltungsanteil von `ZZ-UI-006` werden
   vorerst vertagt. Die bereits implementierten Komponenten bleiben bestehen.
-- `ZZ-UI-007` beschreibt den vorübergehend deaktivierten lokalen Einstieg mit
-  sichtbarem Hinweis.
+- `ZZ-UI-007` beschreibt den auf das Low-Level-Systemmenü begrenzten lokalen
+  Einstieg.
 - `ZZ-UI-008` beschreibt die responsive Smartphone-Administration.
-- `ZZ-AUT-003`, `ZZ-NET-001` und `ZZ-NET-002` bilden die Grundlage für
+- `ZZ-AUT-003`, `ZZ-NET-001` bis `ZZ-NET-003` bilden die Grundlage für
   passwortgeschützten Zugriff im lokalen WLAN.
 - `ZZ-AUT-004` bis `ZZ-AUT-007`, `ZZ-SYS-006`, `ZZ-KEG-002`,
   `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001` und `ZZ-DAT-003` bleiben fachlich
@@ -91,6 +94,9 @@ Hauptzugang zur Administration ausgerichtet werden.
 - Die vorläufige Deaktivierung des lokalen Einstiegs darf keine vorhandenen
   Daten oder Schnittstellen entfernen und muss später ohne Datenmigration
   revidierbar sein.
+- Der Moduswechsel wird über einen fest installierten Systemhelfer und
+  eng begrenzte NetworkManager-Berechtigungen ausgeführt. Die Webanwendung
+  erhält weder `sudo` noch Zugriff auf gespeicherte WLAN-Schlüssel.
 
 ## Safety- und Sicherheitsgrenzen
 
@@ -106,6 +112,9 @@ Hauptzugang zur Administration ausgerichtet werden.
   der lokale Webzugang des Access Points wird weitergeleitet.
 - Die Anwendung bleibt vollständig offlinefähig; externe Identitäts- oder
   Cloud-Dienste sind nicht erforderlich.
+- Das Low-Level-Systemmenü und seine schreibende API sind nur über Loopback
+  erreichbar und erfordern eine aktive NFC-Adminsitzung. Sie werden nicht vom
+  Smartphone-Reverse-Proxy veröffentlicht.
 
 ## Verbleibende offene Frage
 
@@ -114,11 +123,15 @@ einen lokalen Notzugang, falls kein Smartphone verfügbar ist? Umfang und
 Ausgestaltung bleiben als `OD-013` offen und blockieren den
 Smartphone-Checkpoint nicht.
 
+Zusätzlich bleibt als `OD-014` offen, welche besondere NFC-Rolle oder Karte
+das Low-Level-Systemmenü später öffnen darf. In der Alpha-Ausbaustufe ist der
+Zugriff für jeden aktiven Admin zulässig.
+
 ## Vorläufige Abnahmekriterien
 
 1. Nur bei einem angemeldeten Admin bleibt der blaue Admin-Button sichtbar.
-2. Der Button zeigt einen verständlichen Hinweis zur vorübergehenden
-   Deaktivierung und öffnet keine lokale Adminsitzung.
+2. Der Button öffnet nur das lokale WLAN-Systemmenü und nicht die vertagte
+   vollständige Adminoberfläche.
 3. Der vorhandene lokale Entwicklungsstand bleibt automatisiert testbar und
    wird nicht gelöscht.
 4. Die spätere Admin-WebUI ist auf üblichen Smartphone-Breiten ohne
@@ -132,8 +145,11 @@ Smartphone-Checkpoint nicht.
 8. Jeder Admin verwendet sein eigenes Passwort aus dem gemeinsamen
    Benutzerdatensatz; normale Benutzer besitzen kein Passwort und keinen
    Webzugang.
-9. Der Raspberry Pi stellt den WPA-geschützten Access Point `ZUNDER_ZAPFE`
-   bereit; die Admin-WebUI bleibt ohne Internet erreichbar.
+9. Der Raspberry Pi stellt standardmäßig den WPA-geschützten Access Point
+   `ZUNDER_ZAPFE` bereit; die Admin-WebUI bleibt ohne Internet erreichbar.
+10. Der lokale Moduswechsel nutzt nur vorhandene Profile, zeigt keine
+    Zugangsdaten und stellt bei einem gescheiterten Clientwechsel soweit
+    möglich den Access Point wieder her.
 
 Die technische Umsetzung wird in den Arbeitspaketen von Milestone 7
 inkrementell abgenommen. `OD-013` wird in einem späteren Stakeholderentscheid

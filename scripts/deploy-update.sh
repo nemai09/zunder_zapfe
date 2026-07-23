@@ -55,8 +55,8 @@ elif [[ -z "${deployed_revision}" ]] \
   needs_full_install=true
 elif [[ "${deployed_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
   "${deployed_revision}" "${new_revision}" -- \
-  pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh \
-  deploy/systemd deploy/kiosk deploy/nginx config/web.env.example; then
+  pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh scripts/wifi-mode.sh \
+  deploy/systemd deploy/kiosk deploy/nginx deploy/polkit config/web.env.example; then
   needs_full_install=true
 fi
 

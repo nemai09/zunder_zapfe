@@ -116,7 +116,9 @@ Das Installationsskript:
 5. installiert und startet `zunder-zapfe-web.service`,
 6. installiert den Kiosk-Launcher,
 7. ergaenzt den labwc-Autostart des Desktop-Benutzers,
-8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs.
+8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs,
+9. installiert den begrenzten WLAN-Modushelfer und seine NetworkManager-
+   Berechtigung für das lokale Low-Level-Menü.
 
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
@@ -147,7 +149,8 @@ Das Skript prueft:
 - aktiven systemd-Dienst,
 - lokalen HTTP-Health-Endpunkt,
 - angeschlossenen und betriebsbereiten ACR122U.
-- nach bewusster Einrichtung aktiven Access Point und Admin-Webzugang.
+- nach bewusster Einrichtung den aktiven AP- oder Clientmodus und im AP-Modus
+  den Admin-Webzugang.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
@@ -199,6 +202,17 @@ Smartphone-Administration nach eingerichtem Admin-WLAN:
 4. Unter **Benutzer** suchen, bearbeiten oder mit **+ Neu** anlegen.
 5. Für eine Armbandzuordnung den Benutzer öffnen, **Zuweisen** drücken und das
    neue Veranstaltungsarmband kurz am ACR122U auflegen.
+
+Lokaler WLAN-Moduswechsel:
+
+1. Admin-Armband kurz auflegen und den blauen **ADMIN**-Button drücken.
+2. Im Low-Level-Menü **Access Point aktivieren** oder **Mit bekanntem WLAN
+   verbinden** wählen.
+3. Für den Clientmodus muss bereits ein automatisch verbindbares
+   NetworkManager-Profil vorhanden sein. Das Menü richtet keine Zugangsdaten
+   ein.
+4. Über **Zurück zum Zapfen** den Adminmodus verlassen. Der
+   WLAN-Statusindikator im Kiosk zeigt den erkannten Modus.
 
 Während der Zuordnung zeigt der Kiosk den gesperrten Zustand
 `nfc_capture`; das Ventil bleibt geschlossen. Erfolg, Abbruch oder das
@@ -260,7 +274,8 @@ werden.
 
 - Das Skript ist fuer aktuelle Raspberry Pi OS Desktop-Images mit labwc gedacht.
 - Automatische Desktop-Anmeldung wird vorausgesetzt und nicht veraendert.
-- Die Anwendung lauscht nur auf `127.0.0.1`; Fernzugriff ist noch nicht vorgesehen.
+- Die Anwendung lauscht nur auf `127.0.0.1`; ausschließlich der eng begrenzte
+  nginx-Zugang im Admin-AP wird weitergeleitet.
 - NFC-Anmeldung, Zapf-Zustandsautomat und Datenbank sind integriert; die
   aktuelle Kioskseite bietet dafuer aber noch keine vollstaendige Bedienung.
 - Die reale Ventil-, Durchfluss- und Not-Aus-Ansteuerung fehlt noch.

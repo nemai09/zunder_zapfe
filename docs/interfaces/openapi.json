@@ -1746,6 +1746,89 @@
         ],
         "title": "WebAdminSessionResponse",
         "type": "object"
+      },
+      "WifiModeRequest": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "ap",
+              "client"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "WifiModeRequest",
+        "type": "object"
+      },
+      "WifiStatusResponse": {
+        "properties": {
+          "active_connection": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Connection"
+          },
+          "client_profile_available": {
+            "title": "Client Profile Available",
+            "type": "boolean"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "ssid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ssid"
+          }
+        },
+        "required": [
+          "mode",
+          "active_connection",
+          "ssid",
+          "ip_address",
+          "client_profile_available",
+          "detail"
+        ],
+        "title": "WifiStatusResponse",
+        "type": "object"
       }
     }
   },
@@ -2467,6 +2550,74 @@
           }
         },
         "summary": "Capture Admin User Nfc Card"
+      }
+    },
+    "/api/admin/wifi/mode": {
+      "post": {
+        "operationId": "switch_admin_wifi_mode_api_admin_wifi_mode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WifiModeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Active admin mode required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Wi-Fi control unavailable"
+          }
+        },
+        "summary": "Switch Admin Wifi Mode"
       }
     },
     "/api/consumption/current": {
@@ -5004,6 +5155,24 @@
           }
         },
         "summary": "Web Admin Session"
+      }
+    },
+    "/api/wifi/status": {
+      "get": {
+        "operationId": "wifi_status_api_wifi_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wifi Status"
       }
     }
   }

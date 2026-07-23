@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -69,6 +69,19 @@ class HardwareStatusResponse(BaseModel):
     valve: ValveStatusResponse
     flow_meter: FlowStatusResponse
     emergency_stop: EmergencyStopStatusResponse
+
+
+class WifiStatusResponse(BaseModel):
+    mode: str
+    active_connection: str | None
+    ssid: str | None
+    ip_address: str | None
+    client_profile_available: bool
+    detail: str | None
+
+
+class WifiModeRequest(BaseModel):
+    mode: Literal["ap", "client"]
 
 
 class BookingSummaryResponse(BaseModel):

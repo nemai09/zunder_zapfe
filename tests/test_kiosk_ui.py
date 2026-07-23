@@ -59,6 +59,8 @@ def test_kiosk_does_not_render_nfc_uid() -> None:
 def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+    system_html = (WEB_ROOT / "system.html").read_text(encoding="utf-8")
+    system_script = (WEB_ROOT / "system.js").read_text(encoding="utf-8")
 
     assert 'id="admin-button"' in html
     assert 'class="session-actions"' in html
@@ -70,14 +72,12 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert "Karte nicht erkannt" in script
     assert "Karte gesperrt" in script
     assert "Zuordnung entfernen" in script
-    assert "Lokale Administration vorübergehend deaktiviert" in script
-    assert "ZUNDER_ZAPFE" in script
+    assert 'window.location.assign("/system")' in script
+    assert 'api("/api/admin/session/enter"' in script
+    assert "ZUNDER_ZAPFE" in system_html
+    assert "/api/admin/wifi/mode" in system_script
     assert '"nfc_capture"' in script
     assert "Armband wird zugeordnet." in script
-    enter_admin = script.split("async function enterAdmin()", maxsplit=1)[1].split(
-        "async function exitAdmin()", maxsplit=1
-    )[0]
-    assert "/api/admin/session/enter" not in enter_admin
     for route in (
         "/api/admin/session/exit",
         "/api/admin/users",

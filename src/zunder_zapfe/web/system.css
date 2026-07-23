@@ -1,0 +1,141 @@
+:root {
+  color-scheme: dark;
+  --ink: #f5f8fb;
+  --muted: #a9b7c8;
+  --surface: #172333;
+  --surface-light: #1f3045;
+  --line: rgb(255 255 255 / 13%);
+  --blue: #3f8cff;
+  --blue-soft: #1d426f;
+  --amber: #f5a623;
+  --green: #61d991;
+  --red: #e56c65;
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; margin: 0; }
+body {
+  min-width: 640px;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 80% 10%, rgb(63 140 255 / 18%), transparent 28rem),
+    #0e1722;
+  user-select: none;
+}
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: default; opacity: .48; }
+
+.system-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  padding: 1.1rem 1.4rem 1.25rem;
+}
+.system-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid var(--line);
+}
+.brand, .header-actions { display: flex; align-items: center; gap: .7rem; }
+.brand-mark {
+  display: grid;
+  width: 2.5rem;
+  aspect-ratio: 1;
+  border-radius: .75rem;
+  color: #102033;
+  background: var(--blue);
+  font-size: 1.25rem;
+  font-weight: 950;
+  place-items: center;
+}
+.brand p { margin: 0 0 .1rem; color: var(--muted); font-size: .75rem; }
+.brand strong { font-size: 1.05rem; }
+.button {
+  min-height: 2.8rem;
+  padding: .65rem 1rem;
+  border: 0;
+  border-radius: .8rem;
+  font-weight: 800;
+}
+.button-quiet { color: var(--ink); background: var(--surface-light); }
+.button-danger { color: #ffd8d5; background: #67302f; }
+
+.system-content {
+  display: grid;
+  grid-template-columns: .92fr 1.08fr;
+  gap: 1rem;
+  min-height: 0;
+  padding-top: 1rem;
+}
+.status-panel, .action-panel {
+  min-height: 0;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgb(23 35 51 / 92%);
+}
+.eyebrow {
+  margin: 0 0 .25rem;
+  color: var(--blue);
+  font-size: .7rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+h1, h2 { margin: 0; }
+h1 { font-size: 2rem; }
+h2 { margin-bottom: .75rem; font-size: 1.35rem; }
+.mode-state {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: .8rem 0;
+  padding: .7rem .8rem;
+  border-radius: .75rem;
+  background: var(--surface-light);
+}
+.mode-dot {
+  width: .75rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.mode-state.is-ap .mode-dot { background: var(--blue); box-shadow: 0 0 .8rem rgb(63 140 255 / 65%); }
+.mode-state.is-client .mode-dot { background: var(--green); box-shadow: 0 0 .8rem rgb(97 217 145 / 55%); }
+.mode-state.is-error .mode-dot { background: var(--red); }
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .55rem;
+  margin: 0;
+}
+.status-grid div { min-width: 0; padding: .6rem .7rem; border-radius: .7rem; background: rgb(255 255 255 / 5%); }
+.status-grid dt { color: var(--muted); font-size: .68rem; }
+.status-grid dd { overflow: hidden; margin: .15rem 0 0; font-size: .83rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.detail { min-height: 1rem; margin: .65rem 0 0; color: var(--red); font-size: .72rem; }
+
+.mode-button {
+  display: grid;
+  width: 100%;
+  min-height: 5.35rem;
+  margin-bottom: .65rem;
+  padding: .75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: .85rem;
+  color: var(--ink);
+  background: var(--surface-light);
+  text-align: left;
+}
+.mode-button span, .mode-button small { color: var(--muted); font-size: .7rem; }
+.mode-button strong { margin: .12rem 0; font-size: 1.05rem; }
+.mode-button.is-active { border-color: var(--blue); background: var(--blue-soft); }
+.mode-button-client.is-active { border-color: var(--green); background: #1a4939; }
+.warning { margin: .65rem 0 0; color: var(--muted); font-size: .72rem; line-height: 1.35; }
+.message { min-height: 1rem; margin: .45rem 0 0; color: var(--green); font-size: .75rem; }
+.message.is-error { color: var(--red); }

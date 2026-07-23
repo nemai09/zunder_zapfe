@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.wifi_mode_service import WifiStatus
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
 from zunder_zapfe.hardware.simulators import (
@@ -27,6 +28,30 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADMIN_UID = "04DDEEFF"
 USER_UID = "04AABBCC"
 NEW_UID = "11223344"
+
+
+class FakeWifiModeService:
+    def __init__(self) -> None:
+        self.current = WifiStatus(
+            mode="ap",
+            active_connection="zunder-zapfe-ap",
+            ssid="ZUNDER_ZAPFE",
+            ip_address="10.42.0.1",
+            client_profile_available=True,
+        )
+
+    def status(self, *, force: bool = False) -> WifiStatus:
+        return self.current
+
+    def switch(self, mode: str) -> WifiStatus:
+        self.current = WifiStatus(
+            mode=mode,
+            active_connection="zunder-zapfe-ap" if mode == "ap" else "Werkstatt",
+            ssid="ZUNDER_ZAPFE" if mode == "ap" else "Werkstatt",
+            ip_address="10.42.0.1" if mode == "ap" else "192.0.2.20",
+            client_profile_available=True,
+        )
+        return self.current
 
 
 @pytest.fixture
@@ -61,6 +86,7 @@ def admin_api(
         enable_simulator_api=True,
         run_background=False,
         kiosk_settings=KioskSettings(admin_session_timeout_seconds=30),
+        wifi_mode_service=FakeWifiModeService(),
     )
     try:
         with TestClient(application, client=("127.0.0.1", 50000)) as client:
@@ -238,3 +264,25 @@ def test_admin_timeout_is_configurable_and_self_protected(admin_api: tuple[objec
     exit_response = client.post("/api/admin/session/exit")
     assert exit_response.status_code == 200
     assert exit_response.json()["state"] == "authenticated"
+
+
+def test_local_wifi_mode_switch_requires_admin_mode_and_is_audited(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    assert client.get("/system").status_code == 403
+    assert client.get("/api/wifi/status").json()["mode"] == "ap"
+    assert client.post("/api/admin/wifi/mode", json={"mode": "client"}).status_code == 403
+    enter_admin(client)
+    system_page = client.get("/system")
+    assert system_page.status_code == 200
+    assert "Lokales Low-Level-Menü" in system_page.text
+
+    switched = client.post("/api/admin/wifi/mode", json={"mode": "client"})
+
+    assert switched.status_code == 200
+    assert switched.json()["mode"] == "client"
+    assert switched.json()["active_connection"] == "Werkstatt"
+    with sessions() as session:
+        actions = list(session.scalars(select(AdminAuditEntry.action)))
+    assert actions == ["wifi.mode_switch_requested", "wifi.mode_switched"]

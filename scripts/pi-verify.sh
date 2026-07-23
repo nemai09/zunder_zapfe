@@ -50,21 +50,32 @@ grep --extended-regexp --quiet '"state":"(ready|card)"' <<<"${nfc_status}" || {
 
 echo "6/7 Admin-WLAN"
 if [[ -f /etc/zunder-zapfe/admin-wifi.configured ]]; then
-  nmcli --terse --fields NAME connection show --active \
-    | grep --fixed-strings --line-regexp --quiet "zunder-zapfe-ap"
-  nmcli -g 802-11-wireless.ssid connection show "zunder-zapfe-ap" \
-    | grep --fixed-strings --line-regexp --quiet "ZUNDER_ZAPFE"
-  ip -4 address show dev wlan0 \
-    | grep --fixed-strings --quiet "inet 10.42.0.1/24"
-  echo "ZUNDER_ZAPFE: aktiv auf 10.42.0.1/24"
+  wifi_status="$(/usr/local/sbin/zunder-zapfe-wifi-mode status)"
+  echo "${wifi_status}"
+  if grep --fixed-strings --line-regexp --quiet "mode=ap" <<<"${wifi_status}"; then
+    grep --fixed-strings --line-regexp --quiet "ssid=ZUNDER_ZAPFE" <<<"${wifi_status}"
+    grep --fixed-strings --line-regexp --quiet "ip_address=10.42.0.1" <<<"${wifi_status}"
+    echo "ZUNDER_ZAPFE: Access Point aktiv"
+  elif grep --fixed-strings --line-regexp --quiet "mode=client" <<<"${wifi_status}"; then
+    grep --extended-regexp --quiet '^ip_address=.+$' <<<"${wifi_status}"
+    echo "WLAN-Client: verbunden"
+  else
+    echo "WLAN ist weder als Access Point noch als Client verbunden." >&2
+    exit 1
+  fi
 else
   echo "Noch nicht eingerichtet; einmalig sudo zunder-zapfe-admin-wifi ausfuehren."
 fi
 
 echo "7/7 Admin-Webzugang"
 if [[ -f /etc/zunder-zapfe/admin-wifi.configured ]]; then
-  curl --fail --silent --show-error http://10.42.0.1/api/health
-  echo
+  curl --fail --silent --show-error http://127.0.0.1:8000/static/system.js >/dev/null
+  if grep --fixed-strings --line-regexp --quiet "mode=ap" <<<"${wifi_status}"; then
+    curl --fail --silent --show-error http://10.42.0.1/api/health
+    echo
+  else
+    echo "Smartphone-Zugang ist im Clientmodus absichtlich nicht veröffentlicht."
+  fi
 else
   echo "Bis zur WLAN-Einrichtung uebersprungen."
 fi

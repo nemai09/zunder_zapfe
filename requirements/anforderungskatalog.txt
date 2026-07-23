@@ -1,5 +1,5 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.7
+Version: 0.8
 Stand: 2026-07-23
 Status: Milestone 7 in Umsetzung gemaess CR-002
 
@@ -553,14 +553,15 @@ gezielt finden; ein normaler Benutzer sieht keinen Admin-Einstieg.
 Hinweis: Die vorhandene lokale Adminoberflaeche bleibt gemaess CR-002 im
 Repository erhalten, wird aber vorerst nicht geoeffnet oder weiter ausgebaut.
 
-[ZZ-UI-007] Voruebergehend deaktivierter lokaler Admin-Einstieg
+[ZZ-UI-007] Begrenzter lokaler Admin-Einstieg
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Der blaue Admin-Button muss fuer einen am Kiosk per NFC angemeldeten Admin
-sichtbar bleiben. Seine Betaetigung darf vorerst keinen Adminmodus oeffnen und
-muss stattdessen einen verstaendlichen Hinweis anzeigen, dass die lokale
-Adminoberflaeche voruebergehend deaktiviert ist.
-Abnahme: Ein Admin sieht den Button und den Hinweis, bleibt aber in der
-Zapfoberflaeche; ein normaler Benutzer sieht den Button nicht.
+sichtbar bleiben. Seine Betaetigung darf nicht die vertagte vollstaendige
+Adminoberflaeche oeffnen, sondern ausschliesslich ein lokales Low-Level-Menue
+fuer den WLAN-Moduswechsel gemaess `ZZ-NET-003`. Das Menue muss eine aktive
+NFC-Adminsitzung voraussetzen und auf dem lokalen Kioskzugang begrenzt sein.
+Abnahme: Ein Admin erreicht das begrenzte Systemmenue; ein normaler Benutzer
+sieht den Button nicht und ein entfernter Client kann das Menue nicht aufrufen.
 
 [ZZ-UI-008] Smartphone-kompatible Admin-WebUI
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
@@ -577,10 +578,13 @@ dargestellt.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
-Der Raspberry Pi muss dauerhaft ein eigenstaendiges lokales WLAN mit der SSID
-`ZUNDER_ZAPFE` fuer den Zugriff auf die Adminoberflaeche bereitstellen.
+Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
+SSID `ZUNDER_ZAPFE` fuer den Zugriff auf die Adminoberflaeche bereitstellen.
+Ein bewusster lokaler Wechsel in ein bereits bekanntes WLAN gemaess
+`ZZ-NET-003` darf diesen Access Point voruebergehend deaktivieren.
 Abnahme: Ein berechtigtes Geraet kann sich ohne Internetzugang verbinden und die
-Adminoberflaeche erreichen.
+Adminoberflaeche erreichen; nach Rueckkehr in den AP-Modus steht
+`ZUNDER_ZAPFE` wieder bereit.
 
 [ZZ-NET-002] WLAN- und Websicherheit
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -595,6 +599,20 @@ Netze neu bewertet werden.
 Abnahme: Ohne WLAN-Zugang und gueltige persoenliche Passwortsitzung ist kein
 Adminzugriff moeglich; vertrauliche Werte erscheinen in keinem ausgelieferten
 Repositoryinhalt und keinem Anwendungslog.
+
+[ZZ-NET-003] Lokaler WLAN-Moduswechsel
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Ein per NFC angemeldeter Admin muss am Touchscreen zwischen dem eingerichteten
+Access Point `ZUNDER_ZAPFE` und einem bereits auf dem Raspberry Pi gespeicherten,
+automatisch verbindbaren WLAN-Clientprofil wechseln koennen. Das Low-Level-
+Menue darf weder WLANs suchen noch SSIDs oder Zugangsdaten anlegen, anzeigen
+oder aendern. Der Sperrbildschirm muss den erkannten Modus `AP` oder `Client`
+anzeigen. Ist kein Clientprofil vorhanden oder nicht erreichbar, muss der
+Zustand verstaendlich angezeigt und der Access Point soweit moeglich
+wiederhergestellt werden.
+Abnahme: Der Moduswechsel funktioniert mit einer aktiven NFC-Adminsitzung,
+bleibt ueber Neustarts durch NetworkManager-Profile wirksam und ist ohne
+Adminsitzung oder ueber den Smartphone-Proxy nicht aufrufbar.
 
 
 11. DATEN, PROTOKOLLIERUNG UND EXPORT
@@ -727,6 +745,8 @@ OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des
 manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
 OD-013: Umfang und Ausgestaltung eines lokalen Notzugangs fuer Administration,
 Wartung und Fehlerreset bei nicht verfuegbarem Smartphone.
+OD-014: Eigene NFC-Rolle oder bestimmte Karte fuer das lokale Low-Level-
+Systemmenue. In der Alpha-Ausbaustufe darf jeder aktive Admin zugreifen.
 
 
 15. TRACEABILITY-REGELN

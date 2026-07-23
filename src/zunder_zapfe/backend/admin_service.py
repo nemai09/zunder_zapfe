@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend.tap_service import TapService
+from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
 from zunder_zapfe.hardware import HardwareLayer
 from zunder_zapfe.persistence.models import (
     AdminAuditEntry,
@@ -57,11 +58,13 @@ class AdminService:
         tap_service: TapService,
         *,
         default_timeout_seconds: int = 30,
+        wifi_mode_service: WifiModeService | None = None,
     ) -> None:
         self._hardware = hardware
         self._sessions = sessions
         self._tap_service = tap_service
         self._default_timeout_seconds = self._validate_timeout(default_timeout_seconds)
+        self._wifi_mode_service = wifi_mode_service or WifiModeService()
         self._capture: _NfcCapture | None = None
         self._capture_sequence = 0
         self._capture_timer: threading.Timer | None = None
@@ -96,6 +99,45 @@ class AdminService:
             )
         self._tap_service.apply_admin_session_timeout(timeout_seconds)
         return {"admin_session_timeout_seconds": timeout_seconds}
+
+    def switch_wifi_mode(
+        self,
+        mode: str,
+        *,
+        admin_user_id: int | None = None,
+    ) -> dict[str, str | bool | None]:
+        admin_id = self._require_admin_id(admin_user_id)
+        old_status = self._wifi_mode_service.status(force=True).as_dict()
+        with self._sessions.begin() as session:
+            Repository(session).record_admin_action(
+                admin_user_id=admin_id,
+                action="wifi.mode_switch_requested",
+                entity_type="wifi",
+                entity_id="wlan0",
+                old_values=old_status,
+                new_values={"requested_mode": mode},
+            )
+        try:
+            new_status = self._wifi_mode_service.switch(mode)
+        except WifiModeError:
+            with self._sessions.begin() as session:
+                Repository(session).record_technical_event(
+                    severity="error",
+                    event_type="wifi.mode_switch_failed",
+                    message="WLAN-Moduswechsel fehlgeschlagen",
+                    details={"admin_user_id": admin_id, "requested_mode": mode},
+                )
+            raise
+        with self._sessions.begin() as session:
+            Repository(session).record_admin_action(
+                admin_user_id=admin_id,
+                action="wifi.mode_switched",
+                entity_type="wifi",
+                entity_id="wlan0",
+                old_values=old_status,
+                new_values=new_status.as_dict(),
+            )
+        return new_status.as_dict()
 
     def list_users(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
         self._require_admin_id(admin_user_id)

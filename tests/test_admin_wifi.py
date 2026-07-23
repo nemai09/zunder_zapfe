@@ -37,8 +37,25 @@ def test_pi_installer_installs_wifi_dependencies_and_self_contained_helper() -> 
 
     assert "network-manager iw nginx-light" in installer
     assert "/usr/local/sbin/zunder-zapfe-admin-wifi" in installer
+    assert "/usr/local/sbin/zunder-zapfe-wifi-mode" in installer
+    assert "zunder-zapfe-networkmanager.rules" in installer
     assert "/usr/local/share/zunder-zapfe/zunder-zapfe-admin.conf" in installer
     assert "sudo zunder-zapfe-admin-wifi" in installer
+
+
+def test_wifi_mode_helper_only_activates_existing_profiles() -> None:
+    helper = read("scripts/wifi-mode.sh")
+    policy = read("deploy/polkit/zunder-zapfe-networkmanager.rules.in")
+
+    assert 'action="${1:-status}"' in helper
+    assert "connection show" in helper
+    assert "connection up id" in helper
+    assert "connection add" not in helper
+    assert "device wifi connect" not in helper
+    assert "psk" not in helper.lower()
+    assert "org.freedesktop.NetworkManager.network-control" in policy
+    assert "org.freedesktop.NetworkManager.settings.modify.system" in policy
+    assert "org.freedesktop.NetworkManager.enable-disable-network" not in policy
 
 
 def test_nginx_exposes_only_the_smartphone_admin_surface() -> None:
@@ -59,10 +76,13 @@ def test_pi_verification_checks_configured_admin_wifi() -> None:
     verification = read("scripts/pi-verify.sh")
 
     assert "6/7 Admin-WLAN" in verification
-    assert "zunder-zapfe-ap" in verification
+    assert "zunder-zapfe-wifi-mode status" in verification
+    assert "mode=ap" in verification
+    assert "mode=client" in verification
     assert "ZUNDER_ZAPFE" in verification
-    assert "10.42.0.1/24" in verification
+    assert "10.42.0.1" in verification
     assert "http://10.42.0.1/api/health" in verification
+    assert "http://127.0.0.1:8000/static/system.js" in verification
 
 
 def test_deployment_detects_branch_switches_and_missing_runtime_dependencies() -> None:

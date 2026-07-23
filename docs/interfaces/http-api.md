@@ -35,6 +35,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `GET /api/health` | `200 HealthResponse` | Prozess-, Release-, Build- und Revisionsstatus |
 | `GET /api/nfc/status` | `200 NfcStatusResponse` | NFC-Leser und aktuell aufgelegte Karte |
 | `GET /api/hardware/status` | `200 HardwareStatusResponse` | Status aller Hardwarekomponenten |
+| `GET /api/wifi/status` | `200 WifiStatusResponse` | lokaler NetworkManager-Modus ohne Zugangsdaten |
 | `GET /api/tap/status` | `200 TapStatusResponse` | vollständiger Zapfzustand |
 | `POST /api/tap/poll` | `200 TapStatusResponse` | Zustand sofort auswerten; primär Diagnose/Test |
 
@@ -114,6 +115,7 @@ ausführende Benutzer-ID.
 | --- | --- | --- |
 | `POST /api/admin/session/enter` | `TapStatusResponse` | authentifizierter Admin wechselt bei geschlossenem Ventil zu `admin` |
 | `POST /api/admin/session/exit` | `TapStatusResponse` | zurück zu `authenticated` und normalem Timeout |
+| `POST /api/admin/wifi/mode` | `{"mode":"ap"}` oder `{"mode":"client"}` | vorhandenes AP- oder Clientprofil aktivieren und Aktion auditieren |
 | `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
 | `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
 | `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
@@ -125,6 +127,13 @@ ausführende Benutzer-ID.
 | `DELETE /api/admin/nfc-cards/{id}` | `204` | Zuordnung nach Bestätigung entfernen und auditieren |
 | `GET /api/admin/settings` | `AdminSettingsResponse` | wirksamen Admin-Timeout lesen |
 | `PATCH /api/admin/settings` | `{"admin_session_timeout_seconds":45}` | Timeout 10 bis 3600 Sekunden persistent und auditiert ändern |
+
+`GET /api/wifi/status` liefert `mode`, `active_connection`, `ssid`,
+`ip_address`, `client_profile_available` und bei nicht verfügbarer
+Systemintegration einen nicht vertraulichen `detail`-Hinweis. Das schreibende
+Gegenstück akzeptiert ausschließlich `ap` oder `client`, erfordert eine aktive
+lokale NFC-Adminsitzung und wird nicht über den Smartphone-Proxy veröffentlicht.
+Es legt keine Profile an und verarbeitet keine WLAN-Schlüssel.
 
 Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
 muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste

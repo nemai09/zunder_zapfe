@@ -160,6 +160,48 @@ button {
   box-shadow: 0 0 0.8rem rgb(245 166 35 / 70%);
 }
 
+.wifi-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+}
+
+.wifi-dot {
+  width: 0.55rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #8f8779;
+}
+
+.wifi-status.is-ap {
+  color: #9dc5ff;
+  border-color: rgb(63 140 255 / 40%);
+}
+
+.wifi-status.is-ap .wifi-dot {
+  background: var(--admin);
+  box-shadow: 0 0 0.7rem rgb(63 140 255 / 60%);
+}
+
+.wifi-status.is-client {
+  color: var(--success);
+  border-color: rgb(97 217 145 / 35%);
+}
+
+.wifi-status.is-client .wifi-dot {
+  background: var(--success);
+  box-shadow: 0 0 0.7rem rgb(97 217 145 / 50%);
+}
+
+.wifi-status.is-error .wifi-dot {
+  background: var(--danger);
+}
+
 .screen {
   position: relative;
   z-index: 1;
@@ -189,29 +231,6 @@ button {
   grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
   align-items: center;
   gap: clamp(1rem, 5vw, 5rem);
-}
-
-.kiosk-toast {
-  position: fixed;
-  z-index: 30;
-  right: 1.25rem;
-  bottom: 2.5rem;
-  left: 1.25rem;
-  padding: .85rem 1.1rem;
-  border: 1px solid rgb(255 255 255 / 18%);
-  border-radius: .8rem;
-  color: #fff;
-  background: #183d70;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
-  opacity: 0;
-  transform: translateY(1rem);
-  transition: opacity 180ms ease, transform 180ms ease;
-  pointer-events: none;
-}
-
-.kiosk-toast.is-visible {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .eyebrow,

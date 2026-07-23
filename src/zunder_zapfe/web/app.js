@@ -15,6 +15,7 @@ const model = {
   consumption: null,
   keg: null,
   health: null,
+  wifi: null,
   actionPending: false,
   manualHeld: false,
   manualStartPending: false,
@@ -22,8 +23,10 @@ const model = {
   manualReleaseRequested: false,
   manualActivationTimer: null,
   refreshRunning: false,
+  redirecting: false,
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
+  lastWifiRefresh: 0,
   lastActivitySentAt: 0,
   adminUsers: [],
   adminCards: [],
@@ -42,6 +45,8 @@ const elements = {
   connectionLabel: document.querySelector("#connection-label"),
   valveStatus: document.querySelector("#valve-status"),
   valveLabel: document.querySelector("#valve-label"),
+  wifiStatus: document.querySelector("#wifi-status"),
+  wifiLabel: document.querySelector("#wifi-label"),
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
   buildVersion: document.querySelector("#build-version"),
@@ -96,7 +101,6 @@ const elements = {
   diagnosticConnection: document.querySelector("#diagnostic-connection"),
   diagnosticNfc: document.querySelector("#diagnostic-nfc"),
   diagnosticValve: document.querySelector("#diagnostic-valve"),
-  localAdminToast: document.querySelector("#local-admin-toast"),
 };
 
 async function api(path, options = {}) {
@@ -161,6 +165,20 @@ function render() {
     Boolean(model.options?.debug_flow_watchdog_disabled),
   );
   elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
+  elements.wifiStatus.classList.remove("is-ap", "is-client", "is-error");
+  const wifiLabels = {
+    ap: "WLAN · AP",
+    client: "WLAN · Client",
+    disconnected: "WLAN · getrennt",
+    unavailable: "WLAN · n/v",
+    unknown: "WLAN · unbekannt",
+  };
+  elements.wifiLabel.textContent = wifiLabels[model.wifi?.mode] || "WLAN · prüft";
+  if (model.wifi?.mode === "ap") elements.wifiStatus.classList.add("is-ap");
+  if (model.wifi?.mode === "client") elements.wifiStatus.classList.add("is-client");
+  if (["unavailable", "unknown"].includes(model.wifi?.mode)) {
+    elements.wifiStatus.classList.add("is-error");
+  }
   if (model.health?.build) elements.buildVersion.textContent = model.health.build;
 
   elements.readerStatus.classList.remove("is-unknown", "is-blocked");
@@ -292,6 +310,9 @@ async function refresh() {
     const now = Date.now();
     const requests = [api("/api/tap/status")];
     if (!model.health || now - model.lastHealthRefresh >= 3000) requests.push(api("/api/health"));
+    if (!model.wifi || now - model.lastWifiRefresh >= 2000) {
+      requests.push(api("/api/wifi/status"));
+    }
     if (!model.tap || model.tap.state === "idle") requests.push(api("/api/nfc/status"));
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
@@ -305,17 +326,25 @@ async function refresh() {
         model.lastHealthRefresh = now;
       }
       if (result?.state && "simulated" in result) model.nfc = result;
+      if (result?.mode && "client_profile_available" in result) {
+        model.wifi = result;
+        model.lastWifiRefresh = now;
+      }
     }
     model.connected = true;
+    if (tap.state === "admin") {
+      model.redirecting = true;
+      window.location.assign("/system");
+      return;
+    }
     if (tap.state !== "admin") model.adminLoaded = false;
     const contextChanged = previousUser !== tap.user_id || previousBooking !== tap.last_booking?.id;
     await refreshContext(contextChanged);
-    if (tap.state === "admin" && !model.adminLoaded) await loadAdminData();
   } catch (_error) {
     model.connected = false;
   } finally {
     model.refreshRunning = false;
-    render();
+    if (!model.redirecting) render();
   }
 }
 
@@ -367,10 +396,17 @@ function showAdminSection(section) {
 }
 
 async function enterAdmin() {
-  elements.localAdminToast.textContent =
-    "Lokale Administration vorübergehend deaktiviert · Smartphone mit ZUNDER_ZAPFE verbinden.";
-  elements.localAdminToast.classList.add("is-visible");
-  window.setTimeout(() => elements.localAdminToast.classList.remove("is-visible"), 4200);
+  if (model.actionPending) return;
+  model.actionPending = true;
+  elements.actionError.textContent = "";
+  try {
+    model.tap = await api("/api/admin/session/enter", { method: "POST" });
+    window.location.assign("/system");
+  } catch (error) {
+    elements.actionError.textContent = error.message;
+  } finally {
+    model.actionPending = false;
+  }
 }
 
 async function exitAdmin() {

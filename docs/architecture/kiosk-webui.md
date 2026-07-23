@@ -13,7 +13,7 @@ zulässig ist.
 | `idle` | NFC-Aufforderung und Leserstatus | Karte auflegen |
 | `authenticated` | Benutzer, Verbrauch, Getränk und große Zapffläche | gedrückt halten |
 | `manual_pouring` | laufende Istmenge auf der Zapffläche | loslassen |
-| `admin` | lokale, gruppierte Verwaltungsoberfläche | Benutzer und Armbänder verwalten |
+| `admin` | lokales Low-Level-Systemmenü | vorhandenen WLAN-Modus wechseln |
 | kompatibler Portions-/Wartungszustand | neutraler Statushinweis | über auslösenden Client abschließen |
 | `fault_locked`, `emergency_stop` | Sperrgrund und Admin-Hinweis | sicher zurücksetzen |
 | Backend nicht erreichbar | Verbindungsfehler | automatisch erneut verbinden |
@@ -35,6 +35,10 @@ persönlicher Verbrauch und Betrag stehen darunter nebeneinander. Für
 angemeldete Admins erscheint links neben dem Logout der blaue Einstieg in die
 Administration; beide Aktionen belegen zusammen die Breite der rechten
 Informationsspalte. Der manuelle Logout bleibt rechts im Kopfbereich sichtbar.
+Der Admin-Einstieg öffnet gemäß CR-002 nur das lokale WLAN-Systemmenü; die
+vollständige Verwaltungsoberfläche aus Milestone 6 bleibt erhalten, wird aber
+nicht geöffnet. Das Systemmenü erfordert weiterhin die NFC-Adminsitzung und
+kehrt über „Zurück“ in den normalen Zapfmodus zurück.
 Ein schmaler Balken am unteren
 Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das
@@ -62,7 +66,9 @@ Für die hardwarelose Alpha-Phase zeigt die Kopfleiste außerdem dezent den vom
 Backend gemeldeten Sollzustand `valve_open` als `DEBUG · Ventil EIN/AUS`. Dies
 ist keine Rückmeldung eines physischen Ventils und muss zusammen mit dem
 temporären Flow-Debugmodus vor Produktivbetrieb entfernt werden.
+Zwischen Ventil- und Steuerungsstatus zeigt ein weiterer Indikator den vom
+Systemhelfer erkannten WLAN-Modus `AP`, `Client` oder einen Fehlerzustand.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
 `ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und
-`ZZ-NFR-005`.
+`ZZ-NFR-005`, `ZZ-UI-007` und `ZZ-NET-003`.

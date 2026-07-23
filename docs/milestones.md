@@ -77,8 +77,9 @@ Milestones.
 Gemäß [CR-002](../requirements/changes/CR-002-smartphone-administration.md)
 wird die lokale Adminoberfläche vorerst weder geöffnet noch weiter ausgebaut.
 Ihr in Milestone 6 geprüfter Entwicklungsstand bleibt erhalten. Der blaue
-Admin-Button bleibt ausschließlich für Admins sichtbar und soll vorläufig
-einen Hinweis zur deaktivierten lokalen Administration anzeigen.
+Admin-Button bleibt ausschließlich für Admins sichtbar. Als eng begrenzte
+Ausnahme öffnet er ein lokales Low-Level-Systemmenü für den Wechsel zwischen
+Access Point und einem bereits bekannten WLAN-Clientprofil.
 
 Der Schwerpunkt verschiebt sich auf eine einfache, responsive Admin-WebUI für
 Smartphones im eigenständigen WLAN `ZUNDER_ZAPFE`. Jeder Admin verwendet ein
@@ -95,7 +96,7 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
-| `M7.7 FEAT` | Einstellungen, Diagnose, Wartung und Safety-Reset |
+| `M7.7 OPS` | lokales WLAN-Systemmenü und Kiosk-Status implementiert; Einstellungen, Diagnose, Wartung und Safety-Reset folgen |
 | `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
@@ -113,4 +114,4 @@ Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
 `ZZ-KEG-004`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`, `ZZ-MNT-002`,
 `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`,
-`ZZ-NET-002` und `ZZ-DAT-001` bis `ZZ-DAT-007`.
+`ZZ-NET-002`, `ZZ-NET-003` und `ZZ-DAT-001` bis `ZZ-DAT-007`.

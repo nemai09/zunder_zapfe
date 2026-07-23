@@ -56,6 +56,8 @@ from zunder_zapfe.api_models import (
     WebAdminPasswordChangeRequest,
     WebAdminPasswordResetRequest,
     WebAdminSessionResponse,
+    WifiModeRequest,
+    WifiStatusResponse,
 )
 from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
@@ -68,6 +70,7 @@ from zunder_zapfe.backend.web_auth_service import (
     WebCsrfError,
     WebLoginRateLimited,
 )
+from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
 from zunder_zapfe.build_info import current_build_info
 from zunder_zapfe.configuration import KioskSettings, load_kiosk_settings
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
@@ -91,6 +94,7 @@ def create_app(
     enable_simulator_api: bool | None = None,
     run_background: bool = True,
     kiosk_settings: KioskSettings | None = None,
+    wifi_mode_service: WifiModeService | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -106,6 +110,7 @@ def create_app(
         else enable_simulator_api
     )
     resolved_kiosk_settings = kiosk_settings or load_kiosk_settings()
+    resolved_wifi_mode_service = wifi_mode_service or WifiModeService()
     tap_service = TapService(
         hardware_layer,
         sessions,
@@ -126,6 +131,7 @@ def create_app(
         sessions,
         tap_service,
         default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
+        wifi_mode_service=resolved_wifi_mode_service,
     )
     web_auth_service = WebAuthService(sessions)
 
@@ -159,13 +165,16 @@ def create_app(
 
     @application.middleware("http")
     async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
-        if request.url.path.startswith("/api/admin/") and not _is_loopback_request(request):
+        local_only = request.url.path == "/system" or request.url.path.startswith("/api/admin/")
+        if local_only and not _is_loopback_request(request):
             return JSONResponse(
                 status_code=403,
                 content={"detail": "Local admin API is only available over loopback"},
             )
         response = await call_next(request)
-        if request.url.path in {"/", "/admin"} or request.url.path.startswith("/static/"):
+        if request.url.path in {"/", "/admin", "/system"} or request.url.path.startswith(
+            "/static/"
+        ):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -204,6 +213,10 @@ def create_app(
     async def invalid_domain_value(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=422, content={"detail": str(error)})
 
+    @application.exception_handler(WifiModeError)
+    async def wifi_mode_failed(_request: Request, error: Exception) -> JSONResponse:
+        return JSONResponse(status_code=503, content={"detail": str(error)})
+
     @application.get("/", include_in_schema=False)
     async def index() -> FileResponse:
         return FileResponse(WEB_ROOT / "index.html")
@@ -211,6 +224,11 @@ def create_app(
     @application.get("/admin", include_in_schema=False)
     async def smartphone_admin() -> FileResponse:
         return FileResponse(WEB_ROOT / "admin.html")
+
+    @application.get("/system", include_in_schema=False)
+    async def local_system_admin() -> FileResponse:
+        tap_service.require_admin_user_id()
+        return FileResponse(WEB_ROOT / "system.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
 
@@ -337,6 +355,10 @@ def create_app(
     async def hardware_status() -> dict[str, dict[str, object]]:
         return hardware_layer.snapshot()
 
+    @application.get("/api/wifi/status", response_model=WifiStatusResponse)
+    def wifi_status() -> dict[str, str | bool | None]:
+        return resolved_wifi_mode_service.status().as_dict()
+
     @application.get("/api/tap/status", response_model=TapStatusResponse)
     async def tap_status() -> dict[str, object]:
         return tap_service.status_dict()
@@ -403,6 +425,19 @@ def create_app(
         return admin_service.update_settings(
             admin_session_timeout_seconds=request.admin_session_timeout_seconds
         )
+
+    @application.post(
+        "/api/admin/wifi/mode",
+        response_model=WifiStatusResponse,
+        responses={
+            **admin_responses,
+            503: {"model": ErrorResponse, "description": "Wi-Fi control unavailable"},
+        },
+    )
+    def switch_admin_wifi_mode(
+        request: WifiModeRequest,
+    ) -> dict[str, str | bool | None]:
+        return admin_service.switch_wifi_mode(request.mode)
 
     @application.get(
         "/api/admin/users",

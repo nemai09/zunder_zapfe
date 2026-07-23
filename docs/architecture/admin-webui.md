@@ -10,17 +10,19 @@ geprüften Entwicklungsstand von Milestone 6. Gemäß
 [CR-002](../../requirements/changes/CR-002-smartphone-administration.md) wird
 er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
 
-Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Als
-Kioskverhalten weist er darauf hin, dass die lokale Adminoberfläche
-vorübergehend deaktiviert ist und ein Smartphone mit `ZUNDER_ZAPFE` verbunden
-werden soll. Ein Wechsel zu `ADMIN` findet dabei nicht statt. Die weitere
+Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Er
+öffnet als eng begrenzte Ausnahme ausschließlich das lokale Low-Level-Menü
+für den Wechsel zwischen `ZUNDER_ZAPFE` und einem bereits bekannten
+WLAN-Clientprofil. Die nachfolgend beschriebene vollständige lokale
+Verwaltungsoberfläche wird weiterhin nicht geöffnet. Die weitere
 Administration wird als
 responsive WebUI für Smartphones im lokalen Admin-WLAN umgesetzt. Ihre
 Zielarchitektur und der getrennte Passwortzugang stehen unter
 [`smartphone-admin-webui.md`](smartphone-admin-webui.md). Die Websitzung darf
 nicht aus dem vorhandenen NFC-Adminmodus abgeleitet werden.
 
-Die lokale Administration ist ein zusätzlicher Modus derselben Kiosk-WebUI.
+Das Low-Level-Menü verwendet den vorhandenen ventilgesperrten Adminzustand
+derselben Kiosk-WebUI.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines
 NFC-Armbands an und kann normal zapfen. Ausschließlich die serverseitig
 ermittelte Adminrolle blendet den Einstieg in den Adminmodus ein.

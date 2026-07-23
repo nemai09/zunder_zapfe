@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111a25">
+    <title>Zunder Zapfe · System</title>
+    <link rel="stylesheet" href="/static/system.css?v=0.4.0-alpha.1">
+    <script src="/static/system.js?v=0.4.0-alpha.1" defer></script>
+  </head>
+  <body>
+    <main class="system-shell">
+      <header class="system-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">Z</span>
+          <div>
+            <p>Lokales Low-Level-Menü</p>
+            <strong>Zunder Zapfe · Netzwerk</strong>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="button button-quiet" id="back-button" type="button">Zurück zum Zapfen</button>
+          <button class="button button-danger" id="logout-button" type="button">Abmelden</button>
+        </div>
+      </header>
+
+      <section class="system-content">
+        <section class="status-panel" aria-labelledby="status-title">
+          <p class="eyebrow">Aktueller Zustand</p>
+          <h1 id="status-title">WLAN-Modus</h1>
+          <div class="mode-state" id="mode-state">
+            <span class="mode-dot"></span>
+            <strong id="mode-label">Wird geprüft …</strong>
+          </div>
+          <dl class="status-grid">
+            <div>
+              <dt>Verbindung</dt>
+              <dd id="connection-name">–</dd>
+            </div>
+            <div>
+              <dt>SSID</dt>
+              <dd id="ssid-name">–</dd>
+            </div>
+            <div>
+              <dt>IP-Adresse</dt>
+              <dd id="ip-address">–</dd>
+            </div>
+            <div>
+              <dt>Clientprofil</dt>
+              <dd id="client-profile">–</dd>
+            </div>
+          </dl>
+          <p class="detail" id="status-detail"></p>
+        </section>
+
+        <section class="action-panel" aria-labelledby="action-title">
+          <p class="eyebrow">Betriebsart wählen</p>
+          <h2 id="action-title">Netzwerk umschalten</h2>
+          <button class="mode-button mode-button-ap" id="ap-button" type="button">
+            <span>Lokale Administration</span>
+            <strong>Access Point aktivieren</strong>
+            <small>SSID ZUNDER_ZAPFE bereitstellen</small>
+          </button>
+          <button class="mode-button mode-button-client" id="client-button" type="button">
+            <span>Netzwerkzugang</span>
+            <strong>Mit bekanntem WLAN verbinden</strong>
+            <small>Bestes gespeichertes Clientprofil verwenden</small>
+          </button>
+          <p class="warning">
+            Das Umschalten trennt die aktuelle WLAN-Verbindung. Neue WLANs und
+            Zugangsdaten werden hier bewusst nicht eingerichtet.
+          </p>
+          <p class="message" id="action-message" role="status" aria-live="polite"></p>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,6 +1,7 @@
 # Admin-WLAN auf dem Raspberry Pi
 
-Status: implementiert in `M7.3 OPS`, Zielsystemprüfung ausstehend
+Status: Access Point in `M7.3 OPS`, lokaler Moduswechsel in `M7.7 OPS`;
+Zielsystemprüfung ausstehend
 
 ## Ziel
 
@@ -20,6 +21,12 @@ WPA-geschützten Access Point bereit:
 
 WLAN-Schlüssel und persönliche Adminpasswörter sind getrennte Zugangsdaten.
 Keiner dieser Werte wird im Repository abgelegt.
+
+Der Access Point ist der Standard für den Standalone-Betrieb. Falls das
+Ethernetkabel anderweitig benötigt wird, kann ein per NFC angemeldeter Admin
+am Touchscreen über den blauen Admin-Button vorübergehend zu einem bereits
+gespeicherten WLAN-Clientprofil wechseln. Der Sperrbildschirm zeigt dazu
+`WLAN · AP` oder `WLAN · Client`.
 
 ## Technische Basis
 
@@ -84,6 +91,39 @@ Das Skript verändert oder löscht keine fremden NetworkManager-Profile. Ein
 vorhandenes `zunder-zapfe-ap` wird ohne Änderung seines Schlüssels auf die
 festen, nicht geheimen Parameter aktualisiert.
 
+## Lokaler AP-/Client-Moduswechsel
+
+`install-pi.sh` installiert den festen Systemhelfer
+`/usr/local/sbin/zunder-zapfe-wifi-mode`. Er unterstützt ausschließlich:
+
+```text
+zunder-zapfe-wifi-mode status
+zunder-zapfe-wifi-mode ap
+zunder-zapfe-wifi-mode client
+```
+
+Der Clientwechsel wählt unter den bestehenden NetworkManager-Profilen das
+automatisch verbindbare WLAN-Profil mit der höchsten Priorität. Das Profil
+`zunder-zapfe-ap` sowie andere AP-Profile sind ausgeschlossen. Das Menü sucht
+keine WLANs, fragt keine Schlüssel ab und legt keine Profile an. Ein
+Clientprofil muss daher vorher mit den normalen Raspberry-Pi-Werkzeugen
+eingerichtet und auf automatisches Verbinden gestellt worden sein.
+
+Beim Wechsel zu `client` wird das automatische Starten des Access Points
+deaktiviert und das bekannte Profil aktiviert. Schlägt die Verbindung fehl,
+stellt der Helfer den AP-Autostart wieder her und versucht sofort,
+`ZUNDER_ZAPFE` zu reaktivieren. Beim Wechsel zu `ap` wird das AP-Profil wieder
+auf automatischen Start gesetzt. Die Einstellung bleibt dadurch auch nach
+einem Neustart wirksam.
+
+Die Anwendung läuft weiterhin mit `NoNewPrivileges=true` und erhält kein
+`sudo`. Eine installierte Polkit-Regel erlaubt dem Dienstbenutzer nur die für
+den Profilwechsel erforderlichen NetworkManager-Aktionen. Das Low-Level-Menü
+und `POST /api/admin/wifi/mode` sind auf Loopback begrenzt, verlangen eine
+aktive NFC-Adminsitzung und werden von nginx nicht an Smartphones
+weitergereicht. Als `OD-014` bleibt offen, den Einstieg später zusätzlich an
+eine besondere NFC-Karte oder Rolle zu binden.
+
 ## Zugangsdaten
 
 - Das Repository enthält nur Profilnamen und nicht vertrauliche Parameter.
@@ -108,9 +148,10 @@ mit einem eindeutigen Hinweis. Nach gesetzter Markierung sind sie verbindlich.
 
 Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 
-1. `zunder-zapfe-ap` ist aktiv und an `wlan0` gebunden.
-2. Die SSID lautet exakt `ZUNDER_ZAPFE`.
-3. Der Pi besitzt `10.42.0.1/24`.
+1. Der vom Systemhelfer gemeldete Modus ist `ap` oder `client`.
+2. Im AP-Modus ist `zunder-zapfe-ap` an `wlan0` aktiv, die SSID lautet exakt
+   `ZUNDER_ZAPFE` und der Pi besitzt `10.42.0.1/24`.
+3. Im Clientmodus besteht eine IPv4-Verbindung über ein bekanntes Profil.
 4. Ein Smartphone erhält per DHCP eine Adresse.
 5. `http://10.42.0.1/api/health` ist erreichbar.
 6. `/admin` fordert ohne gültige Sitzung zur persönlichen Anmeldung auf.
@@ -125,6 +166,12 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
     kombiniert Benutzer-, Fass-, Art-, Abschluss- und Zeitraumfilter.
 13. Audit und technische Ereignisse sind lesbar; Buchungen bieten weder
     Bearbeiten noch Löschen an.
+14. Ein NFC-angemeldeter Admin erreicht über den blauen Button das
+    Low-Level-Menü; ein normaler Benutzer nicht.
+15. AP → Client → AP funktioniert, sofern ein bekanntes Clientprofil vorhanden
+    ist. Der Kioskindikator folgt dem jeweils aktiven Modus.
+16. Ein absichtlich unerreichbares Clientprofil führt zu einer verständlichen
+    Fehlermeldung und reaktiviert soweit möglich `ZUNDER_ZAPFE`.
 
 ## Offizielle Referenzen
 
@@ -132,5 +179,5 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 - [NetworkManager: `nmcli wifi hotspot`](https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli.html)
 - [NetworkManager: AP-, WPA- und IPv4-Profile](https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nm-settings-nmcli.html)
 
-Traceability: `ZZ-SYS-001`, `ZZ-SYS-002`, `ZZ-AUT-003`, `ZZ-UI-008`,
-`ZZ-NET-001` und `ZZ-NET-002`.
+Traceability: `ZZ-SYS-001`, `ZZ-SYS-002`, `ZZ-AUT-003`, `ZZ-UI-007`,
+`ZZ-UI-008`, `ZZ-NET-001`, `ZZ-NET-002` und `ZZ-NET-003`.

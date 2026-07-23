@@ -49,6 +49,10 @@ Phase: Alpha-Entwicklung
 - Veranstaltungs- und Benutzersummen für kostenpflichtige Istmengen und
   Beträge mit getrennt ausgewiesener Wartungsentnahme
 - Smartphone-Ansichten für auditierte Adminaktionen und technische Ereignisse
+- lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
+  `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
+- WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
+  Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -60,7 +64,8 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
-Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests.
+Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
+einschließlich des lokalen WLAN-Systemmenüs in `M7.7` bestehen 132 Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -68,9 +73,9 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
-| Konfiguration | Umgebungsvariablen, Settings-Tabelle und Admin-WLAN-Installer | Adminbedienung und verbindliche Grenzwerte |
+| Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
 
 ## Nicht implementiert
@@ -118,4 +123,8 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
 - Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
-  wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut.
+  wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Davon
+  ausgenommen ist das eng begrenzte lokale WLAN-Systemmenü.
+- Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
+  Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
+  oder Rolle ist als `OD-014` offen.

@@ -12,8 +12,9 @@ Internet noch einen Cloud-Dienst.
 Der vorhandene lokale Adminmodus aus Milestone 6 bleibt im Code erhalten, wird
 aber nicht geöffnet oder weiter ausgebaut. Die Smartphone-WebUI steuert weder
 SQLite noch Hardware direkt, sondern ausschließlich dokumentierte HTTP-APIs.
-Der blaue Kiosk-Button öffnet deshalb keine lokale Verwaltung mehr, sondern
-weist auf Smartphone und WLAN `ZUNDER_ZAPFE` hin.
+Der blaue Kiosk-Button öffnet deshalb keine lokale Fachverwaltung mehr. Als
+bewusst begrenzte Ausnahme führt er zum lokalen AP-/Client-Moduswechsel; alle
+fachlichen Verwaltungsabläufe bleiben in der Smartphone-WebUI.
 
 ## Gemeinsames Benutzer- und Anmeldemodell
 
@@ -216,5 +217,5 @@ Adminänderung.
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
 `ZZ-KEG-004`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`, `ZZ-MNT-002`,
-`ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-008`, `ZZ-NET-001`, `ZZ-NET-002`
-und `ZZ-DAT-001` bis `ZZ-DAT-007`.
+`ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`,
+`ZZ-NET-002`, `ZZ-NET-003` und `ZZ-DAT-001` bis `ZZ-DAT-007`.
