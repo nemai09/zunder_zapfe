@@ -1,6 +1,6 @@
 # Admin-WLAN auf dem Raspberry Pi
 
-Status: technische Planung für Milestone 7
+Status: implementiert in `M7.3 OPS`, Zielsystemprüfung ausstehend
 
 ## Ziel
 
@@ -45,9 +45,20 @@ connection.autoconnect=yes
 `ipv4.method=shared` stellt über NetworkManager den lokalen DHCP- und
 DNS-Dienst bereit. Die Anlage setzt keinen Internet-Uplink voraus.
 
-## Geplante Installation
+## Einmalige Installation
 
-Ein eigenes idempotentes Root-Skript wird aus `install-pi.sh` aufgerufen:
+`install-pi.sh` installiert NetworkManager, `iw`, nginx sowie das
+Einrichtungswerkzeug, aktiviert den Access Point aber bewusst noch nicht. So
+wird eine bestehende SSH-Verbindung nicht überraschend getrennt.
+
+Vor der Einrichtung muss das WLAN-Land gesetzt sein, beispielsweise:
+
+```bash
+sudo raspi-config nonint do_wifi_country DE
+sudo zunder-zapfe-admin-wifi
+```
+
+Das zweite Kommando:
 
 1. NetworkManager, `wlan0`, gesetztes WLAN-Land und AP-Fähigkeit prüfen.
 2. Einen neuen WPA-Schlüssel verdeckt abfragen oder ein vorhandenes Profil
@@ -55,20 +66,23 @@ Ein eigenes idempotentes Root-Skript wird aus `install-pi.sh` aufgerufen:
 3. Das Profil ausschließlich unter dem festen Namen `zunder-zapfe-ap`
    erstellen oder gezielt aktualisieren.
 4. Den Schlüssel nur im root-lesbaren NetworkManager-Profil speichern.
-5. Das Profil aktivieren und Adresse sowie DHCP-Funktion prüfen.
-6. Einen lokalen HTTP-Zugang von `10.42.0.1:80` zur weiterhin nur an
+5. Vor dem Trennen eines anderen aktiven WLAN-Profils die exakte interaktive
+   Bestätigung `ZUNDER_ZAPFE` verlangen.
+6. Das Profil aktivieren und die lokale Adresse prüfen.
+7. Einen lokalen HTTP-Zugang von `10.42.0.1:80` zur weiterhin nur an
    `127.0.0.1:8000` gebundenen Anwendung einrichten.
-7. Die Startreihenfolge so festlegen, dass ein fehlgeschlagener Access Point
+8. Die Startreihenfolge so festlegen, dass ein fehlgeschlagener Access Point
    weder Kiosk noch Zapfbackend am lokalen Start hindert.
 
-Für die HTTP-Weiterleitung ist `nginx-light` als kleiner Reverse Proxy
-vorgesehen. Er lauscht ausschließlich auf `10.42.0.1:80`. Dadurch bleibt
-Uvicorn auf Loopback gebunden und wird nicht unbeabsichtigt über Ethernet oder
-andere Schnittstellen veröffentlicht.
+`nginx-light` dient als kleiner Reverse Proxy. Er akzeptiert ausschließlich
+Clients aus `10.42.0.0/24` und veröffentlicht nur `/admin`, die
+Smartphone-APIs `/api/web-auth/*` und `/api/web-admin/*` sowie
+`/api/health`. Kiosk-, lokale Admin-, Zapf- und Simulator-APIs bleiben über
+den Proxy unerreichbar. Uvicorn bleibt auf Loopback gebunden.
 
-Das Skript verändert oder löscht keine fremden NetworkManager-Profile.
-Ein Rollback deaktiviert ausschließlich `zunder-zapfe-ap` und die zugehörige
-Proxykonfiguration.
+Das Skript verändert oder löscht keine fremden NetworkManager-Profile. Ein
+vorhandenes `zunder-zapfe-ap` wird ohne Änderung seines Schlüssels auf die
+festen, nicht geheimen Parameter aktualisiert.
 
 ## Zugangsdaten
 
@@ -83,6 +97,15 @@ Proxykonfiguration.
 
 ## Verifikation auf dem Zielsystem
 
+Nach der bewussten Ersteinrichtung:
+
+```bash
+./scripts/pi-verify.sh
+```
+
+Vor der Ersteinrichtung überspringt die Prüfung nur die beiden WLAN-Schritte
+mit einem eindeutigen Hinweis. Nach gesetzter Markierung sind sie verbindlich.
+
 Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 
 1. `zunder-zapfe-ap` ist aktiv und an `wlan0` gebunden.
@@ -90,7 +113,7 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
 3. Der Pi besitzt `10.42.0.1/24`.
 4. Ein Smartphone erhält per DHCP eine Adresse.
 5. `http://10.42.0.1/api/health` ist erreichbar.
-6. `/admin` fordert ohne gültige Sitzung zur Anmeldung auf.
+6. `/admin` fordert ohne gültige Sitzung zur Anmeldung auf (ab `M7.4 UI`).
 7. Der Kiosk bleibt parallel über `127.0.0.1:8000` funktionsfähig.
 8. Ein Neustart aktiviert Access Point, Backend und Kiosk erneut.
 9. WLAN- und Adminpasswörter erscheinen weder in Git-Diff noch Dienstlogs.

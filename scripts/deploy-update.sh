@@ -45,7 +45,8 @@ if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
   needs_full_install=true
 elif [[ "${old_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
   "${old_revision}" "${new_revision}" -- \
-  pyproject.toml scripts/install-pi.sh deploy/systemd deploy/kiosk config/web.env.example; then
+  pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh \
+  deploy/systemd deploy/kiosk deploy/nginx config/web.env.example; then
   needs_full_install=true
 fi
 

@@ -28,6 +28,8 @@ Phase: Alpha-Entwicklung
   CSRF-geschützte Websitzungen
 - getrennte, geschützte Smartphone-API für Benutzer-, Armband- und
   Passwortverwaltung
+- installierbarer NetworkManager-Access-Point `ZUNDER_ZAPFE` mit
+  eingeschränktem nginx-Zugang zur Smartphone-API
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -46,12 +48,12 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Webauthentifizierung, Benutzer-/Armbandverwaltung und Sicherheitsreset | Smartphone-WebUI und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
-| Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
+| Konfiguration | Umgebungsvariablen, Settings-Tabelle und Admin-WLAN-Installer | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
 
 ## Nicht implementiert
 
-- Access Point `ZUNDER_ZAPFE` und vollständige Smartphone-Admin-WebUI
+- vollständige Smartphone-Admin-WebUI; Zielsystemabnahme des Access Points
 - Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer, Buchungen,
   Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter

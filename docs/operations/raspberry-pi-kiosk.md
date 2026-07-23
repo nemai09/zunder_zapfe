@@ -109,16 +109,30 @@ sudo reboot
 
 Das Installationsskript:
 
-1. installiert `python3-venv`, Chromium und curl,
+1. installiert `python3-venv`, Chromium, curl, NetworkManager, `iw` und nginx,
 2. erzeugt die virtuelle Python-Umgebung `.venv`,
 3. installiert Anwendung und Testabhaengigkeiten,
 4. konfiguriert den Webdienst fuer den angegebenen Desktop-Benutzer,
 5. installiert und startet `zunder-zapfe-web.service`,
 6. installiert den Kiosk-Launcher,
-7. ergaenzt den labwc-Autostart des Desktop-Benutzers.
+7. ergaenzt den labwc-Autostart des Desktop-Benutzers,
+8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs.
 
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
+
+Das Admin-WLAN wird nicht automatisch aktiviert, weil dies eine bestehende
+WLAN-SSH-Verbindung trennen kann. Die einmalige Einrichtung erfolgt nach
+gesetztem WLAN-Land interaktiv:
+
+```bash
+sudo raspi-config nonint do_wifi_country DE
+sudo zunder-zapfe-admin-wifi
+```
+
+Dabei wird der neue WLAN-Schlüssel verdeckt abgefragt. Er darf nicht im
+Repository, in einem Shellskript oder in der Kommandozeile hinterlegt werden.
+Details stehen unter [Admin-WLAN](admin-wifi.md).
 
 ### 5. Auf dem Zielsystem verifizieren
 
@@ -133,6 +147,7 @@ Das Skript prueft:
 - aktiven systemd-Dienst,
 - lokalen HTTP-Health-Endpunkt,
 - angeschlossenen und betriebsbereiten ACR122U.
+- nach bewusster Einrichtung aktiven Access Point und Admin-Webzugang.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 

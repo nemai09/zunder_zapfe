@@ -24,7 +24,8 @@ apt-get update
 apt-get install --yes \
   python3-venv python3-dev build-essential \
   chromium curl \
-  pcscd libccid libpcsclite-dev pcsc-tools swig
+  pcscd libccid libpcsclite-dev pcsc-tools swig \
+  network-manager iw nginx-light
 
 install -d -o "${kiosk_user}" -g "${kiosk_user}" /var/lib/zunder-zapfe /var/log/zunder-zapfe
 install -d -m 0755 /etc/zunder-zapfe
@@ -56,6 +57,11 @@ sed -e "s|@@APP_DIR@@|${app_dir}|g" \
 
 install -m 0755 "${app_dir}/deploy/kiosk/zunder-zapfe-kiosk" \
   /usr/local/bin/zunder-zapfe-kiosk
+install -m 0755 "${app_dir}/scripts/install-admin-wifi.sh" \
+  /usr/local/sbin/zunder-zapfe-admin-wifi
+install -d -m 0755 /usr/local/share/zunder-zapfe
+install -m 0644 "${app_dir}/deploy/nginx/zunder-zapfe-admin.conf" \
+  /usr/local/share/zunder-zapfe/zunder-zapfe-admin.conf
 
 kiosk_home="$(getent passwd "${kiosk_user}" | cut -d: -f6)"
 autostart_dir="${kiosk_home}/.config/labwc"
@@ -76,4 +82,5 @@ echo
 echo "Installation abgeschlossen."
 echo "Backend: http://127.0.0.1:8000"
 echo "Pruefung: ${app_dir}/scripts/pi-verify.sh"
+echo "Admin-WLAN einmalig und bewusst: sudo zunder-zapfe-admin-wifi"
 echo "Kioskstart erfolgt bei der naechsten grafischen Anmeldung oder nach einem Neustart."
