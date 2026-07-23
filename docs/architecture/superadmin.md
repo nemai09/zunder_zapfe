@@ -31,8 +31,9 @@ Das Einrichtungswerkzeug `zunder-zapfe-superadmin-card`:
 
 ## Laufzeitzustände
 
-Die Zustände `SUPERADMIN` und `SUPERADMIN_MAINTENANCE_POURING` sind seit M7.9
-ausführbar. Die dargestellte NFC-Übergabe wird in M7.10 ergänzt.
+Die Zustände `SUPERADMIN`, `SUPERADMIN_MAINTENANCE_POURING` und
+`PROVISIONING_HANDOVER` sind ausführbar. Das lokale M7.10-Menü bildet ihre
+Bedienung bei `800 × 480` ab.
 
 ```mermaid
 stateDiagram-v2
@@ -99,12 +100,33 @@ Benutzer erhalten kein Passwort. Für Admins wird ein zufälliges Einmalpasswort
 erzeugt, nur einmal lokal angezeigt und nicht protokolliert. Der erste
 Webzugang erzwingt einen Passwortwechsel.
 
+Der Erfassungsdienst akzeptiert erst dann ein Zielarmband, nachdem der Leser
+mindestens einmal ohne Karte beobachtet wurde. Während des maximal
+15-sekündigen Übergabefensters sind normale NFC-Anmeldung, WLAN-Wechsel,
+Diagnose und Ventilsteuerung gesperrt. Erfolg, Konflikt, Abbruch oder Timeout
+beenden den Zustand und unterdrücken eine Anmeldung mit der noch aufliegenden
+Zielkarte bis zu deren Entfernung.
+
 ## Diagnose
 
 Die Diagnose ist standardmäßig lesend. Sie zeigt keine NFC-UIDs,
 Credential-Pfade, WLAN-Schlüssel, Passwörter, Sitzungstoken oder Hashes.
 Schreibende Aktionen wie WLAN-Wechsel oder Safety-Reset bleiben gesonderte,
 auditierte Fachoperationen.
+
+## Bedienoberfläche
+
+Das lokale Low-Level-Menü öffnet ausschließlich bei erkannter und weiterhin
+präsenter Superadmin-Karte. Seine vier Bereiche sind:
+
+- WLAN-Modus zwischen `ZUNDER_ZAPFE` und einem bekannten Clientprofil,
+- Notfallanlage eines Benutzers oder Admins,
+- gemessene, benutzerlose Wartungszapfung per Gedrückthalten,
+- lesende Systemdiagnose.
+
+Der normale blaue Admin-Button verändert keinen Backendzustand und verweist per
+Toast auf die Smartphone-WebUI. Das Entfernen der Superadmin-Karte beendet das
+Menü serverseitig; eine aktive Wartungsentnahme wird zuerst sicher geschlossen.
 
 ## Implementierungsreihenfolge
 

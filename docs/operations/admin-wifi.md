@@ -23,8 +23,8 @@ WLAN-Schlüssel und persönliche Adminpasswörter sind getrennte Zugangsdaten.
 Keiner dieser Werte wird im Repository abgelegt.
 
 Der Access Point ist der Standard für den Standalone-Betrieb. Falls das
-Ethernetkabel anderweitig benötigt wird, kann ein per NFC angemeldeter Admin
-am Touchscreen über den blauen Admin-Button vorübergehend zu einem bereits
+Ethernetkabel anderweitig benötigt wird, kann der physisch präsente
+Superadmin im lokalen Low-Level-Menü vorübergehend zu einem bereits
 gespeicherten WLAN-Clientprofil wechseln. Der Sperrbildschirm zeigt dazu
 `WLAN · AP` oder `WLAN · Client`.
 
@@ -120,17 +120,12 @@ Die Anwendung läuft weiterhin mit `NoNewPrivileges=true` und erhält kein
 `sudo`. Eine installierte Polkit-Regel erlaubt dem Dienstbenutzer nur die für
 den Profilwechsel erforderlichen NetworkManager-Aktionen einschließlich der
 Aktivierung des WPA-geschützten Hotspots. Offene Hotspots und das globale
-Ein- oder Ausschalten des Netzwerks werden nicht freigegeben. Das Low-Level-Menü
-und `POST /api/admin/wifi/mode` sind auf Loopback begrenzt, verlangen eine
-aktive NFC-Adminsitzung und werden von nginx nicht an Smartphones
-weitergereicht. Als `OD-014` bleibt offen, den Einstieg später zusätzlich an
-eine besondere NFC-Karte oder Rolle zu binden.
-
-Diese Autorisierung ist der M7.7-Übergangsstand. CR-003 entscheidet OD-014:
-Nach der M7.9/M7.10-Laufzeitumstellung ist eine physisch präsente externe
-Superadmin-Karte erforderlich; normale NFC-Admins erhalten über den blauen
-Button keinen Systemzugang mehr. NetworkManager-Profile und Moduswechsel
-bleiben technisch unverändert.
+Ein- oder Ausschalten des Netzwerks werden nicht freigegeben. Das
+Low-Level-Menü und `POST /api/system/wifi/mode` sind auf Loopback begrenzt,
+verlangen bei jedem Aufruf den Zustand `superadmin` sowie die physisch
+präsente externe Superadmin-Karte und werden von nginx nicht an Smartphones
+weitergereicht. Normale NFC-Admins erhalten über den blauen Button keinen
+Systemzugang; er verweist nur auf die Smartphone-WebUI.
 
 ## Zugangsdaten
 
@@ -174,10 +169,11 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
     kombiniert Benutzer-, Fass-, Art-, Abschluss- und Zeitraumfilter.
 13. Audit und technische Ereignisse sind lesbar; Buchungen bieten weder
     Bearbeiten noch Löschen an.
-14. Ein NFC-angemeldeter Admin erreicht über den blauen Button das
-    Low-Level-Menü; ein normaler Benutzer nicht.
+14. Der blaue Button eines NFC-angemeldeten Admins zeigt nur den
+    Smartphone-Hinweis und verändert den Backendzustand nicht.
 15. AP → Client → AP funktioniert, sofern ein bekanntes Clientprofil vorhanden
-    ist. Der Kioskindikator folgt dem jeweils aktiven Modus.
+    ist und die Superadmin-Karte während der Aktion aufliegt. Der
+    Kioskindikator folgt dem jeweils aktiven Modus.
 16. Ein absichtlich unerreichbares Clientprofil führt zu einer verständlichen
     Fehlermeldung und reaktiviert soweit möglich `ZUNDER_ZAPFE`.
 

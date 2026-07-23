@@ -20,6 +20,7 @@ class TapState(StrEnum):
     ADMIN = "admin"
     SUPERADMIN = "superadmin"
     SUPERADMIN_MAINTENANCE_POURING = "superadmin_maintenance_pouring"
+    PROVISIONING_HANDOVER = "provisioning_handover"
     NFC_CAPTURE = "nfc_capture"
     MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
@@ -380,6 +381,26 @@ class TapController:
         with self._mutex:
             self._require_state(TapState.SUPERADMIN_MAINTENANCE_POURING)
             return self._finish_active_pour(PourCompletion.RELEASED, TapState.SUPERADMIN)
+
+    def begin_provisioning_handover(self) -> None:
+        """Replace general Superadmin rights with one bounded NFC handover."""
+        with self._mutex:
+            self._require_state(TapState.SUPERADMIN)
+            self._hardware.valve.close()
+            self._state = TapState.PROVISIONING_HANDOVER
+
+    def end_provisioning_handover(self) -> None:
+        with self._mutex:
+            self._hardware.valve.close()
+            self._synchronize_emergency_stop()
+            if self._state is TapState.PROVISIONING_HANDOVER:
+                self._state = TapState.IDLE
+            elif self._state not in {
+                TapState.FAULT_LOCKED,
+                TapState.EMERGENCY_STOP,
+                TapState.STOPPED,
+            }:
+                raise InvalidTransition("No provisioning handover is active")
 
     def heartbeat(self) -> None:
         with self._mutex:

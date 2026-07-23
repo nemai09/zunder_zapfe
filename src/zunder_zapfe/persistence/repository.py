@@ -233,6 +233,7 @@ class Repository:
             self.session.delete(card)
         user.active = False
         user.password_hash = None
+        user.password_change_required = False
         user.deleted_at = deleted_at or datetime.now(UTC)
         self.revoke_web_admin_sessions(user.id, revoked_at=user.deleted_at)
         self.session.flush()

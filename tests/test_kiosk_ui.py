@@ -80,7 +80,7 @@ def styles_for_rule(styles: str, selector: str) -> str:
     return styles.split(f"{selector} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
 
 
-def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
+def test_zz_ui_006_admin_toast_and_superadmin_low_level_ui_are_packaged() -> None:
     html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
     system_html = (WEB_ROOT / "system.html").read_text(encoding="utf-8")
@@ -97,9 +97,24 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert "Karte gesperrt" in script
     assert "Zuordnung entfernen" in script
     assert 'window.location.assign("/system")' in script
-    assert 'api("/api/admin/session/enter"' in script
+    assert 'api("/api/admin/session/enter"' not in script
+    assert "Administration erfolgt über das Smartphone" in script
     assert "ZUNDER_ZAPFE" in system_html
-    assert "/api/admin/wifi/mode" in system_script
+    for route in (
+        "/api/system/wifi/mode",
+        "/api/system/maintenance/start",
+        "/api/system/maintenance/stop",
+        "/api/system/maintenance/heartbeat",
+        "/api/system/diagnostics",
+        "/api/system/provisioning/start",
+        "/api/system/provisioning/poll",
+    ):
+        assert route in system_script
+    for view in ("wifi", "users", "maintenance", "diagnostics"):
+        assert f'data-system-view="{view}"' in system_html
+    assert 'id="one-time-password"' in system_html
+    assert "one_time_password" in system_script
+    assert "pointercancel" in system_script
     assert '"nfc_capture"' in script
     assert "Armband wird zugeordnet." in script
     assert 'data-screen="registration"' in html

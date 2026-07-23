@@ -333,6 +333,28 @@ class WebAdminSessionResponse(BaseModel):
     display_name: str
     idle_expires_at: datetime
     absolute_expires_at: datetime
+    password_change_required: bool
+
+
+class SuperadminProvisioningRequest(BaseModel):
+    role: Literal["user", "admin"]
+
+
+class SuperadminProvisioningResponse(BaseModel):
+    state: str
+    display_name: str | None = None
+    one_time_password: str | None = None
+
+
+class SuperadminDiagnosticsResponse(BaseModel):
+    application: dict[str, Any]
+    tap: dict[str, Any]
+    nfc: dict[str, Any]
+    valve: dict[str, Any]
+    flow_meter: dict[str, Any]
+    emergency_stop: dict[str, Any]
+    wifi: dict[str, Any]
+    keg: dict[str, Any] | None
 
 
 class WebAdminPasswordChangeRequest(BaseModel):

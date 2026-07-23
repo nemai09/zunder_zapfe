@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.7` in Umsetzung; Diagnose und technische Einstellungen geplant
+Status: `M7.2` bis `M7.7` implementiert; Zielsystemabnahme offen
 
 ## Ziel und Abgrenzung
 
@@ -12,9 +12,9 @@ Internet noch einen Cloud-Dienst.
 Der vorhandene lokale Adminmodus aus Milestone 6 bleibt im Code erhalten, wird
 aber nicht geöffnet oder weiter ausgebaut. Die Smartphone-WebUI steuert weder
 SQLite noch Hardware direkt, sondern ausschließlich dokumentierte HTTP-APIs.
-Der blaue Kiosk-Button öffnet deshalb keine lokale Fachverwaltung mehr. Als
-bewusst begrenzte Ausnahme führt er zum lokalen AP-/Client-Moduswechsel; alle
-fachlichen Verwaltungsabläufe bleiben in der Smartphone-WebUI.
+Der blaue Kiosk-Button öffnet deshalb keine lokale Fachverwaltung mehr und
+zeigt nur einen Hinweis auf diese Smartphone-WebUI. Der AP-/Client-Moduswechsel
+gehört zum getrennten, präsenzgebundenen Superadmin-Menü.
 
 ## Gemeinsames Benutzer- und Anmeldemodell
 
@@ -37,6 +37,14 @@ Passwörter werden mit Argon2id und individuellem Salt gehasht. Das vorhandene
 nullable Feld `users.password_hash` bleibt für normale Benutzer leer.
 Passwörter und Hashes erscheinen niemals in API-Antworten, Auditwerten oder
 Logs.
+
+Ein im lokalen Superadmin-Menü angelegter Notfall-Admin erhält ein zufälliges
+Einmalpasswort. `users.password_change_required` sperrt sämtliche
+Verwaltungsrouten, bis dieses Passwort nach dem ersten Login über die
+persönliche Passwortfunktion ersetzt wurde. Sitzungsstatus, Passwortwechsel
+und Logout bleiben in diesem eingeschränkten Zustand erreichbar. Das
+Einmalpasswort erscheint nur in der lokalen Ergebnisansicht und wird weder
+persistiert noch auditiert.
 
 ## Websitzung
 

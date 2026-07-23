@@ -222,7 +222,7 @@ class TapService:
             TapState.SUPERADMIN_MAINTENANCE_POURING,
         }:
             return self._process_superadmin_presence(nfc)
-        if controller_state is TapState.NFC_CAPTURE:
+        if controller_state in {TapState.NFC_CAPTURE, TapState.PROVISIONING_HANDOVER}:
             return False
         if nfc.state != "card" or not nfc.uid:
             with self._mutex:
@@ -273,6 +273,11 @@ class TapService:
             expected_uid = self._last_presented_uid
         if canonical_uid != expected_uid or not self.is_superadmin_uid(canonical_uid):
             raise PermissionError("A presented superadmin card is required")
+
+    def require_system_page_access(self) -> None:
+        if self._controller.snapshot().state is TapState.PROVISIONING_HANDOVER:
+            return
+        self.require_superadmin_presence()
 
     def logout(self) -> None:
         self._controller.logout()
@@ -418,6 +423,18 @@ class TapService:
     def superadmin_heartbeat(self) -> None:
         self.require_superadmin_presence()
         self._controller.heartbeat()
+
+    def begin_provisioning_handover(self) -> None:
+        self.require_superadmin_presence()
+        self._controller.begin_provisioning_handover()
+
+    def end_provisioning_handover(self) -> None:
+        self._controller.end_provisioning_handover()
+        nfc = self._hardware.nfc.snapshot()
+        with self._mutex:
+            self._last_presented_uid = None
+            self._superadmin_absent_since = None
+            self._nfc_login_suppressed_until_removal = nfc.state == "card"
 
     def heartbeat(self) -> None:
         self._controller.heartbeat()

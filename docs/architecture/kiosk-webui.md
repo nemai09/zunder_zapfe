@@ -36,16 +36,11 @@ persönlicher Verbrauch und Betrag stehen darunter nebeneinander. Für
 angemeldete Admins erscheint links neben dem Logout der blaue Einstieg in die
 Administration; beide Aktionen belegen zusammen die Breite der rechten
 Informationsspalte. Der manuelle Logout bleibt rechts im Kopfbereich sichtbar.
-Der Admin-Einstieg öffnet gemäß CR-002 nur das lokale WLAN-Systemmenü; die
-vollständige Verwaltungsoberfläche aus Milestone 6 bleibt erhalten, wird aber
-nicht geöffnet. Das Systemmenü erfordert weiterhin die NFC-Adminsitzung und
-kehrt über „Zurück“ in den normalen Zapfmodus zurück.
-
-CR-003 löst diesen Einstieg ab. Nach M7.10 bleibt der blaue Admin-Button
-sichtbar, zeigt aber nur einen Toast zur Smartphone-WebUI. Das Low-Level-Menü
-öffnet dann ausschließlich durch die präsente externe Superadmin-Karte. Bis
-zur Laufzeitumstellung in M7.9/M7.10 beschreibt der vorige Absatz weiterhin
-das tatsächlich ausführbare Übergangsverhalten.
+Der Admin-Einstieg verändert gemäß CR-002 und CR-003 keinen Backendzustand.
+Der blaue Button bleibt für normale Admins sichtbar und zeigt ausschließlich
+einen Toast, der auf die Smartphone-WebUI im WLAN `ZUNDER_ZAPFE` verweist.
+Das lokale Low-Level-Menü öffnet nur durch die präsente externe
+Superadmin-Karte und ist keine normale Benutzer- oder Adminsitzung.
 Ein schmaler Balken am unteren
 Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das

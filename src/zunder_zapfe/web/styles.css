@@ -32,6 +32,30 @@ body {
   overscroll-behavior: none;
 }
 
+.kiosk-toast {
+  position: fixed;
+  z-index: 100;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  max-width: 28rem;
+  padding: .85rem 1.1rem;
+  border: 1px solid rgb(63 140 255 / 45%);
+  border-radius: .85rem;
+  color: #dceaff;
+  background: rgb(24 61 112 / 96%);
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 35%);
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(.6rem);
+  transition: 160ms ease;
+}
+
+.kiosk-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 body {
   min-height: 100vh;
   overflow: hidden;

@@ -43,7 +43,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 
 | Feld | Typ | Bedeutung |
 | --- | --- | --- |
-| `state` | `str` | Zustand aus dem Zustandsautomaten, einschließlich `nfc_capture` und des benutzerlosen `superadmin` |
+| `state` | `str` | Zustand aus dem Zustandsautomaten, einschließlich `nfc_capture`, `superadmin` und `provisioning_handover` |
 | `user_id` | `str | null` | intern angemeldeter Benutzer |
 | `is_admin` | `bool` | Rolle der aktuellen Sitzung |
 | `valve_open` | `bool` | angeforderter Ventilzustand |
@@ -117,7 +117,6 @@ ausführende Benutzer-ID.
 | --- | --- | --- |
 | `POST /api/admin/session/enter` | `TapStatusResponse` | authentifizierter Admin wechselt bei geschlossenem Ventil zu `admin` |
 | `POST /api/admin/session/exit` | `TapStatusResponse` | zurück zu `authenticated` und normalem Timeout |
-| `POST /api/admin/wifi/mode` | `{"mode":"ap"}` oder `{"mode":"client"}` | vorhandenes AP- oder Clientprofil aktivieren und Aktion auditieren |
 | `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
 | `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
 | `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
@@ -129,18 +128,6 @@ ausführende Benutzer-ID.
 | `DELETE /api/admin/nfc-cards/{id}` | `204` | Zuordnung nach Bestätigung entfernen und auditieren |
 | `GET /api/admin/settings` | `AdminSettingsResponse` | wirksamen Admin-Timeout lesen |
 | `PATCH /api/admin/settings` | `{"admin_session_timeout_seconds":45}` | Timeout 10 bis 3600 Sekunden persistent und auditiert ändern |
-
-`GET /api/wifi/status` liefert `mode`, `active_connection`, `ssid`,
-`ip_address`, `client_profile_available` und bei nicht verfügbarer
-Systemintegration einen nicht vertraulichen `detail`-Hinweis. Das schreibende
-Gegenstück akzeptiert ausschließlich `ap` oder `client`, erfordert eine aktive
-lokale NFC-Adminsitzung und wird nicht über den Smartphone-Proxy veröffentlicht.
-Es legt keine Profile an und verarbeitet keine WLAN-Schlüssel.
-
-Dies ist der ausführbare M7.7-Übergangsvertrag. CR-003 sieht vor, die
-Autorisierung in M7.9 auf eine physisch präsente externe Superadmin-Karte
-umzustellen. Pfade und Antworten bleiben bis zur gemeinsamen Änderung von
-Implementierung, Tests, diesem Vertrag und OpenAPI unverändert.
 
 Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
 muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste
@@ -168,6 +155,13 @@ von NFC unabhängige Websitzung eröffnen.
 | `GET /api/web-auth/session` | `WebAdminSessionResponse` | aktuelle persönliche Websitzung |
 | `POST /api/web-auth/logout` | `204` | widerruft die Sitzung und entfernt Cookies |
 | `POST /api/web-auth/password` | bisheriges und neues Passwort | ändert das eigene Passwort und beendet bestehende Sitzungen |
+
+`WebAdminSessionResponse.password_change_required` kennzeichnet einen lokal
+erzeugten Notfall-Admin. Solange das Feld `true` ist, bleiben nur
+Sitzungsstatus, Passwortwechsel und Logout erreichbar; alle
+`/api/web-admin/*`-Routen antworten mit `403`. Nach erfolgreichem
+Passwortwechsel werden bestehende Sitzungen widerrufen und ein neuer Login
+liefert `false`.
 
 Das opake Sitzungstoken liegt ausschließlich in einem `HttpOnly`-Cookie mit
 `SameSite=Strict`; die Datenbank speichert nur seinen SHA-256-Hash. Schreibende
@@ -297,6 +291,32 @@ Request. Sie prüfen bei jedem Aufruf den Backendzustand und die aktuelle
 Hardwarepräsenz. Karten- oder Leserentfernung beendet eine laufende Messung
 nach einer Sekunde Entprellung serverseitig mit `card_removed`; das Ventil wird
 vor Persistenz und Zustandswechsel geschlossen.
+
+## Lokaler Superadmin
+
+Diese Routen sind ausschließlich über Loopback vorgesehen und werden von nginx
+nicht an Smartphones weitergereicht:
+
+| Methode und Pfad | Vorbedingung | Wirkung |
+| --- | --- | --- |
+| `POST /api/system/wifi/mode` | `superadmin`, Karte physisch präsent | vorhandenes AP- oder Clientprofil aktivieren und als technischer Akteur auditieren |
+| `GET /api/system/diagnostics` | `superadmin`, Karte physisch präsent | Version, Zapf-, Hardware-, WLAN- und Fassstatus ohne UID oder Geheimnisse |
+| `POST /api/system/provisioning/start` | `superadmin`, Karte physisch präsent | mit `{"role":"user"}` oder `{"role":"admin"}` die einmalige Kartenübergabe starten |
+| `POST /api/system/provisioning/poll` | aktive Übergabe | `remove_card`, `waiting`, `reader_unavailable` oder terminales Ergebnis liefern |
+| `DELETE /api/system/provisioning` | aktive Übergabe | Übergabe abbrechen und zum Lockscreen zurückkehren |
+
+`GET /api/wifi/status` liefert weiterhin öffentlich den nicht vertraulichen
+NetworkManager-Status. Das schreibende Gegenstück legt keine Profile an,
+verarbeitet keine WLAN-Schlüssel und akzeptiert ausschließlich `ap` oder
+`client`.
+
+Die Notfallanlage besitzt absichtlich kein UID-Feld im Request. Erst nachdem
+der Leser ohne Karte beobachtet wurde, wird innerhalb von maximal 15 Sekunden
+genau ein unbekanntes Armband angenommen. `created` enthält den automatisch
+vergebenen Anzeigenamen. Nur für einen neuen Admin enthält genau diese erste
+Antwort zusätzlich `one_time_password`; spätere Statusabfragen geben es nicht
+erneut aus. Konflikt, Superadmin-Karte, ungültige Karte, Abbruch und Timeout
+legen keinen Benutzer an.
 
 ## Verbrauch und Fass
 

@@ -314,6 +314,20 @@ button.user-card { border: 1px solid var(--line); }
 .bottom-nav button span { color: #c4ccc7; font-size: .7rem; }
 .bottom-nav button.is-active { color: var(--green); }
 .bottom-nav button.is-active span { color: var(--green); }
+.bottom-nav button:disabled { opacity: .25; }
+
+.password-required-notice {
+  display: grid;
+  gap: .25rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid rgb(245 166 35 / 45%);
+  border-radius: .9rem;
+  color: #fff0c4;
+  background: rgb(245 166 35 / 12%);
+}
+.password-required-notice span { color: var(--muted); }
+.password-change-required .management-section:not(.management-wide) { display: none; }
 
 .toast {
   position: fixed;

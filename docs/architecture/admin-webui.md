@@ -10,10 +10,9 @@ geprüften Entwicklungsstand von Milestone 6. Gemäß
 [CR-002](../../requirements/changes/CR-002-smartphone-administration.md) wird
 er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
 
-Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Er
-öffnet als eng begrenzte Ausnahme ausschließlich das lokale Low-Level-Menü
-für den Wechsel zwischen `ZUNDER_ZAPFE` und einem bereits bekannten
-WLAN-Clientprofil. Die nachfolgend beschriebene vollständige lokale
+Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar, ändert
+aber keinen Backendzustand und verweist nur per Toast auf die
+Smartphone-WebUI. Die nachfolgend beschriebene vollständige lokale
 Verwaltungsoberfläche wird weiterhin nicht geöffnet. Die weitere
 Administration wird als
 responsive WebUI für Smartphones im lokalen Admin-WLAN umgesetzt. Ihre
@@ -21,14 +20,9 @@ Zielarchitektur und der getrennte Passwortzugang stehen unter
 [`smartphone-admin-webui.md`](smartphone-admin-webui.md). Die Websitzung darf
 nicht aus dem vorhandenen NFC-Adminmodus abgeleitet werden.
 
-CR-003 ändert den lokalen Einstieg nach Abschluss von M7.10 erneut: Der blaue
-Button wird dann wirkungslos und verweist per Toast auf die Smartphone-WebUI.
-Das Low-Level-Menü wird ausschließlich durch die externe Superadmin-Karte
-geöffnet. Der bestehende NFC-Adminzugang bleibt bis zu dieser Laufzeitumstellung
-der ausführbare Übergangsstand.
-
-Das Low-Level-Menü verwendet den vorhandenen ventilgesperrten Adminzustand
-derselben Kiosk-WebUI.
+Das getrennte Low-Level-Menü wird ausschließlich durch die externe,
+präsenzgebundene Superadmin-Karte geöffnet. Es verwendet eigene benutzerlose
+Zustände und nicht den erhaltenen lokalen Zustand `ADMIN`.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines
 NFC-Armbands an und kann normal zapfen. Ausschließlich die serverseitig
 ermittelte Adminrolle blendet den Einstieg in den Adminmodus ein.

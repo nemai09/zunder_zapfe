@@ -25,7 +25,7 @@ from zunder_zapfe.hardware.simulators import (
 )
 from zunder_zapfe.main import create_app
 from zunder_zapfe.persistence.database import create_database_engine, create_session_factory
-from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, TapBooking, UserRole
+from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, TapBooking, User, UserRole
 from zunder_zapfe.persistence.repository import Repository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -298,26 +298,34 @@ def test_admin_timeout_is_configurable_and_self_protected(admin_api: tuple[objec
     assert exit_response.json()["state"] == "authenticated"
 
 
-def test_local_wifi_mode_switch_requires_admin_mode_and_is_audited(
+def test_local_wifi_mode_switch_requires_superadmin_presence_and_is_audited(
     admin_api: tuple[object, ...],
 ) -> None:
     client, sessions, _nfc, _ids = admin_api
     assert client.get("/system").status_code == 403
     assert client.get("/api/wifi/status").json()["mode"] == "ap"
-    assert client.post("/api/admin/wifi/mode", json={"mode": "client"}).status_code == 403
-    enter_admin(client)
+    assert client.post("/api/admin/wifi/mode", json={"mode": "client"}).status_code == 404
+
+    present(client, ADMIN_UID)
+    assert client.get("/system").status_code == 403
+    assert client.post("/api/session/logout").status_code == 204
+    remove(client)
+    present(client, SUPERADMIN_UID)
     system_page = client.get("/system")
     assert system_page.status_code == 200
-    assert "Lokales Low-Level-Menü" in system_page.text
+    assert "Zunder Zapfe · Low-Level" in system_page.text
 
-    switched = client.post("/api/admin/wifi/mode", json={"mode": "client"})
+    switched = client.post("/api/system/wifi/mode", json={"mode": "client"})
 
     assert switched.status_code == 200
     assert switched.json()["mode"] == "client"
     assert switched.json()["active_connection"] == "Werkstatt"
     with sessions() as session:
-        actions = list(session.scalars(select(AdminAuditEntry.action)))
+        audit = session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)).all()
+        actions = [entry.action for entry in audit]
     assert actions == ["wifi.mode_switch_requested", "wifi.mode_switched"]
+    assert all(entry.actor_kind == "superadmin" for entry in audit)
+    assert all(entry.admin_user_id is None for entry in audit)
 
 
 def test_superadmin_maintenance_api_requires_presence_and_stores_no_user(
@@ -359,3 +367,107 @@ def test_superadmin_maintenance_api_requires_presence_and_stores_no_user(
         assert booking is not None
         assert booking.user_id is None
         assert booking.login_session_id is None
+
+
+def test_superadmin_diagnostics_hide_the_presented_card_uid(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, _sessions, _nfc, _ids = admin_api
+
+    assert client.get("/api/system/diagnostics").status_code == 403
+    present(client, SUPERADMIN_UID)
+
+    response = client.get("/api/system/diagnostics")
+
+    assert response.status_code == 200
+    assert response.json()["tap"]["state"] == "superadmin"
+    assert "uid" not in response.json()["nfc"]
+    assert SUPERADMIN_UID not in response.text
+
+
+def test_superadmin_can_create_an_emergency_user_after_card_handover(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    present(client, SUPERADMIN_UID)
+
+    started = client.post("/api/system/provisioning/start", json={"role": "user"})
+    assert started.status_code == 200
+    assert started.json()["state"] == "remove_card"
+    assert client.get("/api/tap/status").json()["state"] == "provisioning_handover"
+    assert client.get("/system").status_code == 200
+
+    remove(client)
+    assert client.post("/api/system/provisioning/poll").json()["state"] == "waiting"
+    present(client, NEW_UID)
+    created = client.post("/api/system/provisioning/poll")
+
+    assert created.status_code == 200
+    assert created.json()["state"] == "created"
+    assert created.json()["display_name"].startswith("Notfall-Benutzer ")
+    assert created.json()["one_time_password"] is None
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+    assert client.post("/api/system/provisioning/poll").json()["one_time_password"] is None
+
+    with sessions() as session:
+        card = Repository(session).find_nfc_card(NEW_UID)
+        assert card is not None
+        user = session.get(User, card.user_id)
+        assert user is not None
+        assert user.role is UserRole.USER
+        audit = session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)).all()
+        assert audit[-1].actor_kind == "superadmin"
+        assert audit[-1].action == "user.emergency_created"
+        assert NEW_UID not in (audit[-1].new_values_json or "")
+
+
+def test_superadmin_emergency_admin_gets_a_single_use_initial_password(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    emergency_admin_uid = "55667788"
+    present(client, SUPERADMIN_UID)
+    assert (
+        client.post("/api/system/provisioning/start", json={"role": "admin"}).json()["state"]
+        == "remove_card"
+    )
+    remove(client)
+    assert client.post("/api/system/provisioning/poll").json()["state"] == "waiting"
+    present(client, emergency_admin_uid)
+
+    created = client.post("/api/system/provisioning/poll").json()
+
+    assert created["state"] == "created"
+    assert created["display_name"].startswith("Notfall-Admin ")
+    assert len(created["one_time_password"]) >= 10
+    assert client.post("/api/system/provisioning/poll").json()["one_time_password"] is None
+    with sessions() as session:
+        card = Repository(session).find_nfc_card(emergency_admin_uid)
+        assert card is not None
+        user = session.get(User, card.user_id)
+        assert user is not None
+        assert user.role is UserRole.ADMIN
+        assert user.password_change_required is True
+        assert user.password_hash
+        assert created["one_time_password"] not in user.password_hash
+
+
+def test_superadmin_emergency_provisioning_rejects_an_assigned_card(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    present(client, SUPERADMIN_UID)
+    assert (
+        client.post("/api/system/provisioning/start", json={"role": "user"}).json()["state"]
+        == "remove_card"
+    )
+    remove(client)
+    assert client.post("/api/system/provisioning/poll").json()["state"] == "waiting"
+    present(client, USER_UID)
+
+    rejected = client.post("/api/system/provisioning/poll")
+
+    assert rejected.status_code == 200
+    assert rejected.json()["state"] == "card_assigned"
+    with sessions() as session:
+        assert len(Repository(session).list_users()) == 2

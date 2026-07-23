@@ -42,6 +42,9 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
   aus normalen Verwaltungsabfragen ausgeschlossen.
 - `users.password_hash` bleibt für normale Benutzer `NULL`. Adminpasswörter
   werden ausschließlich als individuell gesalzene Argon2id-Hashes gespeichert.
+- `users.password_change_required` markiert ausschließlich lokal angelegte
+  Notfall-Admins. Es wird nach erfolgreichem persönlichem Passwortwechsel oder
+  administrativem Reset gelöscht und sperrt bis dahin die Fachverwaltung.
 - `web_admin_sessions` speichert SHA-256-Hashes zufälliger Sitzungs- und
   CSRF-Token sowie Inaktivitäts-, Absolut- und Widerrufszeit.
 - Volumen: Milliliter als `int`.
@@ -78,6 +81,11 @@ Die Migration `f6b942d7183c` erlaubt `user_id=NULL` und
 `login_session_id=NULL` nur gemeinsam für `kind=maintenance` und
 `chargeable=false`. Dieselbe Migration kennzeichnet bestehende Auditzeilen als
 `user_admin` und ermöglicht neue `superadmin`-Einträge ohne Benutzerreferenz.
+
+Die Migration `5d7b3a90e214` ergänzt
+`users.password_change_required` mit dem rückwärtskompatiblen Standard
+`false`. Bestehende Admins werden dadurch nicht zu einem Passwortwechsel
+gezwungen.
 
 ## Schemaänderungen
 

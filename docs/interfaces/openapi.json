@@ -1514,6 +1514,121 @@
         "title": "SessionStatusResponse",
         "type": "object"
       },
+      "SuperadminDiagnosticsResponse": {
+        "properties": {
+          "application": {
+            "additionalProperties": true,
+            "title": "Application",
+            "type": "object"
+          },
+          "emergency_stop": {
+            "additionalProperties": true,
+            "title": "Emergency Stop",
+            "type": "object"
+          },
+          "flow_meter": {
+            "additionalProperties": true,
+            "title": "Flow Meter",
+            "type": "object"
+          },
+          "keg": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keg"
+          },
+          "nfc": {
+            "additionalProperties": true,
+            "title": "Nfc",
+            "type": "object"
+          },
+          "tap": {
+            "additionalProperties": true,
+            "title": "Tap",
+            "type": "object"
+          },
+          "valve": {
+            "additionalProperties": true,
+            "title": "Valve",
+            "type": "object"
+          },
+          "wifi": {
+            "additionalProperties": true,
+            "title": "Wifi",
+            "type": "object"
+          }
+        },
+        "required": [
+          "application",
+          "tap",
+          "nfc",
+          "valve",
+          "flow_meter",
+          "emergency_stop",
+          "wifi",
+          "keg"
+        ],
+        "title": "SuperadminDiagnosticsResponse",
+        "type": "object"
+      },
+      "SuperadminProvisioningRequest": {
+        "properties": {
+          "role": {
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "SuperadminProvisioningRequest",
+        "type": "object"
+      },
+      "SuperadminProvisioningResponse": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "one_time_password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "One Time Password"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "SuperadminProvisioningResponse",
+        "type": "object"
+      },
       "TapOptionsResponse": {
         "properties": {
           "admin_session_timeout_seconds": {
@@ -1914,6 +2029,10 @@
             "title": "Idle Expires At",
             "type": "string"
           },
+          "password_change_required": {
+            "title": "Password Change Required",
+            "type": "boolean"
+          },
           "user_id": {
             "title": "User Id",
             "type": "integer"
@@ -1923,7 +2042,8 @@
           "user_id",
           "display_name",
           "idle_expires_at",
-          "absolute_expires_at"
+          "absolute_expires_at",
+          "password_change_required"
         ],
         "title": "WebAdminSessionResponse",
         "type": "object"
@@ -2733,74 +2853,6 @@
         "summary": "Capture Admin User Nfc Card"
       }
     },
-    "/api/admin/wifi/mode": {
-      "post": {
-        "operationId": "switch_admin_wifi_mode_api_admin_wifi_mode_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WifiModeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WifiStatusResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Active admin mode required"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Domain conflict"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Invalid value"
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Wi-Fi control unavailable"
-          }
-        },
-        "summary": "Switch Admin Wifi Mode"
-      }
-    },
     "/api/consumption/current": {
       "get": {
         "operationId": "current_consumption_api_consumption_current_get",
@@ -2971,6 +3023,34 @@
         "summary": "Session Status"
       }
     },
+    "/api/system/diagnostics": {
+      "get": {
+        "operationId": "superadmin_diagnostics_api_system_diagnostics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperadminDiagnosticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Superadmin card required"
+          }
+        },
+        "summary": "Superadmin Diagnostics"
+      }
+    },
     "/api/system/maintenance/heartbeat": {
       "post": {
         "operationId": "superadmin_maintenance_heartbeat_api_system_maintenance_heartbeat_post",
@@ -3046,6 +3126,148 @@
           }
         },
         "summary": "Stop Superadmin Maintenance Pour"
+      }
+    },
+    "/api/system/provisioning": {
+      "delete": {
+        "operationId": "cancel_superadmin_provisioning_api_system_provisioning_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperadminProvisioningResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cancel Superadmin Provisioning"
+      }
+    },
+    "/api/system/provisioning/poll": {
+      "post": {
+        "operationId": "poll_superadmin_provisioning_api_system_provisioning_poll_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperadminProvisioningResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Poll Superadmin Provisioning"
+      }
+    },
+    "/api/system/provisioning/start": {
+      "post": {
+        "operationId": "start_superadmin_provisioning_api_system_provisioning_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuperadminProvisioningRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperadminProvisioningResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Superadmin card required"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Superadmin Provisioning"
+      }
+    },
+    "/api/system/wifi/mode": {
+      "post": {
+        "operationId": "switch_system_wifi_mode_api_system_wifi_mode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WifiModeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Superadmin card required"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Wi-Fi control unavailable"
+          }
+        },
+        "summary": "Switch System Wifi Mode"
       }
     },
     "/api/tap/heartbeat": {

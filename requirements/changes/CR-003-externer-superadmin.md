@@ -1,6 +1,6 @@
 # CR-003: Externer, präsenzgebundener Superadmin
 
-Status: angenommen; Umsetzung experimentell begonnen
+Status: angenommen; lokal implementiert, Zielsystemabnahme offen
 
 Datum: 2026-07-24
 

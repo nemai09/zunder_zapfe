@@ -105,6 +105,7 @@ class User(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     special_portion_ml: Mapped[int | None] = mapped_column(Integer)
     password_hash: Mapped[str | None] = mapped_column(String(255))
+    password_change_required: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(

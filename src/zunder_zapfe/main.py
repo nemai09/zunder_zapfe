@@ -50,6 +50,9 @@ from zunder_zapfe.api_models import (
     SessionStatusResponse,
     SimulatedCardRequest,
     SimulatedPulsesRequest,
+    SuperadminDiagnosticsResponse,
+    SuperadminProvisioningRequest,
+    SuperadminProvisioningResponse,
     TapOptionsResponse,
     TapStatusResponse,
     WebAdminLoginOptionResponse,
@@ -65,6 +68,7 @@ from zunder_zapfe.backend.superadmin_identity import (
     SuperadminIdentity,
     load_superadmin_identity,
 )
+from zunder_zapfe.backend.superadmin_service import SuperadminService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.backend.web_auth_service import (
@@ -143,6 +147,13 @@ def create_app(
         superadmin_identity=resolved_superadmin_identity,
     )
     web_auth_service = WebAuthService(sessions)
+    superadmin_service = SuperadminService(
+        hardware_layer,
+        sessions,
+        tap_service,
+        wifi_mode_service=resolved_wifi_mode_service,
+        identity=resolved_superadmin_identity,
+    )
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
@@ -151,6 +162,7 @@ def create_app(
             tap_service.start()
             yield
         finally:
+            superadmin_service.shutdown()
             tap_service.shutdown()
             hardware_layer.stop()
             if owned_engine is not None:
@@ -240,17 +252,27 @@ def create_app(
 
     @application.get("/system", include_in_schema=False)
     async def local_system_admin() -> FileResponse:
-        tap_service.require_admin_user_id()
+        tap_service.require_system_page_access()
         return FileResponse(WEB_ROOT / "system.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
 
-    def require_web_admin(request: Request, *, write: bool = False) -> WebAdminIdentity:
-        return web_auth_service.authenticate(
+    def require_web_admin(
+        request: Request,
+        *,
+        write: bool = False,
+        allow_password_change: bool = False,
+    ) -> WebAdminIdentity:
+        identity = web_auth_service.authenticate(
             request.cookies.get(WEB_ADMIN_SESSION_COOKIE),
             csrf_token=request.headers.get(WEB_ADMIN_CSRF_HEADER),
             require_csrf=write,
         )
+        if identity.password_change_required and not allow_password_change:
+            raise WebAuthorizationError(
+                "Vor der Verwaltung muss das Einmalpasswort geändert werden"
+            )
+        return identity
 
     def web_session_response(identity: WebAdminIdentity) -> dict[str, object]:
         return {
@@ -258,6 +280,7 @@ def create_app(
             "display_name": identity.display_name,
             "idle_expires_at": identity.idle_expires_at,
             "absolute_expires_at": identity.absolute_expires_at,
+            "password_change_required": identity.password_change_required,
         }
 
     def clear_web_admin_cookies(response: Response) -> None:
@@ -314,7 +337,7 @@ def create_app(
         responses={401: {"model": ErrorResponse, "description": "No valid session"}},
     )
     async def web_admin_session(request: Request) -> dict[str, object]:
-        return web_session_response(require_web_admin(request))
+        return web_session_response(require_web_admin(request, allow_password_change=True))
 
     @application.post(
         "/api/web-auth/logout",
@@ -438,19 +461,6 @@ def create_app(
         return admin_service.update_settings(
             admin_session_timeout_seconds=request.admin_session_timeout_seconds
         )
-
-    @application.post(
-        "/api/admin/wifi/mode",
-        response_model=WifiStatusResponse,
-        responses={
-            **admin_responses,
-            503: {"model": ErrorResponse, "description": "Wi-Fi control unavailable"},
-        },
-    )
-    def switch_admin_wifi_mode(
-        request: WifiModeRequest,
-    ) -> dict[str, str | bool | None]:
-        return admin_service.switch_wifi_mode(request.mode)
 
     @application.get(
         "/api/admin/users",
@@ -1036,6 +1046,71 @@ def create_app(
     async def superadmin_maintenance_heartbeat() -> Response:
         tap_service.superadmin_heartbeat()
         return Response(status_code=204)
+
+    @application.post(
+        "/api/system/wifi/mode",
+        response_model=WifiStatusResponse,
+        responses={
+            403: {"model": ErrorResponse, "description": "Superadmin card required"},
+            503: {"model": ErrorResponse, "description": "Wi-Fi control unavailable"},
+        },
+    )
+    def switch_system_wifi_mode(
+        request: WifiModeRequest,
+    ) -> dict[str, str | bool | None]:
+        return superadmin_service.switch_wifi_mode(request.mode)
+
+    @application.get(
+        "/api/system/diagnostics",
+        response_model=SuperadminDiagnosticsResponse,
+        responses={403: {"model": ErrorResponse, "description": "Superadmin card required"}},
+    )
+    def superadmin_diagnostics() -> dict[str, Any]:
+        tap_service.require_superadmin_presence()
+        hardware_status = hardware_layer.snapshot()
+        hardware_status["nfc"].pop("uid", None)
+        try:
+            keg = tap_service.current_keg()
+        except TapUnavailable:
+            keg = None
+        return {
+            "application": {
+                "version": __version__,
+                "build": BUILD_INFO.display_version,
+                "revision": BUILD_INFO.revision,
+            },
+            "tap": tap_service.status_dict(),
+            "nfc": hardware_status["nfc"],
+            "valve": hardware_status["valve"],
+            "flow_meter": hardware_status["flow_meter"],
+            "emergency_stop": hardware_status["emergency_stop"],
+            "wifi": resolved_wifi_mode_service.status().as_dict(),
+            "keg": keg,
+        }
+
+    @application.post(
+        "/api/system/provisioning/start",
+        response_model=SuperadminProvisioningResponse,
+        responses={403: {"model": ErrorResponse, "description": "Superadmin card required"}},
+    )
+    def start_superadmin_provisioning(
+        request: SuperadminProvisioningRequest,
+    ) -> dict[str, str | None]:
+        return superadmin_service.start_provisioning(request.role)
+
+    @application.post(
+        "/api/system/provisioning/poll",
+        response_model=SuperadminProvisioningResponse,
+    )
+    def poll_superadmin_provisioning() -> dict[str, str | None]:
+        return superadmin_service.poll_provisioning()
+
+    @application.delete(
+        "/api/system/provisioning",
+        response_model=SuperadminProvisioningResponse,
+    )
+    def cancel_superadmin_provisioning() -> dict[str, str | None]:
+        return superadmin_service.cancel_provisioning()
 
     @application.post("/api/tap/poll", response_model=TapStatusResponse)
     async def poll_tap() -> dict[str, Any]:

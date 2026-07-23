@@ -46,6 +46,7 @@ class WebAdminIdentity:
     session_id: int
     idle_expires_at: datetime
     absolute_expires_at: datetime
+    password_change_required: bool
 
 
 @dataclass(frozen=True)
@@ -138,6 +139,7 @@ class WebAuthService:
                     session_id=web_session.id,
                     idle_expires_at=idle_expires_at,
                     absolute_expires_at=absolute_expires_at,
+                    password_change_required=user.password_change_required,
                 )
                 issued = IssuedWebSession(
                     token=token,
@@ -203,6 +205,7 @@ class WebAuthService:
                         session_id=web_session.id,
                         idle_expires_at=_as_utc(web_session.idle_expires_at),
                         absolute_expires_at=_as_utc(web_session.absolute_expires_at),
+                        password_change_required=user.password_change_required,
                     )
         if error is not None:
             raise error
@@ -243,6 +246,7 @@ class WebAuthService:
             ):
                 raise WebAuthenticationError("Das bisherige Passwort ist ungültig")
             user.password_hash = self._password_hash.hash(normalized_password)
+            user.password_change_required = False
             repository.revoke_web_admin_sessions(user.id, revoked_at=now)
             repository.record_admin_action(
                 admin_user_id=user.id,
@@ -274,6 +278,7 @@ class WebAuthService:
             if not target.active or target.role is not UserRole.ADMIN:
                 raise ValueError("Nur ein aktiver Admin kann ein Webpasswort erhalten")
             target.password_hash = self._password_hash.hash(normalized_password)
+            target.password_change_required = False
             repository.revoke_web_admin_sessions(target.id, revoked_at=now)
             repository.record_admin_action(
                 admin_user_id=actor.id,
@@ -299,6 +304,7 @@ class WebAuthService:
                 else "admin.password_reset_local"
             )
             user.password_hash = self._password_hash.hash(normalized_password)
+            user.password_change_required = False
             repository.revoke_web_admin_sessions(user.id, revoked_at=now)
             repository.record_admin_action(
                 admin_user_id=user.id,

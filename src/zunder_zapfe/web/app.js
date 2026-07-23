@@ -54,6 +54,7 @@ const model = {
   adminLoaded: false,
   captureActive: false,
   captureTimer: null,
+  toastTimer: null,
 };
 
 const elements = {
@@ -119,6 +120,7 @@ const elements = {
   diagnosticConnection: document.querySelector("#diagnostic-connection"),
   diagnosticNfc: document.querySelector("#diagnostic-nfc"),
   diagnosticValve: document.querySelector("#diagnostic-valve"),
+  kioskToast: document.querySelector("#kiosk-toast"),
 };
 
 async function api(path, options = {}) {
@@ -393,7 +395,9 @@ async function refresh() {
       }
     }
     model.connected = true;
-    if (tap.state === "admin") {
+    if (["superadmin", "superadmin_maintenance_pouring", "provisioning_handover"].includes(
+      tap.state,
+    )) {
       model.redirecting = true;
       window.location.assign("/system");
       return;
@@ -456,18 +460,15 @@ function showAdminSection(section) {
   }
 }
 
-async function enterAdmin() {
-  if (model.actionPending) return;
-  model.actionPending = true;
-  elements.actionError.textContent = "";
-  try {
-    model.tap = await api("/api/admin/session/enter", { method: "POST" });
-    window.location.assign("/system");
-  } catch (error) {
-    elements.actionError.textContent = error.message;
-  } finally {
-    model.actionPending = false;
-  }
+function enterAdmin() {
+  elements.kioskToast.textContent =
+    "Die Administration erfolgt über das Smartphone im WLAN ZUNDER_ZAPFE.";
+  elements.kioskToast.classList.add("is-visible");
+  if (model.toastTimer !== null) window.clearTimeout(model.toastTimer);
+  model.toastTimer = window.setTimeout(
+    () => elements.kioskToast.classList.remove("is-visible"),
+    3500,
+  );
 }
 
 async function exitAdmin() {

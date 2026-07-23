@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111a25">
-    <title>Zunder Zapfe · System</title>
+    <meta name="theme-color" content="#0e1722">
+    <title>Zunder Zapfe · Wartung</title>
     <link rel="stylesheet" href="/static/system.css?v=0.4.0-alpha.1">
     <script src="/static/system.js?v=0.4.0-alpha.1" defer></script>
   </head>
@@ -14,65 +14,174 @@
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">Z</span>
           <div>
-            <p>Lokales Low-Level-Menü</p>
-            <strong>Zunder Zapfe · Netzwerk</strong>
+            <p>Präsenzgebundener Wartungszugang</p>
+            <strong>Zunder Zapfe · Low-Level</strong>
           </div>
         </div>
         <div class="header-actions">
-          <button class="button button-quiet" id="back-button" type="button">Zurück zum Zapfen</button>
-          <button class="button button-danger" id="logout-button" type="button">Abmelden</button>
+          <button class="button button-quiet" id="home-button" type="button" hidden>Übersicht</button>
+          <div class="presence" id="presence-status">
+            <span></span>
+            <strong>Superadmin-Karte liegt auf</strong>
+          </div>
         </div>
       </header>
 
-      <section class="system-content">
-        <section class="status-panel" aria-labelledby="status-title">
-          <p class="eyebrow">Aktueller Zustand</p>
-          <h1 id="status-title">WLAN-Modus</h1>
-          <div class="mode-state" id="mode-state">
-            <span class="mode-dot"></span>
-            <strong id="mode-label">Wird geprüft …</strong>
+      <section class="system-view is-active" data-system-view="home">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">Lokale Wartung</p>
+            <h1>Was möchtest du tun?</h1>
           </div>
-          <dl class="status-grid">
-            <div>
-              <dt>Verbindung</dt>
-              <dd id="connection-name">–</dd>
-            </div>
-            <div>
-              <dt>SSID</dt>
-              <dd id="ssid-name">–</dd>
-            </div>
-            <div>
-              <dt>IP-Adresse</dt>
-              <dd id="ip-address">–</dd>
-            </div>
-            <div>
-              <dt>Clientprofil</dt>
-              <dd id="client-profile">–</dd>
-            </div>
-          </dl>
-          <p class="detail" id="status-detail"></p>
-        </section>
-
-        <section class="action-panel" aria-labelledby="action-title">
-          <p class="eyebrow">Betriebsart wählen</p>
-          <h2 id="action-title">Netzwerk umschalten</h2>
-          <button class="mode-button mode-button-ap" id="ap-button" type="button">
-            <span>Lokale Administration</span>
-            <strong>Access Point aktivieren</strong>
-            <small>SSID ZUNDER_ZAPFE bereitstellen</small>
+          <p>Karte zum Beenden einfach vom Leser entfernen.</p>
+        </div>
+        <div class="menu-grid">
+          <button class="menu-card menu-wifi" type="button" data-open-view="wifi">
+            <span>Netzwerk</span>
+            <strong>WLAN-Modus</strong>
+            <small>Access Point oder bekanntes Client-WLAN</small>
           </button>
-          <button class="mode-button mode-button-client" id="client-button" type="button">
-            <span>Netzwerkzugang</span>
-            <strong>Mit bekanntem WLAN verbinden</strong>
-            <small>Bestes gespeichertes Clientprofil verwenden</small>
+          <button class="menu-card menu-users" type="button" data-open-view="users">
+            <span>Notfallzugang</span>
+            <strong>Benutzer anlegen</strong>
+            <small>Neues Armband direkt registrieren</small>
           </button>
-          <p class="warning">
-            Das Umschalten trennt die aktuelle WLAN-Verbindung. Neue WLANs und
-            Zugangsdaten werden hier bewusst nicht eingerichtet.
-          </p>
-          <p class="message" id="action-message" role="status" aria-live="polite"></p>
-        </section>
+          <button class="menu-card menu-tap" type="button" data-open-view="maintenance">
+            <span>Zapfensteuerung</span>
+            <strong>Wartungszapfung</strong>
+            <small>Kostenfrei, gemessen und bestandswirksam</small>
+          </button>
+          <button class="menu-card menu-diagnostics" type="button" data-open-view="diagnostics">
+            <span>System</span>
+            <strong>Diagnose</strong>
+            <small>Hardware, Version, WLAN und Fass</small>
+          </button>
+        </div>
       </section>
+
+      <section class="system-view" data-system-view="wifi">
+        <div class="two-column">
+          <section class="panel">
+            <p class="eyebrow">Aktueller Zustand</p>
+            <h1>WLAN</h1>
+            <div class="mode-state" id="mode-state">
+              <span class="mode-dot"></span>
+              <strong id="mode-label">Wird geprüft …</strong>
+            </div>
+            <dl class="status-grid">
+              <div><dt>Verbindung</dt><dd id="connection-name">–</dd></div>
+              <div><dt>SSID</dt><dd id="ssid-name">–</dd></div>
+              <div><dt>IP-Adresse</dt><dd id="ip-address">–</dd></div>
+              <div><dt>Clientprofil</dt><dd id="client-profile">–</dd></div>
+            </dl>
+          </section>
+          <section class="panel action-panel">
+            <p class="eyebrow">Betriebsart</p>
+            <button class="mode-button" id="ap-button" type="button">
+              <strong>Access Point aktivieren</strong>
+              <small>SSID ZUNDER_ZAPFE bereitstellen</small>
+            </button>
+            <button class="mode-button" id="client-button" type="button">
+              <strong>Bekanntes WLAN verwenden</strong>
+              <small>Gespeichertes Clientprofil verbinden</small>
+            </button>
+            <p class="message" id="wifi-message" role="status"></p>
+          </section>
+        </div>
+      </section>
+
+      <section class="system-view" data-system-view="users">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">Notfallanlage</p>
+            <h1>Neues Armband</h1>
+          </div>
+          <p>Die vollständige Bearbeitung bleibt in der Smartphone-WebUI.</p>
+        </div>
+        <div class="provision-grid">
+          <button class="provision-card" id="create-user-button" type="button">
+            <span>Ohne Passwort</span>
+            <strong>Neuen Benutzer erstellen</strong>
+            <small>Automatischer Name, anschließend am Smartphone änderbar</small>
+          </button>
+          <button class="provision-card provision-admin" id="create-admin-button" type="button">
+            <span>Mit Einmalpasswort</span>
+            <strong>Neuen Admin erstellen</strong>
+            <small>Persönliches Passwort muss beim ersten Login gesetzt werden</small>
+          </button>
+        </div>
+        <p class="hint">Nach dem Start Superadmin-Karte entfernen und das neue Armband kurz auflegen.</p>
+      </section>
+
+      <section class="system-view" data-system-view="maintenance">
+        <div class="maintenance-layout">
+          <div>
+            <p class="eyebrow">Zapfensteuerung</p>
+            <h1>Wartungszapfung</h1>
+            <p class="maintenance-copy">
+              Gedrückt halten öffnet das Ventil. Loslassen oder Kartenentfernung schließt sofort.
+              Die gemessene Menge reduziert den Fassbestand, wird aber keinem Benutzer berechnet.
+            </p>
+            <div class="maintenance-meta">
+              <span id="maintenance-keg">Fass wird geprüft …</span>
+              <span id="maintenance-state">Ventil geschlossen</span>
+            </div>
+          </div>
+          <button class="maintenance-button" id="maintenance-button" type="button" aria-pressed="false">
+            <span id="maintenance-volume">0 ml</span>
+            <strong id="maintenance-label">Gedrückt halten</strong>
+            <small>Wartungsentnahme</small>
+          </button>
+        </div>
+        <p class="message maintenance-message" id="maintenance-message" role="status"></p>
+      </section>
+
+      <section class="system-view" data-system-view="diagnostics">
+        <div class="view-heading compact-heading">
+          <div>
+            <p class="eyebrow">Nur lesend</p>
+            <h1>Systemdiagnose</h1>
+          </div>
+          <button class="button button-quiet" id="refresh-diagnostics" type="button">Aktualisieren</button>
+        </div>
+        <div class="diagnostic-grid">
+          <article><span>Version</span><strong id="diag-version">–</strong></article>
+          <article><span>NFC-Leser</span><strong id="diag-nfc">–</strong></article>
+          <article><span>WLAN</span><strong id="diag-wifi">–</strong></article>
+          <article><span>Ventil</span><strong id="diag-valve">–</strong></article>
+          <article><span>Durchfluss</span><strong id="diag-flow">–</strong></article>
+          <article><span>Not-Aus</span><strong id="diag-estop">–</strong></article>
+          <article><span>Fass</span><strong id="diag-keg">–</strong></article>
+          <article><span>Safety</span><strong id="diag-safety">–</strong></article>
+        </div>
+        <p class="message" id="diagnostics-message" role="status"></p>
+      </section>
+
+      <section class="capture-overlay" id="capture-overlay" hidden>
+        <div class="capture-card">
+          <div class="capture-pulse" aria-hidden="true"></div>
+          <p class="eyebrow">NFC-Übergabe · maximal 15 Sekunden</p>
+          <h1 id="capture-title">Superadmin-Karte entfernen</h1>
+          <p id="capture-instruction">Danach das neue Veranstaltungsarmband kurz auflegen.</p>
+          <button class="button button-quiet" id="cancel-provisioning" type="button">Abbrechen</button>
+        </div>
+      </section>
+
+      <section class="capture-overlay result-overlay" id="result-overlay" hidden>
+        <div class="capture-card result-card">
+          <p class="eyebrow" id="result-eyebrow">Notfallanlage</p>
+          <h1 id="result-title">Benutzer erstellt</h1>
+          <p id="result-message"></p>
+          <div class="password-result" id="password-result" hidden>
+            <span>Einmalpasswort – jetzt notieren</span>
+            <code id="one-time-password"></code>
+            <small>Dieses Passwort wird nur hier angezeigt.</small>
+          </div>
+          <button class="button button-primary" id="finish-result" type="button">Zum Lockscreen</button>
+        </div>
+      </section>
+
+      <div class="system-toast" id="system-toast" role="status" aria-live="polite"></div>
     </main>
   </body>
 </html>

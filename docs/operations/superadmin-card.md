@@ -2,10 +2,10 @@
 
 Stand: 2026-07-24
 
-> Experimenteller M7.9-Checkpoint: Credential, Kollisionsprüfung,
-> präsenzgebundener Backendzustand und benutzerlose Wartungsentnahme sind
-> vorhanden. Das bedienbare Low-Level-Menü folgt in M7.10; die Wartungs-API ist
-> bis dahin keine freigegebene Bedienoberfläche.
+> Experimenteller M7.10-Checkpoint: Credential, Kollisionsprüfung,
+> präsenzgebundener Backendzustand, Low-Level-Menü, Notfallanlage und
+> benutzerlose Wartungsentnahme sind lokal implementiert. Die
+> Raspberry-Pi-Abnahme folgt in M7.11.
 
 Die Karte wird nicht über eine UID in der Shell eingerichtet. Das Werkzeug liest
 sie direkt am ACR122U und schreibt standardmäßig
@@ -56,6 +56,12 @@ Auch die lokale Zuordnung, die Smartphone-NFC-Zuordnung und der Demo-Seed
 vergleichen jedes neue Armband gegen dieses Credential. Die Superadmin-Karte
 kann daher nicht nachträglich einem normalen Benutzer, Admin oder Demo-Konto
 zugeordnet werden.
+
+Nach erfolgreichem Dienststart öffnet kurzes Auflegen nicht die
+Zapfoberfläche, sondern direkt das Low-Level-Menü. Die Karte muss für WLAN,
+Diagnose und Wartungszapfung auf dem Leser bleiben. Nur nach dem bewussten
+Start der Notfallanlage wird sie entfernt; anschließend akzeptiert das Backend
+maximal 15 Sekunden lang genau ein unbekanntes Zielarmband.
 
 ## Verlust und Recovery
 

@@ -103,6 +103,7 @@ const elements = {
   newOwnPassword: document.querySelector("#new-own-password"),
   confirmOwnPassword: document.querySelector("#confirm-own-password"),
   accountMessage: document.querySelector("#account-message"),
+  passwordRequiredNotice: document.querySelector("#password-required-notice"),
   toast: document.querySelector("#toast"),
 };
 
@@ -158,9 +159,16 @@ function showApp() {
   elements.app.hidden = false;
   elements.sessionName.textContent = model.session.display_name;
   elements.welcomeName.textContent = model.session.display_name;
+  const passwordChangeRequired = Boolean(model.session.password_change_required);
+  document.body.classList.toggle("password-change-required", passwordChangeRequired);
+  elements.passwordRequiredNotice.hidden = !passwordChangeRequired;
+  for (const button of elements.navButtons) {
+    button.disabled = passwordChangeRequired && button.dataset.navView !== "settings";
+  }
 }
 
 function showView(name) {
+  if (model.session?.password_change_required) name = "settings";
   for (const view of elements.views) {
     view.classList.toggle("is-active", view.dataset.view === name);
   }
@@ -204,9 +212,15 @@ async function login(event) {
     });
     elements.loginPassword.value = "";
     showApp();
-    await loadWorkspace();
-    resetEventForm();
-    resetBeverageForm();
+    if (model.session.password_change_required) {
+      showView("settings");
+      elements.accountMessage.textContent = "Bitte das angezeigte Einmalpasswort ersetzen.";
+      elements.currentPassword.focus();
+    } else {
+      await loadWorkspace();
+      resetEventForm();
+      resetBeverageForm();
+    }
   } catch (error) {
     elements.loginMessage.textContent =
       error.message === "Invalid admin credentials"
@@ -1056,9 +1070,14 @@ async function initialize() {
   try {
     model.session = await api("/api/web-auth/session");
     showApp();
-    await loadWorkspace();
-    resetEventForm();
-    resetBeverageForm();
+    if (model.session.password_change_required) {
+      showView("settings");
+      elements.accountMessage.textContent = "Bitte das Einmalpasswort jetzt ersetzen.";
+    } else {
+      await loadWorkspace();
+      resetEventForm();
+      resetBeverageForm();
+    }
   } catch (_error) {
     showLogin();
   }

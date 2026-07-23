@@ -246,6 +246,49 @@ def test_zz_aut_012_password_change_revokes_session_and_never_logs_password(
         assert NEW_ADMIN_PASSWORD not in audit_text + event_text
 
 
+def test_emergency_admin_must_change_initial_password_before_management(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    with sessions.begin() as session:
+        admin = session.get(User, ids["admin_id"])
+        assert admin is not None
+        admin.password_change_required = True
+
+    login_response = client.post(
+        "/api/web-auth/login",
+        json={"user_id": ids["admin_id"], "password": ADMIN_PASSWORD},
+    )
+    assert login_response.status_code == 200
+    assert login_response.json()["password_change_required"] is True
+    csrf_token = client.cookies.get("zz_admin_csrf")
+    assert csrf_token
+    assert client.get("/api/web-auth/session").json()["password_change_required"] is True
+    assert client.get("/api/web-admin/users").status_code == 403
+
+    changed = client.post(
+        "/api/web-auth/password",
+        json={
+            "current_password": ADMIN_PASSWORD,
+            "new_password": NEW_ADMIN_PASSWORD,
+        },
+        headers=csrf_headers(csrf_token),
+    )
+    assert changed.status_code == 204
+
+    new_session = client.post(
+        "/api/web-auth/login",
+        json={"user_id": ids["admin_id"], "password": NEW_ADMIN_PASSWORD},
+    )
+    assert new_session.status_code == 200
+    assert new_session.json()["password_change_required"] is False
+    assert client.get("/api/web-admin/users").status_code == 200
+    with sessions() as session:
+        admin = session.get(User, ids["admin_id"])
+        assert admin is not None
+        assert admin.password_change_required is False
+
+
 def test_zz_aut_012_admin_can_set_another_admin_password(
     web_admin_api: tuple[object, ...],
 ) -> None:

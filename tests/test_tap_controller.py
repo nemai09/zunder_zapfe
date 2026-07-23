@@ -125,6 +125,21 @@ def test_zz_aut_014_superadmin_state_has_no_user_session_and_keeps_valve_closed(
     assert controller.snapshot().state is TapState.IDLE
 
 
+def test_superadmin_provisioning_handover_is_non_pouring_and_returns_to_idle() -> None:
+    controller, hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
+    controller.enter_superadmin_mode()
+
+    controller.begin_provisioning_handover()
+
+    assert controller.snapshot().state is TapState.PROVISIONING_HANDOVER
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.present_authenticated_card("user-1") is False
+
+    controller.end_provisioning_handover()
+    assert controller.snapshot().state is TapState.IDLE
+    assert hardware.valve.snapshot().is_open is False
+
+
 def test_zz_mnt_002_superadmin_card_removal_closes_userless_maintenance() -> None:
     controller, hardware, _clock, flow_meter, _emergency_stop = tap_setup()
     controller.enter_superadmin_mode()

@@ -104,6 +104,7 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     }
     user_columns = {column["name"] for column in inspect(migrated_engine).get_columns("users")}
     assert "deleted_at" in user_columns
+    assert "password_change_required" in user_columns
     booking_columns = {
         column["name"]: column for column in inspect(migrated_engine).get_columns("tap_bookings")
     }

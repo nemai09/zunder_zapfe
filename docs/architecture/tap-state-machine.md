@@ -16,6 +16,7 @@ stateDiagram-v2
     state "Lokale Administration<br/>ADMIN" as ADMIN
     state "Superadmin-Karte präsent<br/>SUPERADMIN" as SUPERADMIN
     state "Superadmin-Wartungszapfung<br/>SUPERADMIN_MAINTENANCE_POURING" as SUPERADMIN_MAINTENANCE_POURING
+    state "Einmalige Notfallanlage<br/>PROVISIONING_HANDOVER" as PROVISIONING_HANDOVER
     state "Armbandzuordnung<br/>NFC_CAPTURE" as NFC_CAPTURE
     state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
@@ -37,6 +38,8 @@ stateDiagram-v2
     SUPERADMIN --> SUPERADMIN_MAINTENANCE_POURING: Wartungszapffläche gehalten
     SUPERADMIN_MAINTENANCE_POURING --> SUPERADMIN: losgelassen<br/>kostenfrei ohne Benutzer buchen
     SUPERADMIN_MAINTENANCE_POURING --> IDLE: Karte oder Leser 1 s abwesend<br/>Ventil zuerst schließen
+    SUPERADMIN --> PROVISIONING_HANDOVER: Benutzer oder Admin anlegen<br/>Ventil geschlossen
+    PROVISIONING_HANDOVER --> IDLE: Erfolg, Konflikt, Abbruch<br/>oder 15 s Timeout
     AUTHENTICATED --> IDLE: Logout oder Inaktivität
     AUTHENTICATED --> ADMIN: Admin öffnet Verwaltung<br/>Ventil bleibt geschlossen
     ADMIN --> AUTHENTICATED: Zurück zum Zapfen
@@ -75,6 +78,7 @@ stateDiagram-v2
     ADMIN --> EMERGENCY_STOP: Not-Aus
     SUPERADMIN --> EMERGENCY_STOP: Not-Aus
     SUPERADMIN_MAINTENANCE_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
+    PROVISIONING_HANDOVER --> EMERGENCY_STOP: Not-Aus
     NFC_CAPTURE --> EMERGENCY_STOP: Not-Aus
     MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
@@ -108,6 +112,8 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `SUPERADMIN` | `start_superadmin_maintenance_pour` | Karte physisch präsent, aktiver Fasskontext | `SUPERADMIN_MAINTENANCE_POURING` | Messung nullen, Ventil öffnen |
 | `SUPERADMIN_MAINTENANCE_POURING` | `stop_superadmin_maintenance_pour` | Karte physisch präsent | `SUPERADMIN` | Ventil schließen, kostenfrei ohne Benutzer-/Loginreferenz buchen |
 | `SUPERADMIN_MAINTENANCE_POURING` | Karte oder Leser bestätigt abwesend | 1 s Entprellung | `IDLE` | Ventil zuerst schließen, Abschluss `card_removed` speichern, Berechtigung löschen |
+| `SUPERADMIN` | `begin_provisioning_handover` | Karte physisch präsent, Rolle `user` oder `admin` | `PROVISIONING_HANDOVER` | Ventil schließen und ausschließlich eine einmalige NFC-Erfassung freigeben |
+| `PROVISIONING_HANDOVER` | unbekannte Karte, Konflikt, Abbruch oder 15-s-Timeout | Leser wurde zuvor leer beobachtet | `IDLE` | Ventil geschlossen halten und normale Anmeldung bis zur Kartenentfernung unterdrücken |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
 | `AUTHENTICATED` | Touchaktivität | – | `AUTHENTICATED` | Inaktivitätszeit zurücksetzen |
 | `AUTHENTICATED` | `enter_admin_mode` | Admin | `ADMIN` | Ventil schließen, Admin-Timeout starten |
@@ -165,8 +171,10 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
 9. `SUPERADMIN` besitzt weder Benutzer-ID noch normale Adminsitzung. Eine
    gleichlautende UID in der Benutzerdatenbank wird nicht zur Anmeldung
    verwendet. Ausschließlich `SUPERADMIN_MAINTENANCE_POURING` darf das Ventil
-   öffnen; dabei bleiben alle Safety-Grenzen aktiv. Die NFC-Übergabe folgt als
-   eigener kontrollierter Zustand.
+   öffnen; dabei bleiben alle Safety-Grenzen aktiv.
+10. `PROVISIONING_HANDOVER` öffnet niemals das Ventil und erlaubt weder WLAN-
+    noch Diagnose- oder Wartungsaktionen. Das erste unbekannte Armband wird nur
+    durch den Notfall-Anlagedienst verarbeitet und startet keine Kiosksitzung.
 
 ## Integration und verbleibende Grenzen
 
