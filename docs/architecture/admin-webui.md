@@ -13,10 +13,10 @@ er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
 Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Als
 vorläufiges Kioskverhalten soll er lediglich darauf hinweisen, dass die lokale
 Adminoberfläche deaktiviert ist. Die weitere Administration wird als
-responsive WebUI für Smartphones im lokalen Admin-WLAN geplant. Deren
-Passwort-, Sitzungs-, Audit- und Netzwerkverträge sind noch nicht abschließend
-festgelegt und dürfen nicht aus dem vorhandenen NFC-Adminmodus abgeleitet
-werden.
+responsive WebUI für Smartphones im lokalen Admin-WLAN umgesetzt. Ihre
+Zielarchitektur und der getrennte Passwortzugang stehen unter
+[`smartphone-admin-webui.md`](smartphone-admin-webui.md). Die Websitzung darf
+nicht aus dem vorhandenen NFC-Adminmodus abgeleitet werden.
 
 Die lokale Administration ist ein zusätzlicher Modus derselben Kiosk-WebUI.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines

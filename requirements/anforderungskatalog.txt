@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.5
+Version: 0.6
 Stand: 2026-07-23
-Status: Milestone 7 in Planung gemaess CR-002
+Status: Milestone 7 geplant gemaess CR-002
 
 1. ZWECK UND FORMAT
 ===================
@@ -84,9 +84,12 @@ Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Der Zugriff auf geschuetzte Funktionen der Weboberflaeche muss mit einem
 Passwort authentifiziert werden koennen. Die Authentifizierung muss ohne
 Internet- oder Cloud-Dienst im lokalen Admin-WLAN funktionieren und eine von der
-NFC-Sitzung am Kiosk getrennte Websitzung erzeugen.
-Abnahme: Ohne gueltige Passwortsitzung ist kein Zugriff auf Adminfunktionen
-moeglich; eine gueltige Sitzung funktioniert bei getrennter Internetverbindung.
+NFC-Sitzung am Kiosk getrennte Websitzung erzeugen. Jeder aktive Admin verwendet
+sein eigenes Passwort im gemeinsamen Benutzerdatensatz. Normale Benutzer
+besitzen kein Passwort und erhalten keinen Webzugang.
+Abnahme: Ohne gueltige persoenliche Admin-Passwortsitzung ist kein Zugriff auf
+Adminfunktionen moeglich; ein normaler Benutzer kann sich nicht anmelden und
+eine gueltige Adminsitzung funktioniert bei getrennter Internetverbindung.
 
 [ZZ-AUT-004] Benutzerverwaltung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -111,8 +114,11 @@ Abnahme: Die geaenderte Rolle wirkt bei der naechsten Autorisierungspruefung.
 [ZZ-AUT-006] Initialer Admin
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Das ausgelieferte System muss einen integrierten initialen Admin bereitstellen,
-damit die Erstkonfiguration ohne vorhandenen Benutzer moeglich ist.
-Abnahme: Nach einer Neuinstallation kann die Administration gestartet werden.
+damit die Erstkonfiguration ohne vorhandenen Benutzer moeglich ist. Dessen
+erstes Passwort muss lokal und interaktiv gesetzt werden koennen, ohne es als
+Kommandozeilenargument, Logeintrag oder Repositoryinhalt offenzulegen.
+Abnahme: Nach einer Neuinstallation kann ein initialer Admin ein Passwort setzen
+und die Administration starten.
 
 [ZZ-AUT-007] Kartensperre
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -157,6 +163,19 @@ Timer laeuft ueber 30 Sekunden, Touch setzt ihn zurueck und Ablauf fuehrt zum
 vollstaendigen Logout.
 Hinweis: Der in Milestone 6 implementierte Stand bleibt erhalten, wird gemaess
 CR-002 aber vorerst nicht geoeffnet oder weiter ausgebaut.
+
+[ZZ-AUT-012] Admin-Passwortverwaltung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Ein angemeldeter Admin muss sein eigenes Passwort nach Eingabe des bisherigen
+Passworts aendern koennen. Ein Admin muss fuer einen anderen Admin ein neues
+Passwort setzen koennen, wenn dieser seinen Zugang nicht mehr verwenden kann.
+Passwoerter duerfen ausschliesslich als geeignete, individuell gesalzene Hashes
+gespeichert werden. Passwortaenderung, administrativer Reset und fehlgeschlagene
+Anmeldeversuche muessen nachvollziehbar protokolliert werden, ohne Passwoerter
+oder Hashes in Protokolle aufzunehmen.
+Abnahme: Passwortwechsel und Reset machen den neuen Zugang wirksam, widerrufen
+bestehende Sitzungen des betroffenen Admins und hinterlassen einen Audit- oder
+technischen Protokolleintrag ohne vertrauliche Werte.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -540,29 +559,37 @@ Zapfoberflaeche; ein normaler Benutzer sieht den Button nicht.
 
 [ZZ-UI-008] Smartphone-kompatible Admin-WebUI
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
-Die Adminfunktionen muessen ueber eine einfache, uebersichtliche und responsive
-WebUI im lokalen Admin-WLAN bedienbar sein. Die primaere Zielbedienung ist ein
-Smartphone; eine Internetverbindung darf nicht erforderlich sein.
-Abnahme: Die fuer den jeweiligen Meilenstein spezifizierten Adminablaeufe sind
-auf einer ueblichen Smartphone-Breite ohne horizontales Scrollen bedienbar.
+Alle akzeptierten Adminfunktionen muessen ueber eine einfache, uebersichtliche
+und responsive WebUI im lokalen Admin-WLAN bedienbar sein. Dazu gehoeren
+mindestens Benutzer und Armbaender, Veranstaltungen, Getraenke, Faesser,
+Buchungen und Abrechnungssummen, Einstellungen, Diagnose, Wartung, Safety-Reset,
+Audit und technische Ereignisse. Die primaere Zielbedienung ist ein Smartphone;
+eine Internetverbindung darf nicht erforderlich sein.
+Abnahme: Die akzeptierten Adminablaeufe sind auf einer ueblichen
+Smartphone-Breite ohne horizontales Scrollen bedienbar. Vertagte oder noch nicht
+ausreichend spezifizierte Funktionen werden nicht als bereits verfuegbar
+dargestellt.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
-Das System muss dauerhaft ein lokales WLAN fuer den Zugriff auf die
-Adminoberflaeche bereitstellen.
+Der Raspberry Pi muss dauerhaft ein eigenstaendiges lokales WLAN mit der SSID
+`ZUNDER_ZAPFE` fuer den Zugriff auf die Adminoberflaeche bereitstellen.
 Abnahme: Ein berechtigtes Geraet kann sich ohne Internetzugang verbinden und die
 Adminoberflaeche erreichen.
 
 [ZZ-NET-002] WLAN- und Websicherheit
-Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: TEST
-Das nur fuer Admins vorgesehene WLAN bildet die erste Zugriffshuerde. Die
-Adminoberflaeche muss zusaetzlich durch eine einfache, offlinefaehige
-Passwortauthentifizierung geschuetzt werden. Passwortbereitstellung,
-Passwortwechsel, Sitzungsdetails, Transportabsicherung und Auditidentitaet
-muessen vor der Implementierung festgelegt werden.
-Abnahme: Ohne WLAN-Zugang und gueltige Passwortsitzung ist kein Adminzugriff
-moeglich; die gemaess OD-009 festgelegten Schutzmassnahmen bestehen die
-Zugriffstests.
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Das nur fuer Admins vorgesehene WLAN muss mit einem lokal gespeicherten
+WPA-Schluessel geschuetzt werden. Die Adminoberflaeche muss zusaetzlich die
+persoenliche, offlinefaehige Passwortauthentifizierung gemaess `ZZ-AUT-003`
+erzwingen. WLAN-Schluessel, Passwoerter, Sitzungstoken und Passwort-Hashes
+duerfen weder im Repository noch in Frontendquellen, URLs oder Logs stehen.
+Transportverschluesselung per HTTPS ist fuer die erste, physisch isolierte
+Alpha-Ausbaustufe nicht erforderlich und muss vor einer Freigabe in andere
+Netze neu bewertet werden.
+Abnahme: Ohne WLAN-Zugang und gueltige persoenliche Passwortsitzung ist kein
+Adminzugriff moeglich; vertrauliche Werte erscheinen in keinem ausgelieferten
+Repositoryinhalt und keinem Anwendungslog.
 
 
 11. DATEN, PROTOKOLLIERUNG UND EXPORT
@@ -686,13 +713,15 @@ OD-005: Format und Inhalt der Einzelabrechnung.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
 OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
-OD-009: Detailkonzept fuer Admin-WLAN und Webzugriff: WLAN-Betriebsart,
-Passwortbereitstellung und -wechsel, Hash-Speicherung, Sitzungslebenszyklus,
-Transportabsicherung, Schutz vor fremden Browseranfragen und Auditidentitaet.
+OD-009: Durch CR-002 entschieden: Raspberry Pi als eigenstaendiger Access Point
+mit SSID `ZUNDER_ZAPFE`, WPA-Schutz und persoenlichen Adminpasswoertern;
+HTTPS ist fuer die isolierte Alpha-Ausbaustufe nicht erforderlich.
 OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
 OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
 OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des
 manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
+OD-013: Umfang und Ausgestaltung eines lokalen Notzugangs fuer Administration,
+Wartung und Fehlerreset bei nicht verfuegbarem Smartphone.
 
 
 15. TRACEABILITY-REGELN

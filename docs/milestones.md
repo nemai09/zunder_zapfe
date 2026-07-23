@@ -81,13 +81,36 @@ Admin-Button bleibt ausschließlich für Admins sichtbar und soll vorläufig
 einen Hinweis zur deaktivierten lokalen Administration anzeigen.
 
 Der Schwerpunkt verschiebt sich auf eine einfache, responsive Admin-WebUI für
-Smartphones im lokalen Admin-WLAN. Sie erhält eine von der NFC-Kiosksitzung
-getrennte Passwortsitzung und bleibt ohne Internetverbindung nutzbar. Welche
-Verwaltungsabläufe den ersten abgeschlossenen Umfang bilden, wird nach Klärung
-der in CR-002 festgehaltenen Betriebs-, Audit- und Sicherheitsfragen
-priorisiert. Damit ist die bisherige Aufzählung aller Adminbereiche noch kein
-verbindlicher Umfang eines einzelnen Pull Requests.
+Smartphones im eigenständigen WLAN `ZUNDER_ZAPFE`. Jeder Admin verwendet ein
+persönliches Passwort im gemeinsamen Benutzerdatensatz. Die Websitzung bleibt
+von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 
-Vorläufige Traceability: `ZZ-SYS-001`, `ZZ-AUT-003`, `ZZ-AUT-004`,
-`ZZ-AUT-006`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`, `ZZ-NET-002` und
-`ZZ-DAT-003`.
+### Arbeitspakete
+
+| Paket | Ergebnis |
+| --- | --- |
+| `M7.1 PLAN` | CR-002, Zielarchitektur, Anforderungsversion 0.6 und WLAN-Plan |
+| `M7.2 FEAT` | persönliche Adminpasswörter, Websitzungen, Initial-Admin, Passwortwechsel und gemeinsame Autorisierung |
+| `M7.3 OPS` | NetworkManager-Access-Point `ZUNDER_ZAPFE`, lokaler Webzugang und Pi-Verifikation |
+| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung |
+| `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel |
+| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik |
+| `M7.7 FEAT` | Einstellungen, Diagnose, Wartung und Safety-Reset |
+| `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
+
+Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
+Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
+wird erst nach wirksamer Webauthentifizierung aktiviert. Abgeschlossene
+Buchungen bleiben unveränderlich. Storno, verbindlicher Export, Backup,
+Happy-Hour-Regeln und lokaler Notzugang bleiben entsprechend ihrem
+Anforderungsstatus außerhalb des verbindlichen Milestone-7-Umfangs.
+
+Technische Details stehen unter
+[`Smartphone-Admin-WebUI`](architecture/smartphone-admin-webui.md) und
+[`Admin-WLAN`](operations/admin-wifi.md).
+
+Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
+`ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
+`ZZ-KEG-004`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`, `ZZ-MNT-002`,
+`ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`,
+`ZZ-NET-002` und `ZZ-DAT-001` bis `ZZ-DAT-007`.

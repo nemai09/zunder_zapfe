@@ -1,10 +1,10 @@
 # CR-002: Smartphone statt lokaler Administration
 
-Status: Grundsatzentscheidung angenommen, Detailfragen offen
+Status: angenommen; lokaler Notzugang bleibt offen
 
 Datum: 2026-07-23
 
-Anforderungskatalog: Version 0.5
+Anforderungskatalog: Version 0.6
 
 ## Anlass
 
@@ -35,8 +35,25 @@ Hauptzugang zur Administration ausgerichtet werden.
    Admin-WLAN. Der WLAN-Zugang bildet die erste Zugriffshürde; die WebUI wird
    zusätzlich durch eine einfache Passwortauthentifizierung geschützt.
 
-Diese Entscheidung legt weder das endgültige visuelle Design noch alle
-Sicherheits- und Betriebsdetails der Smartphone-Administration fest.
+## Präzisierungen
+
+- Alle bekannten Personen bleiben in derselben Benutzerdatenbank. Normale
+  Benutzer besitzen kein Passwort und erhalten keinen Webzugang.
+- Jeder Admin setzt ein eigenes Passwort. Dadurch kann jede Webaktion weiterhin
+  der vorhandenen Benutzer-ID zugeordnet und gemäß `ZZ-DAT-003` auditiert
+  werden.
+- Der Raspberry Pi stellt den eigenständigen Access Point mit der SSID
+  `ZUNDER_ZAPFE` bereit. Die Anlage wird offline und standalone betrieben.
+- HTTPS ist für diese physisch isolierte Alpha-Ausbaustufe nicht erforderlich.
+  Eine spätere Freigabe in andere Netze erfordert eine neue Bewertung.
+- Der eigene Passwortwechsel wird in das Benutzermenü der Admin-WebUI
+  integriert. Für den initialen Admin und vergessene Passwörter werden sichere,
+  offlinefähige Setz- und Resetabläufe vorgesehen.
+- Die einzige direkte Koordination zwischen Smartphone und NFC-Leser ist die
+  Registrierung beziehungsweise Zuordnung eines Veranstaltungsarmbands.
+- Die Smartphone-WebUI soll alle akzeptierten Adminanforderungen abdecken,
+  insbesondere Benutzer-, Veranstaltungs-, Getränke-, Fass-, Buchungs-,
+  Einstellungs-, Diagnose-, Wartungs-, Audit- und Statistikfunktionen.
 
 ## Auswirkungen auf Anforderungen
 
@@ -62,16 +79,15 @@ Sicherheits- und Betriebsdetails der Smartphone-Administration fest.
   Bedienwegen unabhängig bleiben. Die WebUI steuert weiterhin weder Hardware
   noch SQLite direkt.
 - Bereits vorhandene `/api/admin/*`-Funktionen sind aktuell an die lokale
-  NFC-Adminsitzung gekoppelt. Ob diese Routen erweitert oder hinter einer
-  gemeinsamen Autorisierungsschicht wiederverwendet werden, wird in der
-  technischen Planung entschieden.
-- Hardwaregebundene Abläufe wie die Live-Zuordnung eines NFC-Armbands benötigen
-  weiterhin den Leser an der Zapfanlage. Die Smartphone-WebUI muss einen
-  verständlichen, sicheren Ablauf zwischen Smartphone und Leser koordinieren.
-- Ein gemeinsames Passwort reduziert den Einrichtungsaufwand, kann aber die
-  eindeutige Zuordnung einer Änderung zu einem konkreten Admin erschweren.
-  Dieser Konflikt mit der Audit-Anforderung `ZZ-DAT-003` ist vor der
-  Implementierung aufzulösen.
+  NFC-Adminsitzung gekoppelt. Sie werden hinter einer gemeinsamen
+  Autorisierungsschicht für persönliche Websitzungen wiederverwendet und
+  fachlich erweitert.
+- Die Live-Zuordnung eines NFC-Armbands benötigt weiterhin den Leser an der
+  Zapfanlage. Die Smartphone-WebUI muss diesen einen hardwaregebundenen Ablauf
+  verständlich und sicher koordinieren.
+- Persönliche Adminpasswörter lösen die Websitzung eindeutig zu einem
+  Benutzerdatensatz auf. Dadurch kann das bestehende Auditmodell ohne
+  generischen Webadmin weiterverwendet werden.
 - Die vorläufige Deaktivierung des lokalen Einstiegs darf keine vorhandenen
   Daten oder Schnittstellen entfernen und muss später ohne Datenmigration
   revidierbar sein.
@@ -86,32 +102,17 @@ Sicherheits- und Betriebsdetails der Smartphone-Administration fest.
   verändern. Ventil-, Wartungs- und Fehlerreset-Aktionen benötigen weiterhin
   die vorhandenen serverseitigen Zustands- und Safety-Prüfungen.
 - Der Server wird für den Smartphone-Zugriff nicht unkontrolliert in fremde
-  Netze freigegeben. Bind-Adresse, Firewall und WLAN-Betriebsart sind Teil der
-  noch offenen Betriebsentscheidung.
+  Netze freigegeben. Das Backend bleibt an Loopback gebunden; ausschließlich
+  der lokale Webzugang des Access Points wird weitergeleitet.
 - Die Anwendung bleibt vollständig offlinefähig; externe Identitäts- oder
   Cloud-Dienste sind nicht erforderlich.
 
-## Offene Fragen
+## Verbleibende offene Frage
 
-1. Stellt der Raspberry Pi selbst das Admin-WLAN bereit oder wird ein bereits
-   vorhandenes, ausschließlich für Admins zugängliches WLAN verwendet?
-2. Wird ein gemeinsames Adminpasswort oder ein Passwort je Admin verwendet?
-3. Wie wird bei einem gemeinsamen Passwort der ausführende Admin für
-   `ZZ-DAT-003` nachvollziehbar bestimmt?
-4. Wie werden Erstpasswort, Passwortwechsel, sicherer Reset und Speicherung des
-   Passwort-Hashes umgesetzt?
-5. Welche Sitzungsdauer, Logoutregeln und Schutzmaßnahmen gegen fremde
-   Browseranfragen sind für den einwöchigen Betrieb angemessen?
-6. Wird der lokale WLAN-Verkehr für die erste Ausbaustufe verschlüsselt und wie
-   wird ein dafür notwendiges Zertifikat auf Smartphones praktikabel
-   gehandhabt?
-7. Welche Funktionen gehören zwingend in den ersten Smartphone-Checkpoint:
-   Benutzer und Armbänder, Veranstaltung, Getränke, Fasswechsel, Parameter,
-   Diagnose, Wartung, Protokolle oder Statistik?
-8. Benötigen Störungsreset, Wartungszapfung oder Fasswechsel langfristig einen
-   lokalen Notfallzugang, falls kein Smartphone verfügbar ist?
-9. Wie zeigt die Zapfanlage einen vom Smartphone gestarteten
-   hardwaregebundenen Ablauf, insbesondere die Armbandzuordnung, eindeutig an?
+Benötigen Störungsreset, Wartung oder andere Administrationsabläufe langfristig
+einen lokalen Notzugang, falls kein Smartphone verfügbar ist? Umfang und
+Ausgestaltung bleiben als `OD-013` offen und blockieren den
+Smartphone-Checkpoint nicht.
 
 ## Vorläufige Abnahmekriterien
 
@@ -128,6 +129,12 @@ Sicherheits- und Betriebsdetails der Smartphone-Administration fest.
    Internetverbindung im vorgesehenen lokalen WLAN.
 7. Schreibende Adminaktionen bleiben serverseitig autorisiert und
    nachvollziehbar.
+8. Jeder Admin verwendet sein eigenes Passwort aus dem gemeinsamen
+   Benutzerdatensatz; normale Benutzer besitzen kein Passwort und keinen
+   Webzugang.
+9. Der Raspberry Pi stellt den WPA-geschützten Access Point `ZUNDER_ZAPFE`
+   bereit; die Admin-WebUI bleibt ohne Internet erreichbar.
 
-Die konkrete Implementierungsabnahme wird nach Klärung der offenen Fragen in
-den Arbeitspaketen von Milestone 7 präzisiert.
+Die technische Umsetzung wird in den Arbeitspaketen von Milestone 7
+inkrementell abgenommen. `OD-013` wird in einem späteren Stakeholderentscheid
+geklärt.

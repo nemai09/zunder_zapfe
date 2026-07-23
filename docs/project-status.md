@@ -47,21 +47,22 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 
 ## Nicht implementiert
 
-- smartphone-kompatible Adminoberfläche und Passwortsitzung
-- Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer und Wartung
+- Access Point `ZUNDER_ZAPFE`, persönliche Passwortsitzungen und vollständige
+  Smartphone-Admin-WebUI
+- Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer, Buchungen,
+  Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
-- WLAN-Administration und Websicherheitskonzept
 - Happy Hour, Storno, Export, Backup und Wiederherstellung
 - optionale Fasswaage und MQTT-Vertrag
 - verbindliche Offline-Zeitquelle
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Die offenen Betriebs-, Audit- und Sicherheitsfragen aus CR-002 klären und
-   daraus den ersten Umfang der Smartphone-Administration für Milestone 7
-   festlegen.
+1. Milestone 7 gemäß den festgelegten Arbeitspaketen mit Webauthentifizierung
+   vor Netzwerkfreigabe umsetzen; danach Smartphone-UI und Verwaltungsbereiche
+   inkrementell ergänzen.
 2. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
 3. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
