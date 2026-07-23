@@ -54,7 +54,9 @@ def test_wifi_mode_helper_only_activates_existing_profiles() -> None:
     assert "device wifi connect" not in helper
     assert "psk" not in helper.lower()
     assert "org.freedesktop.NetworkManager.network-control" in policy
+    assert "org.freedesktop.NetworkManager.wifi.share.protected" in policy
     assert "org.freedesktop.NetworkManager.settings.modify.system" in policy
+    assert "org.freedesktop.NetworkManager.wifi.share.open" not in policy
     assert "org.freedesktop.NetworkManager.enable-disable-network" not in policy
 
 

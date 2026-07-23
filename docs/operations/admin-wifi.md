@@ -118,7 +118,9 @@ einem Neustart wirksam.
 
 Die Anwendung läuft weiterhin mit `NoNewPrivileges=true` und erhält kein
 `sudo`. Eine installierte Polkit-Regel erlaubt dem Dienstbenutzer nur die für
-den Profilwechsel erforderlichen NetworkManager-Aktionen. Das Low-Level-Menü
+den Profilwechsel erforderlichen NetworkManager-Aktionen einschließlich der
+Aktivierung des WPA-geschützten Hotspots. Offene Hotspots und das globale
+Ein- oder Ausschalten des Netzwerks werden nicht freigegeben. Das Low-Level-Menü
 und `POST /api/admin/wifi/mode` sind auf Loopback begrenzt, verlangen eine
 aktive NFC-Adminsitzung und werden von nginx nicht an Smartphones
 weitergereicht. Als `OD-014` bleibt offen, den Einstieg später zusätzlich an

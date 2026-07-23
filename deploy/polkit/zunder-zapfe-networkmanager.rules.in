@@ -1,6 +1,7 @@
 polkit.addRule(function(action, subject) {
     var permitted = [
         "org.freedesktop.NetworkManager.network-control",
+        "org.freedesktop.NetworkManager.wifi.share.protected",
         "org.freedesktop.NetworkManager.settings.modify.system"
     ];
     if (subject.user === "@@SERVICE_USER@@" && permitted.indexOf(action.id) !== -1) {
