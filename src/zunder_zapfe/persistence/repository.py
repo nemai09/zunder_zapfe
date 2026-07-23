@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -12,6 +11,7 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from zunder_zapfe.nfc_identity import canonicalize_nfc_uid
 from zunder_zapfe.persistence.models import (
     AdminAuditEntry,
     Beverage,
@@ -27,13 +27,6 @@ from zunder_zapfe.persistence.models import (
     UserRole,
     WebAdminSession,
 )
-
-
-def canonicalize_nfc_uid(uid: str) -> str:
-    canonical = re.sub(r"[\s:-]", "", uid).upper()
-    if len(canonical) < 4 or len(canonical) % 2 or not re.fullmatch(r"[0-9A-F]+", canonical):
-        raise ValueError("NFC UID must contain an even number of hexadecimal digits")
-    return canonical
 
 
 @dataclass(frozen=True)

@@ -136,6 +136,11 @@ Gegenstück akzeptiert ausschließlich `ap` oder `client`, erfordert eine aktive
 lokale NFC-Adminsitzung und wird nicht über den Smartphone-Proxy veröffentlicht.
 Es legt keine Profile an und verarbeitet keine WLAN-Schlüssel.
 
+Dies ist der ausführbare M7.7-Übergangsvertrag. CR-003 sieht vor, die
+Autorisierung in M7.9 auf eine physisch präsente externe Superadmin-Karte
+umzustellen. Pfade und Antworten bleiben bis zur gemeinsamen Änderung von
+Implementierung, Tests, diesem Vertrag und OpenAPI unverändert.
+
 Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
 muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste
 kurz aufgelegte Armband übernommen wird. So kann ein noch aufliegendes

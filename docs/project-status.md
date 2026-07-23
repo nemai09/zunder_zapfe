@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-23
+Stand: 2026-07-24
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -52,8 +52,8 @@ Phase: Alpha-Entwicklung
 - Veranstaltungs- und Benutzersummen für kostenpflichtige Istmengen und
   Beträge mit getrennt ausgewiesener Wartungsentnahme
 - Smartphone-Ansichten für auditierte Adminaktionen und technische Ereignisse
-- lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
-  `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
+- lokales, im M7.7-Übergangsstand noch NFC-adminautorisiertes Systemmenü für
+  den Wechsel zwischen `ZUNDER_ZAPFE` und einem bekannten WLAN-Clientprofil
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
   Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
 - reduzierte Pi-Laufzeitlast durch gecachten WLAN-Systemstatus, getrennte
@@ -61,6 +61,10 @@ Phase: Alpha-Entwicklung
   HTTP-Access-Log
 - kurze persönliche Kiosk-Begrüßung nach erfolgreicher Live-Zuordnung eines
   Armbands ohne automatische Anmeldung
+- experimentelle externe Superadmin-Identität als Argon2-Credential außerhalb
+  der Benutzer- und NFC-Tabellen
+- lokales, nicht überschreibendes Einrichtungswerkzeug, das die
+  Superadmin-Karte direkt am ACR122U erfasst und ihre UID nicht ausgibt
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -75,6 +79,8 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
 einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe,
 der Loginbuchungen und der Laufzeitoptimierung in `M7.7` bestehen 136 Tests.
+Die externe Credential-Grundlage aus `M7.8` erhöht den lokal geprüften Stand
+auf 142 Tests; ihre ACR122U- und Zielsystemabnahme ist noch offen.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -82,7 +88,7 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit, Sicherheitsreset und externe Superadmin-Credential-Grundlage | Superadmin-Laufzeitautorisierung, Notfallanlage, lokale Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
@@ -91,6 +97,8 @@ auf dem Raspberry Pi demonstriert werden.
 
 - vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
   Point, Login und NFC-Zuordnung
+- präsenzgebundener Superadmin-Zustandsautomat, Notfall-Benutzeranlage,
+  Superadmin-Wartungszapfung und neues Low-Level-Menü
 - Verwaltungsoberflächen für Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
@@ -101,9 +109,9 @@ auf dem Raspberry Pi demonstriert werden.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Milestone 7 gemäß den festgelegten Arbeitspaketen mit Webauthentifizierung
-   vor Netzwerkfreigabe umsetzen; danach Smartphone-UI und Verwaltungsbereiche
-   inkrementell ergänzen.
+1. Milestone 7 gemäß CR-003 um die präsenzgebundene
+   Superadmin-Laufzeitauthorisierung, Wartungsentnahme und das Low-Level-Menü
+   ergänzen; danach den vollständigen Milestone-7-Zielsystemtest durchführen.
 2. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
 3. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
@@ -132,8 +140,10 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
 - Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
-  wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Davon
-  ausgenommen ist das eng begrenzte lokale WLAN-Systemmenü.
+  wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Das
+  Low-Level-Menü wird gemäß CR-003 vom normalen Admin getrennt und künftig
+  ausschließlich durch die Superadmin-Karte geöffnet.
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
-  Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
-  oder Rolle ist als `OD-014` offen.
+  Clientprofile verwenden. Die Bindung an die externe Superadmin-Karte ist
+  beschlossen, aber im aktuellen M7.8-Grundlagenstand noch nicht zur Laufzeit
+  aktiviert.

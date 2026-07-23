@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.9
-Stand: 2026-07-23
-Status: Milestone 7 in Umsetzung gemaess CR-002
+Version: 1.0
+Stand: 2026-07-24
+Status: Milestone 7 in Umsetzung gemaess CR-002 und CR-003
 
 1. ZWECK UND FORMAT
 ===================
@@ -68,8 +68,10 @@ protokolliert.
 [ZZ-AUT-001] Rollenmodell
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Das System muss die Rollen Benutzer und Admin unterstuetzen. Weitere Rollen sind
-nicht erforderlich.
-Abnahme: Berechtigungen werden fuer beide Rollen wie spezifiziert durchgesetzt.
+nicht Teil der gemeinsamen Benutzerdatenbank. Der externe Superadmin gemaess
+`ZZ-AUT-013` ist ein lokaler Wartungszugang und keine Benutzerrolle.
+Abnahme: Berechtigungen werden fuer beide Benutzerrollen wie spezifiziert
+durchgesetzt; der Superadmin erscheint nicht als Benutzer oder Webadmin.
 
 [ZZ-AUT-002] NFC-Authentifizierung am Geraet
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -181,6 +183,42 @@ oder Hashes in Protokolle aufzunehmen.
 Abnahme: Passwortwechsel und Reset machen den neuen Zugang wirksam, widerrufen
 bestehende Sitzungen des betroffenen Admins und hinterlassen einen Audit- oder
 technischen Protokolleintrag ohne vertrauliche Werte.
+
+[ZZ-AUT-013] Externer Superadmin
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + INSPEKTION
+Das System muss genau eine lokal eingerichtete Superadmin-NFC-Identitaet
+ausserhalb der Benutzer-, Admin- und NFC-Kartentabellen unterstuetzen. Sie darf
+ueber Anwendungsoberflaechen und HTTP-APIs weder geloescht, ersetzt noch einer
+Person zugeordnet werden. UID, Credential und daraus abgeleitete geheime Werte
+duerfen nicht im Repository, in Logs oder in API-Antworten erscheinen.
+Abnahme: Die konfigurierte Karte wird unabhaengig von Benutzerdaten erkannt,
+erscheint in keiner Benutzerliste und kann durch keine Anwendungsaktion
+veraendert werden.
+
+[ZZ-AUT-014] Praesenzgebundene Superadmin-Sitzung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Die Superadmin-Karte muss direkt das lokale Low-Level-Menue oeffnen und darf
+keine normale Zapfsitzung beginnen. Die Berechtigung gilt nur, solange genau
+diese Karte auf dem Leser liegt. Eine bestaetigte Entfernung oder Trennung des
+Lesers muss alle allgemeinen Superadmin-Rechte innerhalb hoechstens zwei
+Sekunden beenden. Aktive Ventilvorgaenge muessen dabei zuerst sicher und
+nachvollziehbar abgeschlossen werden.
+Abnahme: Auflegen oeffnet ausschliesslich das Low-Level-Menue; Entfernen,
+Lesertrennung und Neustart fuehren bei geschlossenem Ventil zum Lockscreen.
+
+[ZZ-AUT-015] Lokale Notfallanlage
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Superadmin muss lokal einen normalen Benutzer oder Admin mit automatisch
+vergebenem Namen anlegen koennen. Dazu wird nach einer bewussten Auswahl genau
+ein noch nicht verwendetes NFC-Armband erfasst. Fuer normale Benutzer wird kein
+Passwort angelegt. Ein neuer Admin erhaelt ein zufaelliges Einmalpasswort, das
+genau einmal angezeigt und beim ersten Webzugang geaendert werden muss.
+Waehrend der NFC-Uebergabe duerfen keine anderen Superadmin-Aktionen moeglich
+sein. Erfolg, Konflikt, Abbruch oder ein Zeitlimit beenden den Vorgang am
+Lockscreen.
+Abnahme: Ein unbekanntes Armband erzeugt atomar den gewaehlten Kontotyp und
+seine Zuordnung; bereits verwendete Karten, die Superadmin-Karte und ein
+abgelaufener Erfassungsvorgang erzeugen keinen teilweise angelegten Benutzer.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -455,15 +493,19 @@ davon unberuehrt.
 [ZZ-MNT-001] Wartungsmodus
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Admins muessen einen Wartungsmodus fuer Spuelungen und Testzapfungen aktivieren
-koennen.
-Abnahme: Nur ein Admin kann den Wartungsmodus starten und beenden.
+koennen. Zusaetzlich muss der praesente Superadmin die Wartungszapfung direkt im
+lokalen Low-Level-Menue bedienen koennen.
+Abnahme: Nur ein berechtigter Admin oder der physisch praesente Superadmin kann
+den Wartungsmodus starten und beenden.
 
 [ZZ-MNT-002] Wartungsmengen
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Im Wartungsmodus muessen entnommene Mengen gemessen und als Wartungsverbrauch
 gespeichert, aber keinem Benutzer berechnet werden.
-Abnahme: Der Fassbestand sinkt, ohne dass eine kostenpflichtige Benutzerbuchung
-entsteht.
+Eine Superadmin-Wartungsentnahme darf keinem Benutzerkonto oder Loginzyklus
+zugeordnet werden.
+Abnahme: Der Fassbestand sinkt, ohne dass eine kostenpflichtige oder persoenliche
+Benutzerbuchung entsteht.
 
 
 9. PREISE UND ABRECHNUNG
@@ -569,12 +611,13 @@ Repository erhalten, wird aber vorerst nicht geoeffnet oder weiter ausgebaut.
 [ZZ-UI-007] Begrenzter lokaler Admin-Einstieg
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Der blaue Admin-Button muss fuer einen am Kiosk per NFC angemeldeten Admin
-sichtbar bleiben. Seine Betaetigung darf nicht die vertagte vollstaendige
-Adminoberflaeche oeffnen, sondern ausschliesslich ein lokales Low-Level-Menue
-fuer den WLAN-Moduswechsel gemaess `ZZ-NET-003`. Das Menue muss eine aktive
-NFC-Adminsitzung voraussetzen und auf dem lokalen Kioskzugang begrenzt sein.
-Abnahme: Ein Admin erreicht das begrenzte Systemmenue; ein normaler Benutzer
-sieht den Button nicht und ein entfernter Client kann das Menue nicht aufrufen.
+sichtbar bleiben. Seine Betaetigung darf weder die vertagte vollstaendige
+Adminoberflaeche noch das Superadmin-Menue oeffnen, sondern muss lediglich auf
+die Smartphone-Administration hinweisen. Das Low-Level-Menue ist ausschliesslich
+ueber die physisch praesente Superadmin-Karte gemaess `ZZ-AUT-014` erreichbar.
+Abnahme: Ein Admin sieht beim Betaetigen einen Hinweis ohne Zustandswechsel; ein
+normaler Benutzer sieht den Button nicht und nur die Superadmin-Karte oeffnet
+das lokale Systemmenue.
 
 [ZZ-UI-008] Smartphone-kompatible Admin-WebUI
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
@@ -598,6 +641,17 @@ Zapfsitzung starten.
 Abnahme: Ein erfolgreich zugeordnetes Armband fuehrt fuer kurze Zeit zu einer
 Begruessungsansicht und anschliessend zum Sperrbildschirm; der Benutzer ist
 nicht angemeldet und das Ventil bleibt geschlossen.
+
+[ZZ-UI-010] Lokales Superadmin-Menue
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das lokale Low-Level-Menue muss die Bereiche WLAN, Notfall-Benutzer,
+Zapfsteuerung und Systemdiagnose klar trennen. Die vorhandene WLAN-Seite darf
+unveraendert als Unterseite weiterverwendet werden. Die Diagnose muss mindestens
+Softwareversion, NFC-Leser, WLAN-Modus, Ventil, Durchfluss, Not-Aus, aktiven
+Fasskontext und letzten Safety-Grund lesbar anzeigen. Normale fachliche
+Benutzerverwaltung verbleibt in der Smartphone-WebUI.
+Abnahme: Alle vier Bereiche sind bei praesentierter Superadmin-Karte lokal
+erreichbar; ohne Karte ist weder die Seite noch ihre schreibende API nutzbar.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
@@ -625,7 +679,7 @@ Repositoryinhalt und keinem Anwendungslog.
 
 [ZZ-NET-003] Lokaler WLAN-Moduswechsel
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
-Ein per NFC angemeldeter Admin muss am Touchscreen zwischen dem eingerichteten
+Der physisch praesente Superadmin muss am Touchscreen zwischen dem eingerichteten
 Access Point `ZUNDER_ZAPFE` und einem bereits auf dem Raspberry Pi gespeicherten,
 automatisch verbindbaren WLAN-Clientprofil wechseln koennen. Das Low-Level-
 Menue darf weder WLANs suchen noch SSIDs oder Zugangsdaten anlegen, anzeigen
@@ -633,9 +687,9 @@ oder aendern. Der Sperrbildschirm muss den erkannten Modus `AP` oder `Client`
 anzeigen. Ist kein Clientprofil vorhanden oder nicht erreichbar, muss der
 Zustand verstaendlich angezeigt und der Access Point soweit moeglich
 wiederhergestellt werden.
-Abnahme: Der Moduswechsel funktioniert mit einer aktiven NFC-Adminsitzung,
-bleibt ueber Neustarts durch NetworkManager-Profile wirksam und ist ohne
-Adminsitzung oder ueber den Smartphone-Proxy nicht aufrufbar.
+Abnahme: Der Moduswechsel funktioniert nur bei praesentierter Superadmin-Karte,
+bleibt ueber Neustarts durch NetworkManager-Profile wirksam und ist ueber den
+Smartphone-Proxy nicht aufrufbar.
 
 
 11. DATEN, PROTOKOLLIERUNG UND EXPORT
@@ -653,13 +707,18 @@ Eine Zapfbuchung muss mindestens Veranstaltung, Benutzer, Getraenk, Fass,
 Zeitpunkt, eine bei zielgesteuerten Vorgaengen gewaehlte Zielgroesse, gemessene
 Menge, gueltigen Preis, Betrag,
 Vorgangsart und Abschlussstatus enthalten.
+Bei einer nicht kostenpflichtigen Superadmin-Wartungsentnahme tritt der
+technische Akteur `Superadmin` an die Stelle einer Benutzerreferenz.
 Abnahme: Ein Testvorgang erzeugt einen vollstaendigen Datensatz.
 
 [ZZ-DAT-003] Protokollierung von Adminaktionen
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Alle zustands- oder konfigurationsaendernden Adminaktionen muessen mit Zeitpunkt,
 Admin, Aktion sowie relevanten alten und neuen Werten protokolliert werden.
-Abnahme: Jede getestete Adminaenderung ist im Protokoll nachvollziehbar.
+Superadmin-Aktionen werden mit dem technischen Akteur `Superadmin`, aber ohne
+Benutzer-ID und ohne NFC-Identitaet protokolliert.
+Abnahme: Jede getestete Admin- oder Superadmin-Aenderung ist im Protokoll
+nachvollziehbar.
 
 [ZZ-DAT-004] Technisches Ereignisprotokoll
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -779,10 +838,14 @@ OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
 OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
 OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des
 manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
-OD-013: Umfang und Ausgestaltung eines lokalen Notzugangs fuer Administration,
-Wartung und Fehlerreset bei nicht verfuegbarem Smartphone.
-OD-014: Eigene NFC-Rolle oder bestimmte Karte fuer das lokale Low-Level-
-Systemmenue. In der Alpha-Ausbaustufe darf jeder aktive Admin zugreifen.
+OD-013: Durch CR-003 entschieden: Der lokale Notzugang ist ein externer,
+praesenzgebundener Superadmin fuer WLAN, Notfall-Benutzer, Wartungszapfung und
+Systemdiagnose.
+OD-014: Durch CR-003 entschieden: Nur die ausserhalb der Benutzertabelle
+konfigurierte Superadmin-Karte oeffnet das Low-Level-Menue.
+OD-015: Die bewusste Einmalerfassung fuer einen Notfall-Benutzer darf nach
+Entfernen der Superadmin-Karte fuer maximal 15 Sekunden fortbestehen. In diesem
+Fenster bestehen keine allgemeinen Superadmin-Rechte.
 
 
 15. TRACEABILITY-REGELN

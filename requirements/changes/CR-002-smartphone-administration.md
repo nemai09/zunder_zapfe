@@ -1,6 +1,6 @@
 # CR-002: Smartphone statt lokaler Administration
 
-Status: angenommen; um begrenztes lokales Systemmenü ergänzt
+Status: angenommen; lokale Systemmenü-Autorisierung durch CR-003 abgelöst
 
 Datum: 2026-07-23
 
@@ -126,6 +126,15 @@ Smartphone-Checkpoint nicht.
 Zusätzlich bleibt als `OD-014` offen, welche besondere NFC-Rolle oder Karte
 das Low-Level-Systemmenü später öffnen darf. In der Alpha-Ausbaustufe ist der
 Zugriff für jeden aktiven Admin zulässig.
+
+## Nachfolgeentscheidung
+
+CR-003 entscheidet nachträglich OD-013 und OD-014. Der in diesem Dokument
+beschriebene Zugriff normaler NFC-Admins auf das lokale WLAN-Systemmenü ist nur
+der implementierte Übergangsstand aus M7.7. Im Zielzustand öffnet ausschließlich
+die externe, präsenzgebundene Superadmin-Karte das Low-Level-Menü; der blaue
+Button normaler Admins zeigt nur noch einen Hinweis auf die Smartphone-WebUI.
+Die übrigen Entscheidungen dieses Change Requests bleiben unverändert.
 
 ## Vorläufige Abnahmekriterien
 

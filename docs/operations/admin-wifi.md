@@ -126,6 +126,12 @@ aktive NFC-Adminsitzung und werden von nginx nicht an Smartphones
 weitergereicht. Als `OD-014` bleibt offen, den Einstieg später zusätzlich an
 eine besondere NFC-Karte oder Rolle zu binden.
 
+Diese Autorisierung ist der M7.7-Übergangsstand. CR-003 entscheidet OD-014:
+Nach der M7.9/M7.10-Laufzeitumstellung ist eine physisch präsente externe
+Superadmin-Karte erforderlich; normale NFC-Admins erhalten über den blauen
+Button keinen Systemzugang mehr. NetworkManager-Profile und Moduswechsel
+bleiben technisch unverändert.
+
 ## Zugangsdaten
 
 - Das Repository enthält nur Profilnamen und nicht vertrauliche Parameter.

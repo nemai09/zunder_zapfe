@@ -21,6 +21,12 @@ Zielarchitektur und der getrennte Passwortzugang stehen unter
 [`smartphone-admin-webui.md`](smartphone-admin-webui.md). Die Websitzung darf
 nicht aus dem vorhandenen NFC-Adminmodus abgeleitet werden.
 
+CR-003 ändert den lokalen Einstieg nach Abschluss von M7.10 erneut: Der blaue
+Button wird dann wirkungslos und verweist per Toast auf die Smartphone-WebUI.
+Das Low-Level-Menü wird ausschließlich durch die externe Superadmin-Karte
+geöffnet. Der bestehende NFC-Adminzugang bleibt bis zu dieser Laufzeitumstellung
+der ausführbare Übergangsstand.
+
 Das Low-Level-Menü verwendet den vorhandenen ventilgesperrten Adminzustand
 derselben Kiosk-WebUI.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines

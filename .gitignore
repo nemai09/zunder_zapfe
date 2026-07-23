@@ -15,6 +15,7 @@ dist/
 config/local.*
 *.key
 *.pem
+*.credential
 
 # Runtime data
 data/

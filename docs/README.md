@@ -50,6 +50,7 @@ zu korrigieren.
 - [Kiosk-WebUI](architecture/kiosk-webui.md)
 - [Lokale Admin-WebUI](architecture/admin-webui.md)
 - [Smartphone-Admin-WebUI](architecture/smartphone-admin-webui.md)
+- [Externer Superadmin](architecture/superadmin.md)
 - [Persistenz und Datenmodell](architecture/persistence.md)
 - [ADR 0001: GPL-3.0-or-later](decisions/0001-gpl-3-or-later.md)
 
@@ -61,6 +62,7 @@ zu korrigieren.
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 - [Admin-WLAN](operations/admin-wifi.md)
+- [Superadmin-Karte einrichten](operations/superadmin-card.md)
 
 ## Dokumentationsregeln
 

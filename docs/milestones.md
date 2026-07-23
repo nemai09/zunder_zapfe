@@ -77,9 +77,11 @@ Milestones.
 Gemäß [CR-002](../requirements/changes/CR-002-smartphone-administration.md)
 wird die lokale Adminoberfläche vorerst weder geöffnet noch weiter ausgebaut.
 Ihr in Milestone 6 geprüfter Entwicklungsstand bleibt erhalten. Der blaue
-Admin-Button bleibt ausschließlich für Admins sichtbar. Als eng begrenzte
-Ausnahme öffnet er ein lokales Low-Level-Systemmenü für den Wechsel zwischen
-Access Point und einem bereits bekannten WLAN-Clientprofil.
+Admin-Button bleibt ausschließlich für Admins sichtbar. Der in M7.7
+implementierte Zugriff auf das WLAN-Systemmenü über diesen Button ist gemäß
+[CR-003](../requirements/changes/CR-003-externer-superadmin.md) ein
+Übergangsstand. Im Zielzustand zeigt der Button nur einen Hinweis; das
+Low-Level-Menü wird an eine externe, präsenzgebundene Superadmin-Karte gebunden.
 
 Der Schwerpunkt verschiebt sich auf eine einfache, responsive Admin-WebUI für
 Smartphones im eigenständigen WLAN `ZUNDER_ZAPFE`. Jeder Admin verwendet ein
@@ -97,7 +99,10 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
 | `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen und Registrierungsbegrüßung implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
-| `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
+| `M7.8 PLAN/FEAT` | CR-003, externer Superadmin-Vertrag und unveränderliche lokale Kartenidentität |
+| `M7.9 DB/FEAT` | präsenzgebundene Backendzustände, actorfähiges Audit und Wartungsentnahme ohne Benutzer |
+| `M7.10 UI` | Low-Level-Menü mit WLAN, Notfallanlage, Wartungszapfung und Diagnose; wirkungsloser normaler Admin-Button |
+| `M7.11 TEST` | vollständige Schnittstellen-, Smartphone-, Superadmin-, Neustart- und Zielsystemabnahme |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
 Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
@@ -110,7 +115,9 @@ Anforderungsstatus außerhalb des verbindlichen Milestone-7-Umfangs.
 
 Technische Details stehen unter
 [`Smartphone-Admin-WebUI`](architecture/smartphone-admin-webui.md) und
-[`Admin-WLAN`](operations/admin-wifi.md).
+[`Admin-WLAN`](operations/admin-wifi.md). Der durch CR-003 ergänzte lokale
+Wartungszugang ist unter [`Externer Superadmin`](architecture/superadmin.md)
+abgegrenzt.
 
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis

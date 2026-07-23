@@ -14,7 +14,7 @@ zulässig ist.
 | `idle` mit `registration_welcome` | kurze Begrüßung nach Armbandzuordnung | keine; Rückkehr nach drei Sekunden |
 | `authenticated` | Benutzer, Verbrauch, Getränk und große Zapffläche | gedrückt halten |
 | `manual_pouring` | laufende Istmenge auf der Zapffläche | loslassen |
-| `admin` | lokales Low-Level-Systemmenü | vorhandenen WLAN-Modus wechseln |
+| `admin` | M7.7-Übergangsstand: lokales WLAN-Systemmenü | vorhandenen WLAN-Modus wechseln |
 | kompatibler Portions-/Wartungszustand | neutraler Statushinweis | über auslösenden Client abschließen |
 | `fault_locked`, `emergency_stop` | Sperrgrund und Admin-Hinweis | sicher zurücksetzen |
 | Backend nicht erreichbar | Verbindungsfehler | automatisch erneut verbinden |
@@ -40,6 +40,12 @@ Der Admin-Einstieg öffnet gemäß CR-002 nur das lokale WLAN-Systemmenü; die
 vollständige Verwaltungsoberfläche aus Milestone 6 bleibt erhalten, wird aber
 nicht geöffnet. Das Systemmenü erfordert weiterhin die NFC-Adminsitzung und
 kehrt über „Zurück“ in den normalen Zapfmodus zurück.
+
+CR-003 löst diesen Einstieg ab. Nach M7.10 bleibt der blaue Admin-Button
+sichtbar, zeigt aber nur einen Toast zur Smartphone-WebUI. Das Low-Level-Menü
+öffnet dann ausschließlich durch die präsente externe Superadmin-Karte. Bis
+zur Laufzeitumstellung in M7.9/M7.10 beschreibt der vorige Absatz weiterhin
+das tatsächlich ausführbare Übergangsverhalten.
 Ein schmaler Balken am unteren
 Bildschirmrand zeigt während der gesamten Sitzung die verbleibende Zeit des
 15-Sekunden-Inaktivitäts-Timeouts. Jede Touchberührung meldet Aktivität an das

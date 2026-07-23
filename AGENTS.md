@@ -20,6 +20,9 @@ Werkzeugpräferenzen gehören nicht hierher.
 - Nur `TapController` darf Ventil- und Durchflussvorgänge koordinieren.
 - `TapService` verbindet NFC-Identität, Zapfsteuerung, aktiven
   Veranstaltungs-/Fasskontext und Persistenz.
+- Der Superadmin ist gemäß CR-003 eine externe, präsenzgebundene
+  Wartungsidentität und niemals `User`, `UserRole` oder Webadmin. Sein
+  ausführbarer Zielvertrag steht unter `docs/architecture/superadmin.md`.
 - Hardwareimplementierungen erfüllen die Protocols unter
   `src/zunder_zapfe/hardware/interfaces.py`.
 - Konkrete GPIOs, elektrische Pegel und Bibliotheken bleiben
@@ -50,6 +53,8 @@ Werkzeugpräferenzen gehören nicht hierher.
 Zugangsdaten, private Schlüssel, Umgebungsdateien, reale NFC-UIDs,
 Datenbankdateien, Backups und Logs dürfen niemals committed werden.
 `config/web.env.example` und eindeutig erkennbare Demo-IDs dienen als Vorlagen.
+Die lokale Datei `superadmin.credential` und ihr Inhalt gelten ebenfalls als
+Geheimnis und dürfen weder ausgegeben noch committed werden.
 Persönliche Agentennamen, E-Mail-Adressen und Commitidentitäten gehören nicht
 in Repository-Anweisungen.
 
