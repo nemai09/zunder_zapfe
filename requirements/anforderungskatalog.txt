@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.4
-Stand: 2026-07-21
-Status: Milestone 6 abgeschlossen
+Version: 0.5
+Stand: 2026-07-23
+Status: Milestone 7 in Planung gemaess CR-002
 
 1. ZWECK UND FORMAT
 ===================
@@ -82,8 +82,11 @@ dem Leser verbleiben.
 [ZZ-AUT-003] Web-Authentifizierung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Der Zugriff auf geschuetzte Funktionen der Weboberflaeche muss mit einem
-Passwort authentifiziert werden koennen.
-Abnahme: Ohne gueltige Anmeldedaten ist kein Zugriff auf Adminfunktionen moeglich.
+Passwort authentifiziert werden koennen. Die Authentifizierung muss ohne
+Internet- oder Cloud-Dienst im lokalen Admin-WLAN funktionieren und eine von der
+NFC-Sitzung am Kiosk getrennte Websitzung erzeugen.
+Abnahme: Ohne gueltige Passwortsitzung ist kein Zugriff auf Adminfunktionen
+moeglich; eine gueltige Sitzung funktioniert bei getrennter Internetverbindung.
 
 [ZZ-AUT-004] Benutzerverwaltung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -143,7 +146,7 @@ Fuer die Alpha-WebUI gilt ein Default von 15 Sekunden. Jede Touchberuehrung und
 der Abschluss einer Zapfung setzen die Inaktivitaet zurueck.
 
 [ZZ-AUT-011] Lokaler Adminmodus
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
 Ein Benutzer mit Adminrolle muss sich mit demselben NFC-Armband wie zum Zapfen
 anmelden und aus der normalen Zapfoberflaeche in einen lokalen Adminmodus
 wechseln koennen. Waehrend des Adminmodus darf keine Zapfung gestartet werden.
@@ -152,6 +155,8 @@ einem Alpha-Default von 30 Sekunden besitzen. Touchaktivitaet setzt ihn zurueck.
 Abnahme: Nur ein authentifizierter Admin kann den Modus oeffnen; der sichtbare
 Timer laeuft ueber 30 Sekunden, Touch setzt ihn zurueck und Ablauf fuehrt zum
 vollstaendigen Logout.
+Hinweis: Der in Milestone 6 implementierte Stand bleibt erhalten, wird gemaess
+CR-002 aber vorerst nicht geoeffnet oder weiter ausgebaut.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -510,7 +515,7 @@ Abnahme: Der Balken wird waehrend der gesamten 15 Sekunden sichtbar kuerzer;
 Touch setzt ihn zurueck und 15 Sekunden ohne Aktivitaet beenden die Sitzung.
 
 [ZZ-UI-006] Einstieg und Gliederung der lokalen Administration
-Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Prioritaet: MUSS | Status: VERTAGT | Pruefung: DEMONSTRATION
 Die normale Zapfoberflaeche muss ausschliesslich fuer Admins links neben dem
 Logout einen blauen Admin-Button anzeigen. Admin- und Logout-Button muessen
 zusammen die Breite der rechten Informationsspalte einnehmen. Die lokale
@@ -521,6 +526,25 @@ bedienbar bleiben.
 Abnahme: Ein Admin kann zwischen normalem Zapfen und der gruppierten
 Adminoberflaeche wechseln, einen Benutzer in einer Liste mit 30 Eintraegen
 gezielt finden; ein normaler Benutzer sieht keinen Admin-Einstieg.
+Hinweis: Die vorhandene lokale Adminoberflaeche bleibt gemaess CR-002 im
+Repository erhalten, wird aber vorerst nicht geoeffnet oder weiter ausgebaut.
+
+[ZZ-UI-007] Voruebergehend deaktivierter lokaler Admin-Einstieg
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
+Der blaue Admin-Button muss fuer einen am Kiosk per NFC angemeldeten Admin
+sichtbar bleiben. Seine Betaetigung darf vorerst keinen Adminmodus oeffnen und
+muss stattdessen einen verstaendlichen Hinweis anzeigen, dass die lokale
+Adminoberflaeche voruebergehend deaktiviert ist.
+Abnahme: Ein Admin sieht den Button und den Hinweis, bleibt aber in der
+Zapfoberflaeche; ein normaler Benutzer sieht den Button nicht.
+
+[ZZ-UI-008] Smartphone-kompatible Admin-WebUI
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
+Die Adminfunktionen muessen ueber eine einfache, uebersichtliche und responsive
+WebUI im lokalen Admin-WLAN bedienbar sein. Die primaere Zielbedienung ist ein
+Smartphone; eine Internetverbindung darf nicht erforderlich sein.
+Abnahme: Die fuer den jeweiligen Meilenstein spezifizierten Adminablaeufe sind
+auf einer ueblichen Smartphone-Breite ohne horizontales Scrollen bedienbar.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
@@ -530,10 +554,15 @@ Abnahme: Ein berechtigtes Geraet kann sich ohne Internetzugang verbinden und die
 Adminoberflaeche erreichen.
 
 [ZZ-NET-002] WLAN- und Websicherheit
-Prioritaet: MUSS | Status: VERTAGT | Pruefung: TEST
-Passwortschutz, Passwortwechsel und weitere Zugriffsschutzdetails fuer WLAN und
-Adminoberflaeche muessen vor dem Produktiveinsatz festgelegt werden.
-Abnahme: Die spaeter spezifizierten Schutzmassnahmen bestehen die Zugriffstests.
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: TEST
+Das nur fuer Admins vorgesehene WLAN bildet die erste Zugriffshuerde. Die
+Adminoberflaeche muss zusaetzlich durch eine einfache, offlinefaehige
+Passwortauthentifizierung geschuetzt werden. Passwortbereitstellung,
+Passwortwechsel, Sitzungsdetails, Transportabsicherung und Auditidentitaet
+muessen vor der Implementierung festgelegt werden.
+Abnahme: Ohne WLAN-Zugang und gueltige Passwortsitzung ist kein Adminzugriff
+moeglich; die gemaess OD-009 festgelegten Schutzmassnahmen bestehen die
+Zugriffstests.
 
 
 11. DATEN, PROTOKOLLIERUNG UND EXPORT
@@ -657,7 +686,9 @@ OD-005: Format und Inhalt der Einzelabrechnung.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
 OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
-OD-009: Sicherheitskonzept fuer dauerhaftes Admin-WLAN und Webzugriff.
+OD-009: Detailkonzept fuer Admin-WLAN und Webzugriff: WLAN-Betriebsart,
+Passwortbereitstellung und -wechsel, Hash-Speicherung, Sitzungslebenszyklus,
+Transportabsicherung, Schutz vor fremden Browseranfragen und Auditidentitaet.
 OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
 OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
 OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des

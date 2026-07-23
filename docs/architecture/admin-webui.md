@@ -1,6 +1,22 @@
 # Lokale Admin-WebUI
 
-Status: Milestone 6 abgeschlossen und auf dem Zielsystem geprüft
+Status: Milestone 6 abgeschlossen und auf dem Zielsystem geprüft; lokaler
+Ausbau gemäß CR-002 vorerst pausiert
+
+## Planungsänderung nach Milestone 6
+
+Der nachfolgend dokumentierte lokale Adminmodus bildet den erhaltenen und
+geprüften Entwicklungsstand von Milestone 6. Gemäß
+[CR-002](../../requirements/changes/CR-002-smartphone-administration.md) wird
+er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
+
+Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Als
+vorläufiges Kioskverhalten soll er lediglich darauf hinweisen, dass die lokale
+Adminoberfläche deaktiviert ist. Die weitere Administration wird als
+responsive WebUI für Smartphones im lokalen Admin-WLAN geplant. Deren
+Passwort-, Sitzungs-, Audit- und Netzwerkverträge sind noch nicht abschließend
+festgelegt und dürfen nicht aus dem vorhandenen NFC-Adminmodus abgeleitet
+werden.
 
 Die lokale Administration ist ein zusätzlicher Modus derselben Kiosk-WebUI.
 Ein Admin meldet sich wie jeder andere Benutzer durch kurzes Auflegen seines

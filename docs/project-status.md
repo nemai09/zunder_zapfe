@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-21
+Stand: 2026-07-23
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -40,14 +40,15 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, lokaler Adminmodus, Benutzer-/Armbandverwaltung und Sicherheitsreset | weitere Fachbereiche und Webauthentifizierung |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Benutzer-/Armbandverwaltung und Sicherheitsreset | Smartphone-WebUI, Webauthentifizierung und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen und Settings-Tabelle | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
 
 ## Nicht implementiert
 
-- vollständige Adminoberfläche für Veranstaltung, Getränke, Fässer und Wartung
+- smartphone-kompatible Adminoberfläche und Passwortsitzung
+- Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
@@ -58,8 +59,9 @@ Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Weitere Adminbereiche, den produktiven Initial-Admin-Prozess und die
-   Webauthentifizierung in Milestone 7 ergänzen.
+1. Die offenen Betriebs-, Audit- und Sicherheitsfragen aus CR-002 klären und
+   daraus den ersten Umfang der Smartphone-Administration für Milestone 7
+   festlegen.
 2. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
 3. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
@@ -87,3 +89,5 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 - Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
   nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
+- Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
+  wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut.

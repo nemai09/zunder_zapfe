@@ -13,7 +13,7 @@ bestanden sind.
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
-| 7 / PR 7 | Weitere Admin-WebUI, Webauthentifizierung, Getränke, Fässer und Parameter | geplant |
+| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | in Planung |
 | 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
 
@@ -71,3 +71,23 @@ Traceability: `ZZ-AUT-001`, `ZZ-AUT-002`, `ZZ-AUT-004`, `ZZ-AUT-005`,
 `ZZ-UI-006`. Passwort-Webauthentifizierung (`ZZ-AUT-003`) und der produktive
 Initial-Admin-Prozess (`ZZ-AUT-006`) bleiben ausdrücklich außerhalb dieses
 Milestones.
+
+## Milestone 7: Smartphone-Administration
+
+Gemäß [CR-002](../requirements/changes/CR-002-smartphone-administration.md)
+wird die lokale Adminoberfläche vorerst weder geöffnet noch weiter ausgebaut.
+Ihr in Milestone 6 geprüfter Entwicklungsstand bleibt erhalten. Der blaue
+Admin-Button bleibt ausschließlich für Admins sichtbar und soll vorläufig
+einen Hinweis zur deaktivierten lokalen Administration anzeigen.
+
+Der Schwerpunkt verschiebt sich auf eine einfache, responsive Admin-WebUI für
+Smartphones im lokalen Admin-WLAN. Sie erhält eine von der NFC-Kiosksitzung
+getrennte Passwortsitzung und bleibt ohne Internetverbindung nutzbar. Welche
+Verwaltungsabläufe den ersten abgeschlossenen Umfang bilden, wird nach Klärung
+der in CR-002 festgehaltenen Betriebs-, Audit- und Sicherheitsfragen
+priorisiert. Damit ist die bisherige Aufzählung aller Adminbereiche noch kein
+verbindlicher Umfang eines einzelnen Pull Requests.
+
+Vorläufige Traceability: `ZZ-SYS-001`, `ZZ-AUT-003`, `ZZ-AUT-004`,
+`ZZ-AUT-006`, `ZZ-UI-007`, `ZZ-UI-008`, `ZZ-NET-001`, `ZZ-NET-002` und
+`ZZ-DAT-003`.
