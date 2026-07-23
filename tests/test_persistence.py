@@ -99,7 +99,14 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
         "tap_bookings",
         "technical_events",
         "users",
+        "web_admin_sessions",
     }
+    user_columns = {column["name"] for column in inspect(migrated_engine).get_columns("users")}
+    assert "deleted_at" in user_columns
+    booking_columns = {
+        column["name"]: column for column in inspect(migrated_engine).get_columns("tap_bookings")
+    }
+    assert booking_columns["login_session_id"]["nullable"] is False
     command.check(alembic_config(str(migrated_engine.url)))
 
 
@@ -175,6 +182,7 @@ def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) ->
             booking = session.get(TapBooking, booking_id)
             assert booking is not None
             assert booking.kind is BookingKind.PORTION
+            assert booking.login_session_id == "legacy-1"
     finally:
         migrated.dispose()
 
@@ -208,6 +216,59 @@ def test_user_profile_migration_backfills_existing_display_name(tmp_path: Path) 
         assert row == ("Legacy Name", None, None)
     finally:
         migrated.dispose()
+
+
+def test_web_admin_session_migration_preserves_existing_admin(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path / "upgrade-web-admin-session.db")
+    config = alembic_config(url)
+    command.upgrade(config, "a91f5e7c2d10")
+    engine = create_database_engine(url)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO users "
+                    "(id, display_name, first_name, role, active, password_hash, "
+                    "created_at, updated_at) "
+                    "VALUES (1, 'Ada Admin', 'Ada', 'admin', 1, 'existing-hash', "
+                    ":timestamp, :timestamp)"
+                ),
+                {"timestamp": "2026-07-23 12:00:00"},
+            )
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, "head")
+    migrated = create_database_engine(url)
+    try:
+        with migrated.connect() as connection:
+            password_hash = connection.scalar(text("SELECT password_hash FROM users WHERE id = 1"))
+        assert password_hash == "existing-hash"
+        assert "web_admin_sessions" in inspect(migrated).get_table_names()
+    finally:
+        migrated.dispose()
+
+
+def test_user_ids_are_not_reused_after_a_physical_row_delete(
+    migrated_engine: Engine,
+) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        repository.create_user("Erster")
+        removed = repository.create_user("Zweiter")
+        removed_id = removed.id
+
+    with migrated_engine.begin() as connection:
+        users_ddl = connection.scalar(
+            text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'")
+        )
+        connection.execute(text("DELETE FROM users WHERE id = :user_id"), {"user_id": removed_id})
+    assert "AUTOINCREMENT" in str(users_ddl).upper()
+
+    with sessions.begin() as session:
+        created = Repository(session).create_user("Dritter")
+        assert created.id > removed_id
 
 
 def test_repository_persists_core_domain_and_calculates_amount(

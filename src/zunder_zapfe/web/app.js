@@ -6,6 +6,20 @@ const ACTIVE_POUR_STATES = new Set([
   "top_up_pouring",
   "maintenance_pouring",
 ]);
+const STATUS_REFRESH_MS = 300;
+const NFC_REFRESH_MS = 2000;
+const CONTEXT_REFRESH_MS = 15000;
+const HEALTH_REFRESH_MS = 30000;
+const WIFI_REFRESH_MS = 30000;
+const volumeFormatter = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
+const moneyFormatter = new Intl.NumberFormat("de-DE", {
+  style: "currency",
+  currency: "EUR",
+});
+const clockFormatter = new Intl.DateTimeFormat("de-DE", {
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
 
 const model = {
   connected: false,
@@ -15,6 +29,7 @@ const model = {
   consumption: null,
   keg: null,
   health: null,
+  wifi: null,
   actionPending: false,
   manualHeld: false,
   manualStartPending: false,
@@ -22,9 +37,14 @@ const model = {
   manualReleaseRequested: false,
   manualActivationTimer: null,
   refreshRunning: false,
+  redirecting: false,
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
+  lastNfcRefresh: 0,
+  lastWifiRefresh: 0,
   lastActivitySentAt: 0,
+  lastRenderSignature: null,
+  lastTimeoutSignature: null,
   adminUsers: [],
   adminCards: [],
   userSearch: "",
@@ -42,9 +62,12 @@ const elements = {
   connectionLabel: document.querySelector("#connection-label"),
   valveStatus: document.querySelector("#valve-status"),
   valveLabel: document.querySelector("#valve-label"),
+  wifiStatus: document.querySelector("#wifi-status"),
+  wifiLabel: document.querySelector("#wifi-label"),
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
   buildVersion: document.querySelector("#build-version"),
+  registrationName: document.querySelector("#registration-name"),
   clock: document.querySelector("#clock"),
   userName: document.querySelector("#user-name"),
   logoutButton: document.querySelector("#logout-button"),
@@ -63,6 +86,9 @@ const elements = {
   manualHint: document.querySelector("#manual-hint"),
   sessionTimeout: document.querySelector("#session-timeout"),
   sessionTimeoutFill: document.querySelector("#session-timeout-fill"),
+  legacyEyebrow: document.querySelector("#legacy-eyebrow"),
+  legacyTitle: document.querySelector("#legacy-title"),
+  legacyDescription: document.querySelector("#legacy-description"),
   legacyState: document.querySelector("#legacy-state"),
   safetyReason: document.querySelector("#safety-reason"),
   resetError: document.querySelector("#reset-error"),
@@ -123,9 +149,10 @@ function currentScreen() {
   if (!model.connected) return "offline";
   const state = model.tap?.state || "starting";
   if (["fault_locked", "emergency_stop"].includes(state)) return "locked";
+  if (state === "idle" && model.tap?.registration_welcome) return "registration";
   if (state === "admin") return "admin";
   if (["authenticated", "manual_pouring"].includes(state)) return "tap";
-  if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring"].includes(state)) {
+  if (["portion_pouring", "top_up_available", "top_up_pouring", "maintenance", "maintenance_pouring", "nfc_capture"].includes(state)) {
     return "legacy";
   }
   return state === "idle" ? "idle" : "offline";
@@ -134,16 +161,58 @@ function currentScreen() {
 function formatVolume(volumeMl) {
   if (!Number.isFinite(volumeMl)) return "–";
   return volumeMl >= 1000
-    ? `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(volumeMl / 1000)} l`
+    ? `${volumeFormatter.format(volumeMl / 1000)} l`
     : `${volumeMl} ml`;
 }
 
 function formatMoney(amountCents) {
   if (!Number.isFinite(amountCents)) return "–";
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amountCents / 100);
+  return moneyFormatter.format(amountCents / 100);
+}
+
+function renderSessionTimeout() {
+  const sessionRemainingMs = model.tap?.session_remaining_ms;
+  const sessionTimeoutSeconds = model.tap?.state === "admin"
+    ? model.adminSettings?.admin_session_timeout_seconds
+      ?? model.options?.admin_session_timeout_seconds
+      ?? 30
+    : model.options?.session_timeout_seconds ?? 15;
+  const sessionTimeoutMs = sessionTimeoutSeconds * 1000;
+  const sessionBarActive =
+    Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
+  const sessionProgress = sessionBarActive
+    ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
+    : 0;
+  const timeoutSignature = `${sessionBarActive}:${sessionProgress}`;
+  if (timeoutSignature === model.lastTimeoutSignature) return;
+  model.lastTimeoutSignature = timeoutSignature;
+  elements.sessionTimeout.classList.toggle("is-active", sessionBarActive);
+  elements.sessionTimeoutFill.style.transform = `scaleX(${sessionProgress})`;
+}
+
+function renderSignature() {
+  let tap = model.tap;
+  if (tap) {
+    const { session_remaining_ms: _sessionRemainingMs, ...stableTap } = tap;
+    tap = stableTap;
+  }
+  return JSON.stringify({
+    connected: model.connected,
+    tap,
+    nfc: model.nfc,
+    options: model.options,
+    consumption: model.consumption,
+    keg: model.keg,
+    health: model.health,
+    wifi: model.wifi,
+  });
+}
+
+function renderIfChanged() {
+  renderSessionTimeout();
+  const signature = renderSignature();
+  if (signature === model.lastRenderSignature) return;
+  render();
 }
 
 function render() {
@@ -157,7 +226,22 @@ function render() {
     Boolean(model.options?.debug_flow_watchdog_disabled),
   );
   elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
+  elements.wifiStatus.classList.remove("is-ap", "is-client", "is-error");
+  const wifiLabels = {
+    ap: "WLAN · AP",
+    client: "WLAN · Client",
+    disconnected: "WLAN · getrennt",
+    unavailable: "WLAN · n/v",
+    unknown: "WLAN · unbekannt",
+  };
+  elements.wifiLabel.textContent = wifiLabels[model.wifi?.mode] || "WLAN · prüft";
+  if (model.wifi?.mode === "ap") elements.wifiStatus.classList.add("is-ap");
+  if (model.wifi?.mode === "client") elements.wifiStatus.classList.add("is-client");
+  if (["unavailable", "unknown"].includes(model.wifi?.mode)) {
+    elements.wifiStatus.classList.add("is-error");
+  }
   if (model.health?.build) elements.buildVersion.textContent = model.health.build;
+  elements.registrationName.textContent = model.tap?.registration_welcome || "Zapfer";
 
   elements.readerStatus.classList.remove("is-unknown", "is-blocked");
   if (model.nfc) {
@@ -221,21 +305,19 @@ function render() {
   elements.sessionActions.classList.toggle("has-admin", adminEntryVisible);
   elements.adminButton.disabled = manualPouring;
 
-  const sessionRemainingMs = model.tap?.session_remaining_ms;
-  const sessionTimeoutSeconds = model.tap?.state === "admin"
-    ? model.adminSettings?.admin_session_timeout_seconds
-      ?? model.options?.admin_session_timeout_seconds
-      ?? 30
-    : model.options?.session_timeout_seconds ?? 15;
-  const sessionTimeoutMs = sessionTimeoutSeconds * 1000;
-  const sessionBarActive = Boolean(model.tap?.user_id) && Number.isFinite(sessionRemainingMs);
-  const sessionProgress = sessionBarActive
-    ? Math.max(0, Math.min(1, sessionRemainingMs / sessionTimeoutMs))
-    : 0;
-  elements.sessionTimeout.classList.toggle("is-active", sessionBarActive);
-  elements.sessionTimeoutFill.style.width = `${sessionProgress * 100}%`;
+  renderSessionTimeout();
 
   elements.legacyState.textContent = model.tap?.state || "unbekannt";
+  const nfcCapture = model.tap?.state === "nfc_capture";
+  elements.legacyEyebrow.textContent = nfcCapture
+    ? "Administration aktiv"
+    : "Backend-Vorgang aktiv";
+  elements.legacyTitle.textContent = nfcCapture
+    ? "Armband wird zugeordnet."
+    : "Bitte kurz warten.";
+  elements.legacyDescription.textContent = nfcCapture
+    ? "Die Zapfanlage bleibt vorübergehend gesperrt."
+    : "Ein kompatibler Portions- oder Wartungsvorgang läuft.";
   elements.safetyReason.textContent = model.tap?.safety_reason || "Die Anlage wurde sicher verriegelt.";
 
   const readerState = model.nfc?.state || "unbekannt";
@@ -246,11 +328,12 @@ function render() {
   elements.diagnosticConnection.textContent = model.connected ? "bereit" : "offline";
   elements.diagnosticNfc.textContent = readerState;
   elements.diagnosticValve.textContent = valveState;
+  model.lastRenderSignature = renderSignature();
 }
 
 async function refreshContext(force = false) {
   const now = Date.now();
-  if (!force && now - model.lastContextRefresh < 2000) return;
+  if (!force && now - model.lastContextRefresh < CONTEXT_REFRESH_MS) return;
   model.lastContextRefresh = now;
   const authenticated = Boolean(model.tap?.user_id);
   try {
@@ -277,8 +360,18 @@ async function refresh() {
     const previousBooking = model.tap?.last_booking?.id;
     const now = Date.now();
     const requests = [api("/api/tap/status")];
-    if (!model.health || now - model.lastHealthRefresh >= 3000) requests.push(api("/api/health"));
-    if (!model.tap || model.tap.state === "idle") requests.push(api("/api/nfc/status"));
+    if (!model.health || now - model.lastHealthRefresh >= HEALTH_REFRESH_MS) {
+      requests.push(api("/api/health"));
+    }
+    if (!model.wifi || now - model.lastWifiRefresh >= WIFI_REFRESH_MS) {
+      requests.push(api("/api/wifi/status"));
+    }
+    if (
+      (!model.tap || model.tap.state === "idle")
+      && (!model.nfc || now - model.lastNfcRefresh >= NFC_REFRESH_MS)
+    ) {
+      requests.push(api("/api/nfc/status"));
+    }
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
     for (const result of secondary) {
@@ -290,18 +383,29 @@ async function refresh() {
         model.health = result;
         model.lastHealthRefresh = now;
       }
-      if (result?.state && "simulated" in result) model.nfc = result;
+      if (result?.state && "simulated" in result) {
+        model.nfc = result;
+        model.lastNfcRefresh = now;
+      }
+      if (result?.mode && "client_profile_available" in result) {
+        model.wifi = result;
+        model.lastWifiRefresh = now;
+      }
     }
     model.connected = true;
+    if (tap.state === "admin") {
+      model.redirecting = true;
+      window.location.assign("/system");
+      return;
+    }
     if (tap.state !== "admin") model.adminLoaded = false;
     const contextChanged = previousUser !== tap.user_id || previousBooking !== tap.last_booking?.id;
     await refreshContext(contextChanged);
-    if (tap.state === "admin" && !model.adminLoaded) await loadAdminData();
   } catch (_error) {
     model.connected = false;
   } finally {
     model.refreshRunning = false;
-    render();
+    if (!model.redirecting) renderIfChanged();
   }
 }
 
@@ -358,13 +462,11 @@ async function enterAdmin() {
   elements.actionError.textContent = "";
   try {
     model.tap = await api("/api/admin/session/enter", { method: "POST" });
-    model.adminLoaded = false;
-    await loadAdminData();
+    window.location.assign("/system");
   } catch (error) {
     elements.actionError.textContent = error.message;
   } finally {
     model.actionPending = false;
-    render();
   }
 }
 
@@ -731,10 +833,7 @@ document.addEventListener("visibilitychange", () => {
 document.addEventListener("contextmenu", (event) => event.preventDefault());
 
 window.setInterval(() => {
-  elements.clock.textContent = new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  }).format(new Date());
+  elements.clock.textContent = clockFormatter.format(new Date());
 }, 1000);
 
 window.setInterval(() => {
@@ -746,5 +845,9 @@ window.setInterval(() => {
   }
 }, 650);
 
-window.setInterval(refresh, 300);
-refresh();
+async function refreshLoop() {
+  await refresh();
+  window.setTimeout(refreshLoop, STATUS_REFRESH_MS);
+}
+
+refreshLoop();

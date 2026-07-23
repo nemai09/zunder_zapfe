@@ -21,10 +21,11 @@ eine Weboberfläche für den Kioskbetrieb.
 | Ventil, Durchfluss, Not-Aus | Stabile Verträge und Simulatoren vorhanden |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
-| Buchungen, Verbrauch, Fassbestand | Im Backend integriert |
+| Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
-| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480 auf dem Raspberry Pi geprüft |
-| Admin-WebUI | Milestone 6: lokaler Adminmodus sowie Benutzer- und Armbandverwaltung auf dem Raspberry Pi geprüft |
+| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
+| Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer, eigener Fassbereich, zusammengefasste Buchungen, Abrechnung und Protokolle implementiert; Pi-Abnahme offen |
+| Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil implementiert; Pi-Abnahme offen |
 | Reale Zapfhardware | Noch nicht implementiert |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
@@ -85,6 +86,7 @@ dokumentiert:
 - [ACR122U-NFC-Leser](docs/operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](docs/operations/alpha-integration-test.md)
 - [SQLite-Diagnose](docs/operations/database-browser.md)
+- [Admin-WLAN und Smartphone-Zugang](docs/operations/admin-wifi.md)
 
 Die Anwendung lauscht standardmäßig nur auf `127.0.0.1` und benötigt zur
 Laufzeit keine Internetverbindung.

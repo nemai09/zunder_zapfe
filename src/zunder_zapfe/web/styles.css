@@ -160,6 +160,67 @@ button {
   box-shadow: 0 0 0.8rem rgb(245 166 35 / 70%);
 }
 
+.wifi-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  color: var(--muted);
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+}
+
+.wifi-dot {
+  width: 0.55rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #8f8779;
+}
+
+.wifi-status.is-ap {
+  color: #9dc5ff;
+}
+
+.wifi-status.is-ap .wifi-dot {
+  background: var(--admin);
+  box-shadow: 0 0 0.7rem rgb(63 140 255 / 60%);
+}
+
+.wifi-status.is-client {
+  color: var(--success);
+}
+
+.wifi-status.is-client .wifi-dot {
+  background: var(--success);
+  box-shadow: 0 0 0.7rem rgb(97 217 145 / 50%);
+}
+
+.wifi-status.is-error .wifi-dot {
+  background: var(--danger);
+}
+
+.welcome-screen {
+  align-content: center;
+  text-align: center;
+  place-items: center;
+}
+
+.welcome-symbol {
+  display: grid;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1.2rem;
+  border-radius: 50%;
+  color: #0e2d20;
+  background: var(--success);
+  font-size: 2.4rem;
+  font-weight: 900;
+  box-shadow: 0 0 2rem rgb(97 217 145 / 35%);
+  place-items: center;
+}
+
+.welcome-screen h1 { margin: 0.2rem 0 0.8rem; }
+.welcome-screen p:last-child { margin: 0; color: var(--muted); }
+
 .screen {
   position: relative;
   z-index: 1;
@@ -1197,7 +1258,9 @@ h1 span {
   width: 100%;
   height: 100%;
   background: var(--amber);
-  transition: width 220ms linear, background 160ms ease;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform 220ms linear, background 160ms ease;
 }
 
 @media (max-width: 720px), (max-height: 500px) and (orientation: portrait) {

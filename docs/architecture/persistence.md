@@ -1,6 +1,6 @@
 # Persistenz und Datenmodell
 
-Stand: 2026-07-19
+Stand: 2026-07-23
 
 ## Ziel
 
@@ -12,19 +12,20 @@ Der transaktionsgebundene Vertrag zwischen Fachlogik und Repository ist unter
 [`docs/interfaces/persistence.md`](../interfaces/persistence.md) beschrieben.
 
 Betroffen sind insbesondere `ZZ-SYS-003` bis `ZZ-SYS-006`, `ZZ-AUT-001` bis
-`ZZ-AUT-008`, `ZZ-KEG-001` bis `ZZ-KEG-004`, `ZZ-BIL-001` bis `ZZ-BIL-004` und
-`ZZ-DAT-001` bis `ZZ-DAT-007`.
+`ZZ-AUT-008`, `ZZ-KEG-001` bis `ZZ-KEG-004`, `ZZ-BIL-001` bis `ZZ-BIL-004`,
+`ZZ-DAT-001` bis `ZZ-DAT-007` und `ZZ-DAT-009`.
 
 ## Tabellen
 
 - `events` trennt Buchungen verschiedener Veranstaltungen und Jahre.
 - `users` speichert verpflichtenden Vornamen, optionalen Nachnamen und
-  Zusatztext sowie abgeleiteten Anzeigenamen, Status, Rolle und individuelle
-  Portionsgroesse.
+  Zusatztext sowie abgeleiteten Anzeigenamen, Status, Rolle, individuelle
+  Portionsgroesse und einen optionalen fachlichen Loeschzeitpunkt.
 - `nfc_cards` ordnet normalisierte Karten-UIDs aktiven Benutzern zu.
 - `beverages` speichert Sorte, Standard-Fassgroesse und Preis pro Liter.
 - `kegs` bildet einzelne angestochene Faesser und deren Startmenge ab.
-- `tap_bookings` speichert den vollstaendigen historischen Zapfdatensatz.
+- `tap_bookings` speichert den vollstaendigen historischen Zapfdatensatz und
+  die gemeinsame Kennung der NFC-Anmeldesitzung.
 - `settings` speichert konfigurierbare Betriebsparameter als JSON-Werte.
 - `admin_audit_entries` protokolliert alte und neue Werte von Adminaktionen.
 - `technical_events` protokolliert Fehler, Sperren und technische Ereignisse.
@@ -51,6 +52,13 @@ Buchungen deshalb nicht.
 - Kostenfreie Buchungen besitzen den Betrag null.
 - Wartungsbuchungen sind nicht kostenpflichtig.
 - Abgeschlossene Zapfbuchungen koennen weder geaendert noch geloescht werden.
+- Jede Ventilfreigabe bleibt als eigener Rohdatensatz erhalten. Datensaetze
+  desselben NFC-Loginzyklus tragen dieselbe `login_session_id` und werden in
+  Buchungsansicht, Statistik und persoenlichem Buchungszaehler zusammengefasst.
+- Benutzer werden nur fachlich geloescht: Die Benutzerzeile und historische
+  Referenzen bleiben erhalten, waehrend Karten und Zugangsmoeglichkeiten
+  entfernt werden.
+- Benutzer-IDs werden monoton vergeben und niemals wiederverwendet.
 - Schreibende Benutzer-, Armband- und Einstellungsaktionen erzeugen im selben
   fachlichen Ablauf einen `admin_audit_entries`-Datensatz. NFC-UIDs werden nicht
   in die Audit-JSON-Werte kopiert.
@@ -75,8 +83,11 @@ Datenbank und wenden darauf die vollstaendige Migrationshistorie an.
 `TapService` friert Veranstaltung, Benutzer, Getraenk, Fass, Zielmenge und Preis
 beim Start eines Zapfvorgangs ein. Der vom Zustandsautomaten abgeschlossene
 `PourRecord` wird nach dem Schliessen des Ventils synchron als `TapBooking`
-gespeichert. Ein Persistenzfehler setzt eine Fehlersperre und verhindert weitere
-Zapfungen ohne bewusste Fehlerbehandlung.
+gespeichert. Bei erfolgreicher NFC-Anmeldung erzeugt `TapService` genau eine
+Sitzungskennung; Logout, Capture oder Verlust der Controllersitzung verwerfen
+sie. Mehrere Zapfungen innerhalb dieses Zyklus behalten dieselbe Kennung. Ein
+Persistenzfehler setzt eine Fehlersperre und verhindert weitere Zapfungen ohne
+bewusste Fehlerbehandlung.
 
 Die Impulsumrechnung und der vollstaendige Komponentenfluss sind unter
 [`backend-core-integration.md`](backend-core-integration.md) beschrieben.

@@ -13,7 +13,7 @@ bestanden sind.
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
-| 7 / PR 7 | Weitere Admin-WebUI, Webauthentifizierung, Getränke, Fässer und Parameter | geplant |
+| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | in Umsetzung |
 | 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
 
@@ -71,3 +71,50 @@ Traceability: `ZZ-AUT-001`, `ZZ-AUT-002`, `ZZ-AUT-004`, `ZZ-AUT-005`,
 `ZZ-UI-006`. Passwort-Webauthentifizierung (`ZZ-AUT-003`) und der produktive
 Initial-Admin-Prozess (`ZZ-AUT-006`) bleiben ausdrücklich außerhalb dieses
 Milestones.
+
+## Milestone 7: Smartphone-Administration
+
+Gemäß [CR-002](../requirements/changes/CR-002-smartphone-administration.md)
+wird die lokale Adminoberfläche vorerst weder geöffnet noch weiter ausgebaut.
+Ihr in Milestone 6 geprüfter Entwicklungsstand bleibt erhalten. Der blaue
+Admin-Button bleibt ausschließlich für Admins sichtbar. Als eng begrenzte
+Ausnahme öffnet er ein lokales Low-Level-Systemmenü für den Wechsel zwischen
+Access Point und einem bereits bekannten WLAN-Clientprofil.
+
+Der Schwerpunkt verschiebt sich auf eine einfache, responsive Admin-WebUI für
+Smartphones im eigenständigen WLAN `ZUNDER_ZAPFE`. Jeder Admin verwendet ein
+persönliches Passwort im gemeinsamen Benutzerdatensatz. Die Websitzung bleibt
+von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
+
+### Arbeitspakete
+
+| Paket | Ergebnis |
+| --- | --- |
+| `M7.1 PLAN` | CR-002, Zielarchitektur, Anforderungsversion 0.6 und WLAN-Plan |
+| `M7.2 FEAT` | persönliche Adminpasswörter, Websitzungen, Initial-Admin, Passwortwechsel und gemeinsame Autorisierung |
+| `M7.3 OPS` | NetworkManager-Access-Point `ZUNDER_ZAPFE`, lokaler Webzugang und Pi-Verifikation |
+| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
+| `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
+| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
+| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen und Registrierungsbegrüßung implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
+| `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
+
+Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
+Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
+wird erst nach wirksamer Webauthentifizierung aktiviert. Abgeschlossene
+Zapfvorgänge bleiben als unveränderliche Rohdatensätze erhalten und werden
+über ihre NFC-Anmeldesitzung fachlich zusammengefasst. Storno, verbindlicher
+Export, Backup,
+Happy-Hour-Regeln und lokaler Notzugang bleiben entsprechend ihrem
+Anforderungsstatus außerhalb des verbindlichen Milestone-7-Umfangs.
+
+Technische Details stehen unter
+[`Smartphone-Admin-WebUI`](architecture/smartphone-admin-webui.md) und
+[`Admin-WLAN`](operations/admin-wifi.md).
+
+Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
+`ZZ-AUT-003` bis `ZZ-AUT-007`, `ZZ-AUT-012`, `ZZ-KEG-001` bis
+`ZZ-KEG-004`, `ZZ-KEG-006`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`,
+`ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
+`ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
+und `ZZ-DAT-009`.

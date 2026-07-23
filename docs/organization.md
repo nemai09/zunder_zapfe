@@ -50,6 +50,9 @@ verantwortlich, unabhängig vom verwendeten Werkzeug.
 - `main` ist der gemeinsame Integrationsstand und bleibt funktionsfähig.
 - Änderungen erfolgen auf kurzen, thematisch begrenzten Branches.
 - Integration in `main` erfolgt ausschließlich per Pull Request.
+- Commit-Betreff und -Text folgen der verbindlichen
+  [`Commit-Konvention`](commit-konvention.md); Milestone- und GitHub-PR-Nummern
+  werden nicht gleichgesetzt.
 - Anforderungen behalten ihre ID und werden nicht stillschweigend geändert.
 - Schnittstellen- und Safety-Änderungen benötigen Review der betroffenen
   Verantwortungsbereiche.

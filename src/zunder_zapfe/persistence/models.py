@@ -92,6 +92,7 @@ class User(Base):
             "special_portion_ml IS NULL OR special_portion_ml > 0",
             name="ck_users_special_portion_positive",
         ),
+        {"sqlite_autoincrement": True},
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -103,6 +104,7 @@ class User(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     special_portion_ml: Mapped[int | None] = mapped_column(Integer)
     password_hash: Mapped[str | None] = mapped_column(String(255))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, onupdate=utc_now
@@ -183,6 +185,7 @@ class TapBooking(Base):
             name="ck_tap_bookings_maintenance_not_chargeable",
         ),
         Index("ix_tap_bookings_event_user", "event_id", "user_id"),
+        Index("ix_tap_bookings_login_session", "login_session_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -201,6 +204,7 @@ class TapBooking(Base):
         enum_type(BookingCompletion, "booking_completion")
     )
     chargeable: Mapped[bool] = mapped_column(Boolean)
+    login_session_id: Mapped[str] = mapped_column(String(64))
 
 
 class Setting(Base):
@@ -227,6 +231,20 @@ class AdminAuditEntry(Base):
     entity_id: Mapped[str | None] = mapped_column(String(80))
     old_values_json: Mapped[str | None] = mapped_column(Text)
     new_values_json: Mapped[str | None] = mapped_column(Text)
+
+
+class WebAdminSession(Base):
+    __tablename__ = "web_admin_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    csrf_token_hash: Mapped[str] = mapped_column(String(64))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    idle_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    absolute_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class TechnicalEvent(Base):

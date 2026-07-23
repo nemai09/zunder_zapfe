@@ -26,6 +26,7 @@ zu korrigieren.
 - [Projektstatus](project-status.md)
 - [Entwicklungsmeilensteine](milestones.md)
 - [Versionierung](versioning.md)
+- [Commit-Konvention](commit-konvention.md)
 - [Projektorganisation](organization.md)
 - [Beiträge](../CONTRIBUTING.md)
 - [Agentenleitfaden](../AGENTS.md)
@@ -48,6 +49,7 @@ zu korrigieren.
 - [Backend-Core-Integration](architecture/backend-core-integration.md)
 - [Kiosk-WebUI](architecture/kiosk-webui.md)
 - [Lokale Admin-WebUI](architecture/admin-webui.md)
+- [Smartphone-Admin-WebUI](architecture/smartphone-admin-webui.md)
 - [Persistenz und Datenmodell](architecture/persistence.md)
 - [ADR 0001: GPL-3.0-or-later](decisions/0001-gpl-3-or-later.md)
 
@@ -58,6 +60,7 @@ zu korrigieren.
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
+- [Admin-WLAN](operations/admin-wifi.md)
 
 ## Dokumentationsregeln
 

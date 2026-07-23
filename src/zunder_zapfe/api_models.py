@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -68,6 +71,19 @@ class HardwareStatusResponse(BaseModel):
     emergency_stop: EmergencyStopStatusResponse
 
 
+class WifiStatusResponse(BaseModel):
+    mode: str
+    active_connection: str | None
+    ssid: str | None
+    ip_address: str | None
+    client_profile_available: bool
+    detail: str | None
+
+
+class WifiModeRequest(BaseModel):
+    mode: Literal["ap", "client"]
+
+
 class BookingSummaryResponse(BaseModel):
     id: int
     measured_volume_ml: int
@@ -93,6 +109,7 @@ class TapStatusResponse(BaseModel):
     persistence_error: str | None
     last_booking: BookingSummaryResponse | None
     nfc_feedback: str | None
+    registration_welcome: str | None
 
 
 class SessionStatusResponse(BaseModel):
@@ -131,6 +148,7 @@ class AdminUserResponse(BaseModel):
     note: str | None
     is_admin: bool
     active: bool
+    has_password: bool
     nfc_card_count: int
     active_nfc_card_count: int
 
@@ -157,6 +175,171 @@ class AdminSettingsResponse(BaseModel):
 
 class AdminSettingsUpdateRequest(BaseModel):
     admin_session_timeout_seconds: int = Field(ge=10, le=3600)
+
+
+class AdminEventCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    year: int = Field(ge=2000, le=9999)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    active: bool = False
+
+
+class AdminEventUpdateRequest(AdminEventCreateRequest):
+    pass
+
+
+class AdminEventResponse(BaseModel):
+    id: int
+    name: str
+    year: int
+    starts_at: datetime | None
+    ends_at: datetime | None
+    active: bool
+
+
+class AdminBeverageCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    default_keg_size_ml: int = Field(gt=0)
+    price_per_liter_cents: int = Field(ge=0)
+
+
+class AdminBeverageUpdateRequest(AdminBeverageCreateRequest):
+    active: bool = True
+
+
+class AdminBeverageResponse(BaseModel):
+    id: int
+    name: str
+    default_keg_size_ml: int
+    price_per_liter_cents: int
+    active: bool
+
+
+class AdminKegSwitchRequest(BaseModel):
+    event_id: int | None = Field(default=None, gt=0)
+    beverage_id: int = Field(gt=0)
+    initial_volume_ml: int | None = Field(default=None, gt=0)
+
+
+class AdminKegResponse(BaseModel):
+    id: int
+    event_id: int
+    event_name: str
+    beverage_id: int
+    beverage_name: str
+    initial_volume_ml: int
+    remaining_volume_ml: int
+    active: bool
+    opened_at: datetime
+    closed_at: datetime | None
+
+
+class AdminBookingResponse(BaseModel):
+    id: int
+    event_id: int
+    event_name: str
+    user_id: int
+    user_display_name: str
+    beverage_id: int
+    beverage_name: str
+    keg_id: int
+    occurred_at: datetime
+    target_volume_ml: int | None
+    measured_volume_ml: int
+    measured_pulses: int
+    price_per_liter_cents: int
+    amount_cents: int
+    kind: str
+    completion: str
+    chargeable: bool
+    login_session_id: str
+
+
+class AdminBookingSessionResponse(BaseModel):
+    session_id: str
+    first_booking_id: int
+    event_id: int
+    event_name: str
+    user_id: int
+    user_display_name: str
+    started_at: datetime
+    ended_at: datetime
+    pour_count: int
+    measured_volume_ml: int
+    measured_pulses: int
+    amount_cents: int
+    chargeable: bool
+    beverage_names: list[str]
+    keg_ids: list[int]
+    kinds: list[str]
+    completions: list[str]
+
+
+class AdminUserStatisticsResponse(BaseModel):
+    user_id: int
+    user_display_name: str
+    booking_count: int
+    measured_volume_ml: int
+    amount_cents: int
+
+
+class AdminEventStatisticsResponse(BaseModel):
+    event_id: int
+    event_name: str
+    booking_count: int
+    measured_volume_ml: int
+    chargeable_volume_ml: int
+    maintenance_volume_ml: int
+    amount_cents: int
+    users: list[AdminUserStatisticsResponse]
+
+
+class AdminAuditEntryResponse(BaseModel):
+    id: int
+    occurred_at: datetime
+    admin_user_id: int
+    admin_display_name: str
+    action: str
+    entity_type: str
+    entity_id: str | None
+    old_values: Any | None
+    new_values: Any | None
+
+
+class AdminTechnicalEventResponse(BaseModel):
+    id: int
+    occurred_at: datetime
+    severity: str
+    event_type: str
+    message: str
+    details: Any | None
+
+
+class WebAdminLoginOptionResponse(BaseModel):
+    id: int
+    display_name: str
+
+
+class WebAdminLoginRequest(BaseModel):
+    user_id: int = Field(gt=0)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class WebAdminSessionResponse(BaseModel):
+    user_id: int
+    display_name: str
+    idle_expires_at: datetime
+    absolute_expires_at: datetime
+
+
+class WebAdminPasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=10, max_length=128)
+
+
+class WebAdminPasswordResetRequest(BaseModel):
+    new_password: str = Field(min_length=10, max_length=128)
 
 
 class PourRecordResponse(BaseModel):

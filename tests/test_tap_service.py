@@ -377,6 +377,40 @@ def test_zz_tap_013_manual_pour_is_billed_to_authenticated_user(
         stop_service(service, hardware)
 
 
+def test_zz_dat_002_multiple_pours_share_one_nfc_login_session(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    service, hardware, _nfc, flow_meter = start_service(sessions)
+    try:
+        assert service.authenticate_card("04AABBCC") is True
+        service.start_manual_pour()
+        flow_meter.add_pulses(8)
+        service.stop_manual_pour()
+        service.start_manual_pour()
+        flow_meter.add_pulses(4)
+        service.stop_manual_pour()
+
+        with sessions() as session:
+            first_cycle = list(session.scalars(select(TapBooking).order_by(TapBooking.id)))
+            assert len(first_cycle) == 2
+            assert len({booking.login_session_id for booking in first_cycle}) == 1
+            first_session_id = first_cycle[0].login_session_id
+
+        service.logout()
+        assert service.authenticate_card("04AABBCC") is True
+        service.start_manual_pour()
+        flow_meter.add_pulses(2)
+        service.stop_manual_pour()
+
+        with sessions() as session:
+            all_bookings = list(session.scalars(select(TapBooking).order_by(TapBooking.id)))
+            assert all_bookings[-1].login_session_id != first_session_id
+    finally:
+        stop_service(service, hardware)
+
+
 def test_zz_tap_013_manual_api_exercises_start_and_release(
     database: tuple[Engine, sessionmaker[Session]],
 ) -> None:

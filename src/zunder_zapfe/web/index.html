@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.3.0-alpha.2">
-    <script src="/static/app.js?v=0.3.0-alpha.2" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.4.0-alpha.1">
+    <script src="/static/app.js?v=0.4.0-alpha.1" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
@@ -20,12 +20,23 @@
             <span class="valve-dot"></span>
             <span id="valve-label">DEBUG · Ventil AUS</span>
           </div>
+          <div class="wifi-status" id="wifi-status" role="status" title="Aktueller WLAN-Betriebsmodus">
+            <span class="wifi-dot"></span>
+            <span id="wifi-label">WLAN · prüft</span>
+          </div>
           <div class="connection" id="connection" role="status">
             <span class="connection-dot"></span>
             <span id="connection-label">Verbinde …</span>
           </div>
         </div>
       </header>
+
+      <section class="screen welcome-screen" data-screen="registration" aria-labelledby="registration-title">
+        <div class="welcome-symbol" aria-hidden="true">✓</div>
+        <p class="eyebrow">Armband registriert</p>
+        <h1 id="registration-title">Willkommen, <span id="registration-name">Zapfer</span>!</h1>
+        <p>Du kannst dein Armband jetzt zum Anmelden verwenden.</p>
+      </section>
 
       <section class="screen screen-idle is-active" data-screen="idle" aria-labelledby="idle-title">
         <div class="idle-copy">
@@ -220,9 +231,9 @@
       <section class="screen screen-alert" data-screen="legacy" aria-labelledby="legacy-title">
         <div class="alert-symbol" aria-hidden="true">…</div>
         <div>
-          <p class="eyebrow">Backend-Vorgang aktiv</p>
+          <p class="eyebrow" id="legacy-eyebrow">Backend-Vorgang aktiv</p>
           <h1 class="compact-title" id="legacy-title">Bitte kurz warten.</h1>
-          <p class="lead compact">Ein kompatibler Portions- oder Wartungsvorgang läuft.</p>
+          <p class="lead compact" id="legacy-description">Ein kompatibler Portions- oder Wartungsvorgang läuft.</p>
           <p class="reset-help">Zustand: <span id="legacy-state">unbekannt</span></p>
         </div>
       </section>
@@ -253,7 +264,7 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.3.0_alpha.1_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.4.0_alpha.1_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
       <div class="session-timeout" id="session-timeout" aria-hidden="true">

@@ -1,6 +1,6 @@
 # Zapf-Zustandsautomat
 
-Stand: 2026-07-20
+Stand: 2026-07-23
 
 Der Zustandsautomat ist die einzige Backend-Komponente, die Ventil und
 Durchflussmessung zu einem Zapfvorgang koordiniert. Die WebUI fordert nur
@@ -14,6 +14,7 @@ stateDiagram-v2
     state "Bereit, wartet auf Karte<br/>IDLE" as IDLE
     state "Benutzer angemeldet<br/>AUTHENTICATED" as AUTHENTICATED
     state "Lokale Administration<br/>ADMIN" as ADMIN
+    state "Armbandzuordnung<br/>NFC_CAPTURE" as NFC_CAPTURE
     state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
     state "Nachfüllen möglich<br/>TOP_UP_AVAILABLE" as TOP_UP_AVAILABLE
@@ -33,6 +34,10 @@ stateDiagram-v2
     AUTHENTICATED --> ADMIN: Admin öffnet Verwaltung<br/>Ventil bleibt geschlossen
     ADMIN --> AUTHENTICATED: Zurück zum Zapfen
     ADMIN --> IDLE: Logout oder Admin-Inaktivität
+    IDLE --> NFC_CAPTURE: Smartphone startet Zuordnung<br/>Ventil geschlossen
+    AUTHENTICATED --> NFC_CAPTURE: Smartphone startet Zuordnung<br/>Sitzung beenden
+    TOP_UP_AVAILABLE --> NFC_CAPTURE: Smartphone startet Zuordnung<br/>Sitzung beenden
+    NFC_CAPTURE --> IDLE: Erfolg, Abbruch oder Timeout
 
     AUTHENTICATED --> MANUAL_POURING: Zapffläche gehalten<br/>Messung starten, Ventil öffnen
     MANUAL_POURING --> AUTHENTICATED: losgelassen oder Zeitlimit<br/>Ventil schließen, Istmenge buchen
@@ -60,6 +65,7 @@ stateDiagram-v2
     IDLE --> EMERGENCY_STOP: Not-Aus
     AUTHENTICATED --> EMERGENCY_STOP: Not-Aus
     ADMIN --> EMERGENCY_STOP: Not-Aus
+    NFC_CAPTURE --> EMERGENCY_STOP: Not-Aus
     MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     TOP_UP_AVAILABLE --> EMERGENCY_STOP: Not-Aus
@@ -93,6 +99,8 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `ADMIN` | Touchaktivität | – | `ADMIN` | Admin-Inaktivitätszeit zurücksetzen |
 | `ADMIN` | `exit_admin_mode` | – | `AUTHENTICATED` | normalen Timeout neu starten |
 | `ADMIN` | `logout` oder Admin-Inaktivitätszeit | – | `IDLE` | Sitzung vollständig löschen |
+| `IDLE`, `AUTHENTICATED` oder `TOP_UP_AVAILABLE` | `begin_nfc_capture` | kein aktiver Zapfvorgang oder Safety-Lock | `NFC_CAPTURE` | Ventil schließen, Sitzung und Nachfüllfenster löschen |
+| `NFC_CAPTURE` | Erfolg, Abbruch oder Timeout | – | `IDLE` | Ventil geschlossen halten, NFC-Anmeldung wieder freigeben |
 | `AUTHENTICATED` | `start_manual_pour` | aktiver Fachkontext | `MANUAL_POURING` | Messung nullen, Ventil öffnen |
 | `MANUAL_POURING` | `stop_manual_pour` | – | `AUTHENTICATED` | Ventil schließen, Istmenge buchen |
 | `MANUAL_POURING` | maximales Zeitlimit | – | `AUTHENTICATED` | Ventil schließen, Istmenge mit Limitabschluss buchen |
@@ -136,6 +144,9 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
 6. Wartungszapfungen werden gemessen, aber als nicht kostenpflichtig markiert.
 7. Das Zeitlimit manueller Zapfungen beendet den Vorgang kontrolliert. Fehler
    bei Durchfluss, Watchdog oder Not-Aus bleiben verriegelnde Safety-Ereignisse.
+8. `NFC_CAPTURE` öffnet niemals das Ventil. Kartenereignisse werden in diesem
+   Zustand ausschließlich für die kurzlebige Adminzuordnung verarbeitet und
+   starten keine Kiosksitzung. Sein Ende hebt keinen Safety-Lock auf.
 
 ## Integration und verbleibende Grenzen
 

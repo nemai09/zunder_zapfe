@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -24,6 +25,7 @@ from zunder_zapfe.persistence.models import (
     TechnicalEvent,
     User,
     UserRole,
+    WebAdminSession,
 )
 
 
@@ -48,6 +50,7 @@ class NewTapBooking:
     kind: BookingKind
     completion: BookingCompletion
     chargeable: bool
+    login_session_id: str = field(default_factory=lambda: uuid4().hex)
 
 
 @dataclass(frozen=True)
@@ -77,20 +80,78 @@ class Repository:
         self.session = session
 
     def create_event(self, name: str, year: int, *, active: bool = False) -> Event:
-        event = Event(name=_required_text(name, "Event name"), year=year, active=False)
+        if not 2000 <= year <= 9999:
+            raise ValueError("Event year must be between 2000 and 9999")
+        normalized_name = _required_text(name, "Event name")
+        duplicate = self.session.scalar(
+            select(Event.id).where(Event.name == normalized_name, Event.year == year)
+        )
+        if duplicate is not None:
+            raise ValueError("An event with this name and year already exists")
+        event = Event(name=normalized_name, year=year, active=False)
         self.session.add(event)
         self.session.flush()
         if active:
             self.activate_event(event.id)
         return event
 
-    def activate_event(self, event_id: int) -> Event:
+    def get_event(self, event_id: int) -> Event:
         event = self.session.get(Event, event_id)
         if event is None:
             raise LookupError(f"Event {event_id} does not exist")
+        return event
+
+    def list_events(self) -> list[Event]:
+        return list(
+            self.session.scalars(
+                select(Event).order_by(Event.active.desc(), Event.year.desc(), Event.name)
+            )
+        )
+
+    def active_event(self) -> Event | None:
+        return self.session.scalar(select(Event).where(Event.active.is_(True)))
+
+    def activate_event(self, event_id: int) -> Event:
+        event = self.get_event(event_id)
         for current_event in self.session.scalars(select(Event).where(Event.active.is_(True))):
             current_event.active = False
         event.active = True
+        self.session.flush()
+        return event
+
+    def update_event(
+        self,
+        event_id: int,
+        *,
+        name: str,
+        year: int,
+        starts_at: datetime | None,
+        ends_at: datetime | None,
+        active: bool,
+    ) -> Event:
+        event = self.get_event(event_id)
+        if not 2000 <= year <= 9999:
+            raise ValueError("Event year must be between 2000 and 9999")
+        normalized_name = _required_text(name, "Event name")
+        duplicate = self.session.scalar(
+            select(Event.id).where(
+                Event.name == normalized_name,
+                Event.year == year,
+                Event.id != event_id,
+            )
+        )
+        if duplicate is not None:
+            raise ValueError("An event with this name and year already exists")
+        if starts_at is not None and ends_at is not None and ends_at < starts_at:
+            raise ValueError("Event end must not be before its start")
+        event.name = normalized_name
+        event.year = year
+        event.starts_at = starts_at
+        event.ends_at = ends_at
+        if active:
+            self.activate_event(event.id)
+        else:
+            event.active = False
         self.session.flush()
         return event
 
@@ -119,12 +180,32 @@ class Repository:
 
     def get_user(self, user_id: int) -> User:
         user = self.session.get(User, user_id)
-        if user is None:
+        if user is None or user.deleted_at is not None:
             raise LookupError(f"User {user_id} does not exist")
         return user
 
     def list_users(self) -> list[User]:
-        return list(self.session.scalars(select(User).order_by(User.first_name, User.last_name)))
+        return list(
+            self.session.scalars(
+                select(User)
+                .where(User.deleted_at.is_(None))
+                .order_by(User.first_name, User.last_name)
+            )
+        )
+
+    def list_web_admins(self) -> list[User]:
+        return list(
+            self.session.scalars(
+                select(User)
+                .where(
+                    User.role == UserRole.ADMIN,
+                    User.active.is_(True),
+                    User.password_hash.is_not(None),
+                    User.deleted_at.is_(None),
+                )
+                .order_by(User.first_name, User.last_name, User.id)
+            )
+        )
 
     def update_user(
         self,
@@ -146,6 +227,24 @@ class Repository:
         self.session.flush()
         return user
 
+    def soft_delete_user(
+        self,
+        user_id: int,
+        *,
+        deleted_at: datetime | None = None,
+    ) -> tuple[User, int]:
+        """Retire a user while preserving its immutable historical references."""
+        user = self.get_user(user_id)
+        cards = list(self.session.scalars(select(NfcCard).where(NfcCard.user_id == user_id)))
+        for card in cards:
+            self.session.delete(card)
+        user.active = False
+        user.password_hash = None
+        user.deleted_at = deleted_at or datetime.now(UTC)
+        self.revoke_web_admin_sessions(user.id, revoked_at=user.deleted_at)
+        self.session.flush()
+        return user, len(cards)
+
     def add_nfc_card(self, user_id: int, uid: str) -> NfcCard:
         self.get_user(user_id)
         card = NfcCard(user_id=user_id, uid=canonicalize_nfc_uid(uid), active=True)
@@ -160,7 +259,14 @@ class Repository:
         return card
 
     def find_nfc_card(self, uid: str) -> NfcCard | None:
-        return self.session.scalar(select(NfcCard).where(NfcCard.uid == canonicalize_nfc_uid(uid)))
+        return self.session.scalar(
+            select(NfcCard)
+            .join(User, User.id == NfcCard.user_id)
+            .where(
+                NfcCard.uid == canonicalize_nfc_uid(uid),
+                User.deleted_at.is_(None),
+            )
+        )
 
     def list_nfc_cards(self, user_id: int) -> list[NfcCard]:
         self.get_user(user_id)
@@ -189,6 +295,7 @@ class Repository:
                 NfcCard.uid == canonicalize_nfc_uid(uid),
                 NfcCard.active.is_(True),
                 User.active.is_(True),
+                User.deleted_at.is_(None),
             )
         )
         return self.session.scalar(statement)
@@ -196,13 +303,62 @@ class Repository:
     def create_beverage(
         self, name: str, *, default_keg_size_ml: int, price_per_liter_cents: int
     ) -> Beverage:
+        if default_keg_size_ml <= 0:
+            raise ValueError("Default keg size must be greater than zero")
+        if price_per_liter_cents < 0:
+            raise ValueError("Price per liter must not be negative")
+        normalized_name = _required_text(name, "Beverage name")
+        duplicate = self.session.scalar(select(Beverage.id).where(Beverage.name == normalized_name))
+        if duplicate is not None:
+            raise ValueError("A beverage with this name already exists")
         beverage = Beverage(
-            name=_required_text(name, "Beverage name"),
+            name=normalized_name,
             default_keg_size_ml=default_keg_size_ml,
             price_per_liter_cents=price_per_liter_cents,
             active=True,
         )
         self.session.add(beverage)
+        self.session.flush()
+        return beverage
+
+    def get_beverage(self, beverage_id: int) -> Beverage:
+        beverage = self.session.get(Beverage, beverage_id)
+        if beverage is None:
+            raise LookupError(f"Beverage {beverage_id} does not exist")
+        return beverage
+
+    def list_beverages(self) -> list[Beverage]:
+        return list(
+            self.session.scalars(select(Beverage).order_by(Beverage.active.desc(), Beverage.name))
+        )
+
+    def update_beverage(
+        self,
+        beverage_id: int,
+        *,
+        name: str,
+        default_keg_size_ml: int,
+        price_per_liter_cents: int,
+        active: bool,
+    ) -> Beverage:
+        beverage = self.get_beverage(beverage_id)
+        if default_keg_size_ml <= 0:
+            raise ValueError("Default keg size must be greater than zero")
+        if price_per_liter_cents < 0:
+            raise ValueError("Price per liter must not be negative")
+        normalized_name = _required_text(name, "Beverage name")
+        duplicate = self.session.scalar(
+            select(Beverage.id).where(
+                Beverage.name == normalized_name,
+                Beverage.id != beverage_id,
+            )
+        )
+        if duplicate is not None:
+            raise ValueError("A beverage with this name already exists")
+        beverage.name = normalized_name
+        beverage.default_keg_size_ml = default_keg_size_ml
+        beverage.price_per_liter_cents = price_per_liter_cents
+        beverage.active = active
         self.session.flush()
         return beverage
 
@@ -239,6 +395,14 @@ class Repository:
         initial_volume_ml: int,
         opened_at: datetime | None = None,
     ) -> Keg:
+        event = self.get_event(event_id)
+        beverage = self.get_beverage(beverage_id)
+        if not event.active:
+            raise ValueError("The selected event must be active")
+        if not beverage.active:
+            raise ValueError("The selected beverage must be active")
+        if initial_volume_ml <= 0:
+            raise ValueError("Initial keg volume must be greater than zero")
         timestamp = opened_at or datetime.now(UTC)
         for current_keg in self.session.scalars(select(Keg).where(Keg.active.is_(True))):
             current_keg.active = False
@@ -254,6 +418,28 @@ class Repository:
         self.session.flush()
         return keg
 
+    def get_keg(self, keg_id: int) -> Keg:
+        keg = self.session.get(Keg, keg_id)
+        if keg is None:
+            raise LookupError(f"Keg {keg_id} does not exist")
+        return keg
+
+    def list_kegs(self) -> list[Keg]:
+        return list(
+            self.session.scalars(
+                select(Keg).order_by(Keg.active.desc(), Keg.opened_at.desc(), Keg.id.desc())
+            )
+        )
+
+    def close_active_keg(self, *, closed_at: datetime | None = None) -> Keg | None:
+        keg = self.session.scalar(select(Keg).where(Keg.active.is_(True)))
+        if keg is None:
+            return None
+        keg.active = False
+        keg.closed_at = closed_at or datetime.now(UTC)
+        self.session.flush()
+        return keg
+
     def add_tap_booking(self, values: NewTapBooking) -> TapBooking:
         keg = self.session.get(Keg, values.keg_id)
         if keg is None:
@@ -262,6 +448,8 @@ class Repository:
             raise ValueError("Booking event and beverage must match the selected keg")
         if self.session.get(User, values.user_id) is None:
             raise LookupError(f"User {values.user_id} does not exist")
+        if not values.login_session_id.strip() or len(values.login_session_id) > 64:
+            raise ValueError("Login session ID must contain between 1 and 64 characters")
         amount_cents = (
             calculate_amount_cents(values.measured_volume_ml, values.price_per_liter_cents)
             if values.chargeable
@@ -280,6 +468,40 @@ class Repository:
         )
         return list(self.session.scalars(statement))
 
+    def list_tap_bookings(
+        self,
+        *,
+        event_id: int | None = None,
+        user_id: int | None = None,
+        keg_id: int | None = None,
+        kind: BookingKind | None = None,
+        completion: BookingCompletion | None = None,
+        occurred_from: datetime | None = None,
+        occurred_to: datetime | None = None,
+        limit: int | None = 100,
+    ) -> list[TapBooking]:
+        statement = select(TapBooking)
+        if event_id is not None:
+            statement = statement.where(TapBooking.event_id == event_id)
+        if user_id is not None:
+            statement = statement.where(TapBooking.user_id == user_id)
+        if keg_id is not None:
+            statement = statement.where(TapBooking.keg_id == keg_id)
+        if kind is not None:
+            statement = statement.where(TapBooking.kind == kind)
+        if completion is not None:
+            statement = statement.where(TapBooking.completion == completion)
+        if occurred_from is not None:
+            statement = statement.where(TapBooking.occurred_at >= occurred_from)
+        if occurred_to is not None:
+            statement = statement.where(TapBooking.occurred_at <= occurred_to)
+        statement = statement.order_by(TapBooking.occurred_at.desc(), TapBooking.id.desc())
+        if limit is not None:
+            if not 1 <= limit <= 500:
+                raise ValueError("Booking limit must be between 1 and 500")
+            statement = statement.limit(limit)
+        return list(self.session.scalars(statement))
+
     def user_consumption(self, *, event_id: int, user_id: int) -> ConsumptionSummary:
         if self.session.get(Event, event_id) is None:
             raise LookupError(f"Event {event_id} does not exist")
@@ -287,7 +509,7 @@ class Repository:
             raise LookupError(f"User {user_id} does not exist")
         booking_count, measured_volume_ml, amount_cents = self.session.execute(
             select(
-                func.count(TapBooking.id),
+                func.count(func.distinct(TapBooking.login_session_id)),
                 func.coalesce(func.sum(TapBooking.measured_volume_ml), 0),
                 func.coalesce(func.sum(TapBooking.amount_cents), 0),
             ).where(
@@ -377,6 +599,26 @@ class Repository:
         self.session.add(entry)
         return entry
 
+    def list_admin_audit_entries(
+        self,
+        *,
+        entity_type: str | None = None,
+        action: str | None = None,
+        limit: int = 100,
+    ) -> list[AdminAuditEntry]:
+        if not 1 <= limit <= 500:
+            raise ValueError("Audit limit must be between 1 and 500")
+        statement = select(AdminAuditEntry)
+        if entity_type is not None:
+            statement = statement.where(AdminAuditEntry.entity_type == entity_type)
+        if action is not None:
+            statement = statement.where(AdminAuditEntry.action == action)
+        statement = statement.order_by(
+            AdminAuditEntry.occurred_at.desc(),
+            AdminAuditEntry.id.desc(),
+        ).limit(limit)
+        return list(self.session.scalars(statement))
+
     def record_technical_event(
         self,
         *,
@@ -394,6 +636,55 @@ class Repository:
         self.session.add(entry)
         self.session.flush()
         return entry
+
+    def list_technical_events(
+        self,
+        *,
+        severity: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[TechnicalEvent]:
+        if not 1 <= limit <= 500:
+            raise ValueError("Technical event limit must be between 1 and 500")
+        statement = select(TechnicalEvent)
+        if severity is not None:
+            statement = statement.where(TechnicalEvent.severity == severity)
+        if event_type is not None:
+            statement = statement.where(TechnicalEvent.event_type == event_type)
+        statement = statement.order_by(
+            TechnicalEvent.occurred_at.desc(),
+            TechnicalEvent.id.desc(),
+        ).limit(limit)
+        return list(self.session.scalars(statement))
+
+    def find_web_admin_session(self, token_hash: str) -> WebAdminSession | None:
+        return self.session.scalar(
+            select(WebAdminSession).where(WebAdminSession.token_hash == token_hash)
+        )
+
+    def revoke_web_admin_sessions(
+        self,
+        user_id: int,
+        *,
+        revoked_at: datetime,
+        except_session_id: int | None = None,
+    ) -> int:
+        sessions = list(
+            self.session.scalars(
+                select(WebAdminSession).where(
+                    WebAdminSession.user_id == user_id,
+                    WebAdminSession.revoked_at.is_(None),
+                )
+            )
+        )
+        revoked = 0
+        for web_session in sessions:
+            if except_session_id is not None and web_session.id == except_session_id:
+                continue
+            web_session.revoked_at = revoked_at
+            revoked += 1
+        self.session.flush()
+        return revoked
 
     def _require_active_admin(self, user_id: int) -> User:
         user = self.session.get(User, user_id)

@@ -109,16 +109,32 @@ sudo reboot
 
 Das Installationsskript:
 
-1. installiert `python3-venv`, Chromium und curl,
+1. installiert `python3-venv`, Chromium, curl, NetworkManager, `iw` und nginx,
 2. erzeugt die virtuelle Python-Umgebung `.venv`,
 3. installiert Anwendung und Testabhaengigkeiten,
 4. konfiguriert den Webdienst fuer den angegebenen Desktop-Benutzer,
 5. installiert und startet `zunder-zapfe-web.service`,
 6. installiert den Kiosk-Launcher,
-7. ergaenzt den labwc-Autostart des Desktop-Benutzers.
+7. ergaenzt den labwc-Autostart des Desktop-Benutzers,
+8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs,
+9. installiert den begrenzten WLAN-Modushelfer und seine NetworkManager-
+   Berechtigung für das lokale Low-Level-Menü.
 
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
+
+Das Admin-WLAN wird nicht automatisch aktiviert, weil dies eine bestehende
+WLAN-SSH-Verbindung trennen kann. Die einmalige Einrichtung erfolgt nach
+gesetztem WLAN-Land interaktiv:
+
+```bash
+sudo raspi-config nonint do_wifi_country DE
+sudo zunder-zapfe-admin-wifi
+```
+
+Dabei wird der neue WLAN-Schlüssel verdeckt abgefragt. Er darf nicht im
+Repository, in einem Shellskript oder in der Kommandozeile hinterlegt werden.
+Details stehen unter [Admin-WLAN](admin-wifi.md).
 
 ### 5. Auf dem Zielsystem verifizieren
 
@@ -133,6 +149,8 @@ Das Skript prueft:
 - aktiven systemd-Dienst,
 - lokalen HTTP-Health-Endpunkt,
 - angeschlossenen und betriebsbereiten ACR122U.
+- nach bewusster Einrichtung den aktiven AP- oder Clientmodus und im AP-Modus
+  den Admin-Webzugang.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
@@ -157,11 +175,78 @@ Live-Protokoll:
 journalctl -u zunder-zapfe-web.service -f
 ```
 
+Das HTTP-Access-Log ist im Normalbetrieb deaktiviert, weil die lokale
+Kioskseite regelmäßig Statusendpunkte abfragt. Für eine kurze Diagnose kann in
+`/etc/zunder-zapfe/web.env` vorübergehend
+`ZUNDER_ZAPFE_ACCESS_LOG=1` gesetzt und der Dienst neu gestartet werden. Danach
+muss der Wert wieder auf `0`, damit Journal und Datenträger nicht mit
+erwartbaren Polling-Zugriffen belastet werden.
+
 Health-Endpunkt:
 
 ```bash
 curl http://127.0.0.1:8000/api/health
 ```
+
+### Laufzeitlast prüfen
+
+Für einen vergleichbaren Schnappschuss die Anlage zunächst mindestens eine
+Minute ohne Bedienung im Sperrbildschirm laufen lassen:
+
+```bash
+ps -eo pid,pcpu,pmem,rss,time,comm,args --sort=-pcpu | head -n 15
+```
+
+Danach einmal anmelden, einige Sekunden angemeldet warten und eine simulierte
+oder reale Zapfung durchführen. Die Messung jeweils wiederholen. Hohe
+Chromium-`VIRT`-Werte bezeichnen reservierten virtuellen Adressraum; für den
+physischen Speicher sind `RSS` beziehungsweise `RES` maßgeblich.
+
+Im ruhenden Sperrbildschirm sollen insbesondere `NetworkManager` und
+`dbus-daemon` keine durch die Kioskseite verursachte zweisekündliche
+Lastspitze mehr zeigen. Der schnelle Zapfstatus bleibt absichtlich aktiv, damit
+NFC-Anmeldung und Safety-Rückmeldungen ohne spürbare Zusatzverzögerung
+erscheinen.
+
+Initiales oder lokal zurückgesetztes Admin-Webpasswort:
+
+```bash
+sudo -u zapfe /home/zapfe/sw/zunder_zapfe/.venv/bin/zunder-zapfe-admin-password
+```
+
+Das Kommando listet aktive Admins auf und fragt das Passwort verdeckt zweimal
+ab. Ein Passwort darf niemals als Kommandozeilenargument, in `web.env` oder im
+Repository hinterlegt werden. Der tatsächliche Desktop-Benutzer und
+Repositorypfad sind bei einer abweichenden Installation entsprechend
+anzupassen.
+
+Smartphone-Administration nach eingerichtem Admin-WLAN:
+
+1. Smartphone mit `ZUNDER_ZAPFE` verbinden. Eine Warnung „kein Internet“ ist
+   im Standalone-Betrieb normal.
+2. `http://10.42.0.1/admin` öffnen.
+3. Persönlichen Admin auswählen und mit dessen Passwort anmelden.
+4. Unter **Benutzer** suchen, bearbeiten oder mit **+ Neu** anlegen.
+5. Für eine Armbandzuordnung den Benutzer öffnen, **Zuweisen** drücken und das
+   neue Veranstaltungsarmband kurz am ACR122U auflegen.
+
+Lokaler WLAN-Moduswechsel:
+
+1. Admin-Armband kurz auflegen und den blauen **ADMIN**-Button drücken.
+2. Im Low-Level-Menü **Access Point aktivieren** oder **Mit bekanntem WLAN
+   verbinden** wählen.
+3. Für den Clientmodus muss bereits ein automatisch verbindbares
+   NetworkManager-Profil vorhanden sein. Das Menü richtet keine Zugangsdaten
+   ein.
+4. Über **Zurück zum Zapfen** den Adminmodus verlassen. Der
+   WLAN-Statusindikator im Kiosk zeigt den erkannten Modus.
+
+Während der Zuordnung zeigt der Kiosk den gesperrten Zustand
+`nfc_capture`; das Ventil bleibt geschlossen. Erfolg, Abbruch oder das
+serverseitige Zeitlimit geben die Anlage wieder frei. Die finale
+Zielsystemabnahme muss mindestens Login, 20 bis 30 sichtbare Benutzer, Suche,
+Sperren/Aktivieren/Löschen eines Demo-Armbands, Passwortwechsel und
+Neustartverhalten prüfen.
 
 Dienst neu starten:
 
@@ -190,7 +275,12 @@ sudo ./scripts/deploy-update.sh
 Das Deployment-Skript aktualisiert den aktuell ausgecheckten Branch nur per
 Fast-Forward, installiert geaenderte Abhaengigkeiten beziehungsweise
 Systemdateien, startet den Webdienst neu und fuehrt die Zielsystem-Verifikation
-aus. Bei reinen Python-, HTML- oder CSS-Aenderungen wird nur der Dienst neu
+aus. Den letzten erfolgreich verifizierten Commit speichert es unter
+`/var/lib/zunder-zapfe/deployed-revision`. Dadurch erkennt es notwendige
+Neuinstallationen auch dann, wenn vor dem Aufruf bereits auf einen anderen
+Branch gewechselt wurde. Fehlende Laufzeitabhängigkeiten erzwingen ebenfalls
+eine vollständige Installation. Bei reinen Python-, HTML- oder CSS-Aenderungen
+wird nur der Dienst neu
 gestartet. Ein Neustart des Raspberry Pi ist nicht erforderlich.
 
 Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und
@@ -211,7 +301,8 @@ werden.
 
 - Das Skript ist fuer aktuelle Raspberry Pi OS Desktop-Images mit labwc gedacht.
 - Automatische Desktop-Anmeldung wird vorausgesetzt und nicht veraendert.
-- Die Anwendung lauscht nur auf `127.0.0.1`; Fernzugriff ist noch nicht vorgesehen.
+- Die Anwendung lauscht nur auf `127.0.0.1`; ausschließlich der eng begrenzte
+  nginx-Zugang im Admin-AP wird weitergeleitet.
 - NFC-Anmeldung, Zapf-Zustandsautomat und Datenbank sind integriert; die
   aktuelle Kioskseite bietet dafuer aber noch keine vollstaendige Bedienung.
 - Die reale Ventil-, Durchfluss- und Not-Aus-Ansteuerung fehlt noch.

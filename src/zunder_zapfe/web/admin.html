@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#12251e">
+    <title>Zunder Zapfe · Administration</title>
+    <link rel="stylesheet" href="/static/admin-styles.css?v=0.4.0-alpha.1">
+    <script src="/static/admin-app.js?v=0.4.0-alpha.1" defer></script>
+  </head>
+  <body>
+    <section class="login-shell" id="login-screen">
+      <div class="login-card">
+        <div class="brand-mark" aria-hidden="true">Z</div>
+        <p class="eyebrow">Zunder Zapfe</p>
+        <h1>Administration</h1>
+        <p class="muted">Persönlich am lokalen Admin-WLAN anmelden.</p>
+        <form id="login-form">
+          <label for="login-user">Admin</label>
+          <select id="login-user" required>
+            <option value="">Admins werden geladen …</option>
+          </select>
+          <label for="login-password">Passwort</label>
+          <input id="login-password" type="password" autocomplete="current-password" maxlength="128" required>
+          <button class="button button-primary" type="submit">Anmelden</button>
+          <p class="message error" id="login-message" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell" id="admin-app" hidden>
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Zunder Zapfe</p>
+          <strong>Administration</strong>
+        </div>
+        <div class="session-menu">
+          <span id="session-name">Admin</span>
+          <button class="button button-quiet button-small" id="logout-button" type="button">Abmelden</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="view is-active" data-view="overview" aria-labelledby="overview-title">
+          <p class="eyebrow">Übersicht</p>
+          <h1 id="overview-title">Guten Tag, <span id="welcome-name">Admin</span>.</h1>
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>Bekannte Benutzer</span>
+              <strong id="user-count">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Aktive Armbänder</span>
+              <strong id="card-count">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Veranstaltung</span>
+              <strong class="metric-text" id="active-event-name">Nicht gewählt</strong>
+            </article>
+            <article class="metric-card">
+              <span>Aktives Fass</span>
+              <strong class="metric-text" id="active-keg-name">Keines</strong>
+              <small id="active-keg-remaining"></small>
+            </article>
+            <article class="metric-card wide">
+              <span>Backend</span>
+              <strong id="backend-status">Wird geprüft …</strong>
+              <small id="build-version"></small>
+            </article>
+          </div>
+          <h2>Verwaltungsbereiche</h2>
+          <div class="area-grid">
+            <button class="area-card is-ready" type="button" data-open-view="users">
+              <span>Jetzt verfügbar</span>
+              <strong>Benutzer &amp; Armbänder</strong>
+              <small>Anlegen, sperren und live zuweisen</small>
+            </button>
+            <button class="area-card is-ready" type="button" data-open-view="kegs">
+              <span>Jetzt verfügbar</span>
+              <strong>Fass am Hahn</strong>
+              <small>Anzapfen, Bestand prüfen und abzapfen</small>
+            </button>
+            <button class="area-card is-ready" type="button" data-open-view="data">
+              <span>Jetzt verfügbar</span>
+              <strong>Buchungen &amp; Statistik</strong>
+              <small>Abrechnung, Audit und technische Ereignisse</small>
+            </button>
+            <button class="area-card is-ready" type="button" data-open-view="settings">
+              <span>Stammdaten</span>
+              <strong>Einstellungen</strong>
+              <small>Veranstaltungen, Getränke und eigenes Konto</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="view" data-view="users" aria-labelledby="users-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">Verwaltung</p>
+              <h1 id="users-title">Benutzer &amp; Armbänder</h1>
+            </div>
+            <button class="button button-primary" id="new-user-button" type="button">+ Neu</button>
+          </div>
+          <div class="filter-row">
+            <input id="user-search" type="search" placeholder="Name oder Zusatz suchen" aria-label="Benutzer suchen">
+            <select id="user-filter" aria-label="Benutzer filtern">
+              <option value="all">Alle</option>
+              <option value="active">Aktiv</option>
+              <option value="blocked">Gesperrt</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
+          <p class="result-count" id="user-result-count"></p>
+          <div class="user-list" id="user-list"></div>
+          <p class="empty-state" id="user-empty" hidden>Keine passenden Benutzer gefunden.</p>
+        </section>
+
+        <section class="view" data-view="kegs" aria-labelledby="kegs-title">
+          <p class="eyebrow">Häufiger Betriebsablauf</p>
+          <h1 id="kegs-title">Fass am Hahn</h1>
+          <div class="keg-management-grid">
+            <section class="panel">
+              <h2>Aktueller Zustand</h2>
+              <article class="active-context" id="active-keg-card">
+                <span>Aktuell am Hahn</span>
+                <strong id="operations-active-keg">Kein aktives Fass</strong>
+                <small id="operations-active-keg-detail">Vor dem Zapfen ein Fass anzapfen.</small>
+              </article>
+              <button class="button button-danger keg-detach-button" id="keg-detach-button" type="button">
+                Aktives Fass abzapfen
+              </button>
+              <p class="muted operational-note">
+                Danach ist bewusst kein Getränk am Hahn aktiv. Historie und Buchungen bleiben erhalten.
+              </p>
+            </section>
+
+            <section class="panel">
+              <h2>Fass anzapfen</h2>
+              <p class="muted">Das Getränk ist erforderlich. Ohne Füllstand wird ein volles Standardfass angenommen.</p>
+              <form class="form-stack" id="keg-switch-form">
+                <label for="keg-beverage">Getränk</label>
+                <select id="keg-beverage" required></select>
+                <label for="keg-volume-liters">Aktueller Füllstand in Liter <small>optional</small></label>
+                <input id="keg-volume-liters" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="Standardfass voll">
+                <small id="keg-volume-hint">Leer lassen für den Standardfüllstand.</small>
+                <button class="button button-primary" type="submit">Fass anzapfen</button>
+              </form>
+            </section>
+
+            <section class="panel keg-history">
+              <h2>Fasshistorie</h2>
+              <div class="record-list" id="keg-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view="settings" aria-labelledby="settings-title">
+          <p class="eyebrow">Seltene Verwaltung</p>
+          <h1 id="settings-title">Allgemeine Einstellungen</h1>
+          <div class="management-grid">
+            <section class="panel management-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Veranstaltungen</h2>
+                  <p class="muted">Jahresbezogene Abrechnungskontexte.</p>
+                </div>
+                <button class="button button-quiet button-small" id="reset-event-button" type="button">+ Neu</button>
+              </div>
+              <form class="form-stack compact-form" id="event-form">
+                <input id="event-id" type="hidden">
+                <label for="event-name">Name</label>
+                <input id="event-name" maxlength="120" placeholder="Zunder 2026" required>
+                <label for="event-year">Jahr</label>
+                <input id="event-year" type="number" min="2000" max="9999" required>
+                <label class="toggle single-toggle">
+                  <input id="event-active" type="checkbox">
+                  <span>Als aktive Veranstaltung verwenden</span>
+                </label>
+                <button class="button button-primary" type="submit">Veranstaltung speichern</button>
+              </form>
+              <div class="record-list" id="event-list"></div>
+            </section>
+
+            <section class="panel management-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Getränke</h2>
+                  <p class="muted">Standardfass und Preis für das Anzapfen.</p>
+                </div>
+                <button class="button button-quiet button-small" id="reset-beverage-button" type="button">+ Neu</button>
+              </div>
+              <form class="form-stack compact-form" id="beverage-form">
+                <input id="beverage-id" type="hidden">
+                <label for="beverage-name">Getränk</label>
+                <input id="beverage-name" maxlength="120" placeholder="Pils" required>
+                <div class="split-fields">
+                  <div>
+                    <label for="beverage-keg-liters">Standardfass in Liter</label>
+                    <input id="beverage-keg-liters" type="number" min="0.001" step="0.001" inputmode="decimal" required>
+                  </div>
+                  <div>
+                    <label for="beverage-price-euros">Preis je Liter in €</label>
+                    <input id="beverage-price-euros" type="number" min="0" step="0.01" inputmode="decimal" required>
+                  </div>
+                </div>
+                <label class="toggle single-toggle">
+                  <input id="beverage-active" type="checkbox" checked>
+                  <span>Getränk aktiv und auswählbar</span>
+                </label>
+                <button class="button button-primary" type="submit">Getränk speichern</button>
+              </form>
+              <div class="record-list" id="beverage-list"></div>
+            </section>
+
+            <section class="panel management-section management-wide">
+              <h2>Eigenes Passwort ändern</h2>
+              <p class="muted">Nach der Änderung wirst du auf allen Geräten abgemeldet.</p>
+              <form class="form-stack" id="own-password-form">
+                <label for="current-password">Aktuelles Passwort</label>
+                <input id="current-password" type="password" autocomplete="current-password" maxlength="128" required>
+                <label for="new-own-password">Neues Passwort</label>
+                <input id="new-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+                <label for="confirm-own-password">Neues Passwort wiederholen</label>
+                <input id="confirm-own-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+                <button class="button button-primary" type="submit">Passwort ändern</button>
+                <p class="message" id="account-message" role="status"></p>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view="data" aria-labelledby="data-title">
+          <div class="view-heading reporting-heading">
+            <div>
+              <p class="eyebrow">Daten</p>
+              <h1 id="data-title">Buchungen &amp; Statistik</h1>
+            </div>
+            <button class="button button-quiet button-small" id="refresh-reporting-button" type="button">Aktualisieren</button>
+          </div>
+
+          <section class="panel reporting-context">
+            <label for="report-event">Veranstaltung auswerten</label>
+            <select id="report-event"></select>
+          </section>
+
+          <div class="metric-grid report-metrics">
+            <article class="metric-card">
+              <span>Buchungen</span>
+              <strong id="report-booking-count">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Kostenpflichtig</span>
+              <strong id="report-volume">–</strong>
+              <small>Liter</small>
+            </article>
+            <article class="metric-card">
+              <span>Betrag</span>
+              <strong class="metric-text" id="report-amount">–</strong>
+            </article>
+            <article class="metric-card">
+              <span>Wartung</span>
+              <strong id="report-maintenance">–</strong>
+              <small>Liter</small>
+            </article>
+          </div>
+
+          <div class="report-grid">
+            <section class="panel report-section">
+              <h2>Abrechnung pro Benutzer</h2>
+              <p class="muted">Kostenpflichtige Istmengen der ausgewählten Veranstaltung.</p>
+              <div class="record-list" id="billing-user-list"></div>
+            </section>
+
+            <section class="panel report-section report-wide">
+              <div class="section-heading">
+                <div>
+                  <h2>Buchungen</h2>
+                  <p class="muted">Alle Zapfungen eines NFC-Logins zusammengefasst, neueste zuerst.</p>
+                </div>
+                <small class="muted">max. 100</small>
+              </div>
+              <form class="booking-filters" id="booking-filter-form">
+                <select id="booking-user-filter" aria-label="Benutzer filtern">
+                  <option value="">Alle Benutzer</option>
+                </select>
+                <select id="booking-keg-filter" aria-label="Fass filtern">
+                  <option value="">Alle Fässer</option>
+                </select>
+                <select id="booking-kind-filter" aria-label="Buchungsart filtern">
+                  <option value="">Alle Arten</option>
+                  <option value="manual">Manuell</option>
+                  <option value="portion">Portion</option>
+                  <option value="top_up">Nachfüllen</option>
+                  <option value="maintenance">Wartung</option>
+                  <option value="free_admin">Adminfrei</option>
+                </select>
+                <select id="booking-completion-filter" aria-label="Abschluss filtern">
+                  <option value="">Alle Abschlüsse</option>
+                  <option value="target_reached">Ziel erreicht</option>
+                  <option value="released">Losgelassen</option>
+                  <option value="limit_reached">Zeitlimit</option>
+                  <option value="user_abort">Abgebrochen</option>
+                  <option value="fault">Fehler</option>
+                  <option value="shutdown">Shutdown</option>
+                </select>
+                <input id="booking-from-filter" type="datetime-local" aria-label="Buchungen ab">
+                <input id="booking-to-filter" type="datetime-local" aria-label="Buchungen bis">
+                <button class="button button-secondary" type="submit">Filter anwenden</button>
+              </form>
+              <p class="result-count" id="booking-result-count"></p>
+              <div class="record-list dense-list" id="booking-list"></div>
+            </section>
+
+            <section class="panel report-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Admin-Audit</h2>
+                  <p class="muted">Nachvollziehbare Verwaltungsaktionen.</p>
+                </div>
+                <small class="muted">letzte 50</small>
+              </div>
+              <div class="record-list dense-list" id="audit-list"></div>
+            </section>
+
+            <section class="panel report-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Technische Ereignisse</h2>
+                  <p class="muted">Warnungen und Laufzeitmeldungen.</p>
+                </div>
+                <small class="muted">letzte 50</small>
+              </div>
+              <div class="record-list dense-list" id="technical-event-list"></div>
+            </section>
+          </div>
+        </section>
+
+      </main>
+
+      <nav class="bottom-nav" aria-label="Admin-Navigation">
+        <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
+        <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
+        <button type="button" data-nav-view="kegs"><span>●</span>Fass</button>
+        <button type="button" data-nav-view="data"><span>●</span>Daten</button>
+        <button type="button" data-nav-view="settings"><span>●</span>Mehr</button>
+      </nav>
+    </div>
+
+    <div class="sheet-backdrop" id="user-sheet" hidden>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+        <header class="sheet-header">
+          <div>
+            <p class="eyebrow">Benutzerverwaltung</p>
+            <h2 id="editor-title">Benutzer bearbeiten</h2>
+          </div>
+          <button class="icon-button" id="close-user-sheet" type="button" aria-label="Schließen">×</button>
+        </header>
+        <form class="form-stack" id="user-form">
+          <input id="user-id" type="hidden">
+          <label for="first-name">Vorname</label>
+          <input id="first-name" maxlength="80" required>
+          <label for="last-name">Nachname <small>optional</small></label>
+          <input id="last-name" maxlength="80">
+          <label for="user-note">Zusatzfeld <small>optional</small></label>
+          <input id="user-note" maxlength="500">
+          <div class="toggle-grid">
+            <label class="toggle"><input id="user-is-admin" type="checkbox"><span>Adminzugang</span></label>
+            <label class="toggle"><input id="user-active" type="checkbox" checked><span>Benutzer aktiv</span></label>
+          </div>
+          <button class="button button-primary" type="submit">Speichern</button>
+          <p class="message" id="user-message" role="status"></p>
+        </form>
+
+        <section class="editor-section destructive-section" id="delete-user-section" hidden>
+          <h3>Benutzer löschen</h3>
+          <p class="muted">
+            Der Benutzer und seine Armbänder verschwinden aus der Verwaltung.
+            Vorhandene Buchungen bleiben erhalten.
+          </p>
+          <button class="button button-danger" id="delete-user-button" type="button">
+            Benutzer löschen
+          </button>
+        </section>
+
+        <section class="editor-section" id="password-section" hidden>
+          <h3>Adminpasswort</h3>
+          <p class="muted" id="password-state"></p>
+          <form class="inline-form" id="reset-password-form">
+            <input id="reset-password" type="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Neues Passwort" required>
+            <button class="button button-secondary" type="submit">Setzen</button>
+          </form>
+        </section>
+
+        <section class="editor-section" id="cards-section" hidden>
+          <div class="section-heading">
+            <div>
+              <h3>Armbänder</h3>
+              <p class="muted">UIDs werden nur verkürzt angezeigt.</p>
+            </div>
+            <button class="button button-secondary button-small" id="capture-card-button" type="button">+ Zuweisen</button>
+          </div>
+          <div class="card-list" id="card-list"></div>
+        </section>
+      </section>
+    </div>
+
+    <div class="capture-backdrop" id="capture-dialog" hidden>
+      <section class="capture-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
+        <div class="reader-animation" aria-hidden="true"><span></span></div>
+        <p class="eyebrow">Live am Zapfhahn</p>
+        <h2 id="capture-title">Armband zuweisen</h2>
+        <p id="capture-instruction">NFC-Leser wird vorbereitet …</p>
+        <p class="muted">Die Zapfanlage bleibt währenddessen gesperrt.</p>
+        <button class="button button-quiet" id="cancel-capture-button" type="button">Abbrechen</button>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

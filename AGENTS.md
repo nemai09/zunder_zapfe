@@ -1,56 +1,59 @@
-# Agent guide for Zunder Zapfe
+# Agentenleitfaden für Zunder Zapfe
 
-This file applies to the complete repository. It provides stable project
-context for coding agents; contributor-specific identities and local tool
-preferences do not belong here.
+Diese Datei gilt für das gesamte Repository. Sie stellt stabilen Projektkontext
+für Entwicklungsagenten bereit. Persönliche Identitäten und lokale
+Werkzeugpräferenzen gehören nicht hierher.
 
-## Read first
+## Zuerst lesen
 
-1. `requirements/anforderungskatalog.txt` for accepted product behaviour.
-2. `docs/README.md` for the documentation map and sources of truth.
-3. `docs/project-status.md` before assuming a component is implemented.
-4. The relevant executable interface before changing its documentation.
+1. `requirements/anforderungskatalog.txt` für das akzeptierte Produktverhalten.
+2. `docs/README.md` für Dokumentationsstruktur und Quellen der Wahrheit.
+3. `docs/project-status.md`, bevor eine Komponente als implementiert angenommen
+   wird.
+4. Den relevanten ausführbaren Vertrag, bevor seine Dokumentation geändert
+   wird.
 
-## Architecture boundaries
+## Architekturgrenzen
 
-- Web code calls the local HTTP API; it never controls hardware or SQLite
-  directly.
-- `TapController` is the only component allowed to coordinate valve and flow
-  operations.
-- `TapService` connects NFC identity, tap control, active event/keg context and
-  persistence.
-- Hardware implementations satisfy the protocols in
+- Webcode verwendet ausschließlich die lokale HTTP-API und steuert weder
+  Hardware noch SQLite direkt.
+- Nur `TapController` darf Ventil- und Durchflussvorgänge koordinieren.
+- `TapService` verbindet NFC-Identität, Zapfsteuerung, aktiven
+  Veranstaltungs-/Fasskontext und Persistenz.
+- Hardwareimplementierungen erfüllen die Protocols unter
   `src/zunder_zapfe/hardware/interfaces.py`.
-- Concrete GPIO numbers, electrical levels and libraries remain adapter
-  configuration until hardware decisions are approved.
-- The default runtime uses real ACR122U NFC and simulated valve, flow meter and
-  emergency stop.
+- Konkrete GPIOs, elektrische Pegel und Bibliotheken bleiben
+  Adapterkonfiguration, bis die Hardwareentscheidungen freigegeben sind.
+- Die Standardlaufzeit verwendet einen realen ACR122U sowie Simulatoren für
+  Ventil, Durchflussmesser und Not-Aus.
 
-## Safety and data invariants
+## Safety- und Dateninvarianten
 
-- Start, stop, faults and shutdown must leave the valve closed.
-- `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` is a temporary, documented
-  alpha deviation for tests without flow hardware. Never broaden it to disable
-  the control watchdog, emergency stop or time limits; set it to `0` before
-  real valve hardware is connected.
-- Safety locks stay latched until a valid admin-card reset; restoring an input
-  alone must not resume pouring.
-- Volume is stored in millilitres, prices in cents per litre and amounts in
-  cents. Do not introduce floating-point billing.
-- Completed tap bookings are immutable. Corrections require a future explicit
-  domain operation, never an update or delete.
-- Schema changes require an Alembic migration. Never edit a deployed SQLite
-  database as an application workflow.
-- The application remains offline-capable and bound to loopback by default.
+- Start, Stopp, Fehler und Shutdown müssen das Ventil geschlossen hinterlassen.
+- `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` ist eine zeitlich begrenzte
+  Alpha-Abweichung für Tests ohne Durchflusshardware. Sie darf niemals den
+  Steuerungs-Watchdog, Not-Aus oder Zeitlimits deaktivieren und muss vor dem
+  Anschluss realer Ventilhardware auf `0` stehen.
+- Sicherheitssperren bleiben bis zu einem gültigen Admin-Reset verriegelt. Das
+  Wiederherstellen eines Eingangs darf keine Zapfung fortsetzen.
+- Volumen werden in Millilitern, Preise in Cent pro Liter und Beträge in Cent
+  gespeichert. Gleitkommawerte für Abrechnung sind unzulässig.
+- Abgeschlossene Zapfbuchungen sind unveränderlich. Korrekturen benötigen eine
+  spätere explizite Fachoperation und dürfen niemals per Update oder Delete
+  erfolgen.
+- Schemaänderungen benötigen eine Alembic-Migration. Eine ausgelieferte
+  SQLite-Datenbank darf nicht als Anwendungsworkflow manuell bearbeitet werden.
+- Die Anwendung bleibt offlinefähig und standardmäßig an Loopback gebunden.
 
-## Secrets and local data
+## Geheimnisse und lokale Daten
 
-Never commit credentials, private keys, environment files, real NFC UIDs,
-database files, backups or logs. Use `config/web.env.example` and obvious demo
-identifiers. Do not add personal agent names, emails or commit identities to
-repository instructions.
+Zugangsdaten, private Schlüssel, Umgebungsdateien, reale NFC-UIDs,
+Datenbankdateien, Backups und Logs dürfen niemals committed werden.
+`config/web.env.example` und eindeutig erkennbare Demo-IDs dienen als Vorlagen.
+Persönliche Agentennamen, E-Mail-Adressen und Commitidentitäten gehören nicht
+in Repository-Anweisungen.
 
-## Development commands
+## Entwicklungsbefehle
 
 Windows PowerShell:
 
@@ -70,27 +73,33 @@ Raspberry Pi/Linux:
 .venv/bin/python -m pytest
 ```
 
-Do not use `sudo pip`. The Pi installer performs privileged system setup but
-runs repository-local Python installation as the repository user.
+Im Checkout darf niemals `sudo pip` verwendet werden. Der Pi-Installer führt
+die lokale Python-Installation als Besitzer des Repositorys aus.
 
-## Change rules
+## Änderungsregeln
 
-- Work on a short branch; `main` changes only through pull requests.
-- Preserve requirement IDs and reference affected IDs in tests, commits or PRs
-  when applicable.
-- Interface changes require implementation, tests, human-readable contract and
-  generated contract updates in one PR.
-- Regenerate `docs/interfaces/openapi.json` after HTTP contract changes with
-  `python scripts/export_openapi.py`.
-- Add a migration and migration test for persistence schema changes.
-- Implement hardware-contract extensions in simulators before real adapters.
-- Keep simulator-only HTTP routes disabled by default and clearly marked.
+- Auf einem kurzen Branch arbeiten; `main` wird ausschließlich per Pull
+  Request verändert.
+- Alle Commit-Nachrichten folgen verbindlich
+  [`docs/commit-konvention.md`](docs/commit-konvention.md).
+- Anforderungs-IDs erhalten und bei relevanten Änderungen in Tests, Commit-Text
+  oder PR nennen.
+- Schnittstellenänderungen aktualisieren Implementierung, Tests,
+  menschenlesbaren Vertrag und generiertes Artefakt im selben PR.
+- Nach HTTP-Änderungen `docs/interfaces/openapi.json` mit
+  `python scripts/export_openapi.py` regenerieren.
+- Persistenzänderungen benötigen Migration und Migrationstest.
+- Hardwareverträge zuerst in Simulatoren implementieren, bevor reale Adapter
+  ergänzt werden.
+- Simulatorrouten bleiben standardmäßig deaktiviert und klar gekennzeichnet.
+- Projektdokumentation und Commit-Nachrichten werden auf Deutsch gepflegt.
 
-## Definition of done
+## Definition of Done
 
-- Relevant requirements and open decisions are identified.
-- Safety invariants and architecture boundaries remain intact.
-- Tests, Ruff and documentation checks pass.
-- Human and machine-readable interfaces agree.
-- Operational documentation reflects deployment impact.
-- The diff contains no secret, personal runtime data or generated database.
+- Relevante Anforderungen und offene Entscheidungen sind identifiziert.
+- Safety-Invarianten und Architekturgrenzen bleiben erhalten.
+- Tests, Ruff und Dokumentationsprüfungen bestehen.
+- Menschen- und maschinenlesbare Schnittstellen stimmen überein.
+- Betriebsdokumentation beschreibt die Auswirkungen auf das Zielsystem.
+- Der Diff enthält keine Geheimnisse, persönlichen Laufzeitdaten oder
+  generierten Datenbanken.
