@@ -41,6 +41,12 @@ flowchart LR
 `TapService` kennt keine GPIOs. Er loest Karten und den aktiven fachlichen
 Kontext auf, konvertiert Impulse und nimmt die Buchung entgegen.
 
+Seit M7.9 prüft `TapService` vor jeder Benutzerauflösung die externe
+Superadmin-Identität. Eine Übereinstimmung erzeugt den benutzerlosen Zustand
+`SUPERADMIN` und niemals eine normale NFC-Sitzung. Die lokale und entfernte
+Armbandzuordnung verwenden dieselbe Identität als Reservierung und lehnen sie
+vor jedem Datenbankschreibzugriff ab.
+
 ## Buchungssnapshot
 
 Beim Start jeder manuellen Zapfung, Portion, Nachfuellung oder Wartungszapfung werden folgende

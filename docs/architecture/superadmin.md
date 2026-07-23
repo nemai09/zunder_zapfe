@@ -25,12 +25,14 @@ Das Einrichtungswerkzeug `zunder-zapfe-superadmin-card`:
 - gibt die UID nicht aus,
 - nimmt keine UID als Kommandozeilenargument an,
 - erstellt die Datei exklusiv,
-- überschreibt kein bestehendes Credential.
+- überschreibt kein bestehendes Credential,
+- prüft vor dem Schreiben die produktive Benutzerdatenbank und lehnt bereits
+  zugeordnete Karten ab.
 
 ## Laufzeitzustände
 
-Die nachfolgenden Zustände ergänzen den Zapfzustandsautomaten in einem späteren
-M7.9-Checkpoint. Sie sind in der M7.8-Grundlage noch nicht aktiv.
+Der Zustand `SUPERADMIN` ist seit M7.9 ausführbar. Die dargestellten
+Folgezustände für Wartung und Übergabe werden im nächsten Checkpoint ergänzt.
 
 ```mermaid
 stateDiagram-v2
@@ -81,8 +83,8 @@ Damit gelten gleichzeitig:
 - nachvollziehbarer Abschluss bei Kartenentfernung oder Fehler.
 
 Das dafür notwendige Persistenz- und Auditmodell folgt in M7.9 per
-Alembic-Migration. Eine zweite Ventilsteuerung außerhalb des `TapController`
-ist unzulässig.
+Alembic-Migration als nächster Teil dieses Arbeitspakets. Eine zweite
+Ventilsteuerung außerhalb des `TapController` ist unzulässig.
 
 ## Notfallanlage
 
@@ -105,7 +107,8 @@ auditierte Fachoperationen.
 ## Implementierungsreihenfolge
 
 1. `M7.8 PLAN/FEAT`: CR-003, externe Identität, lokale Provisionierung.
-2. `M7.9 DB/FEAT`: actorfähiges Audit, Wartungsentnahme ohne Benutzer und
-   präsenzgebundene Backendzustände.
+2. `M7.9 FEAT`: präsenzgebundener Backendzustand und beidseitige
+   Kartenkollisionssperre; anschließend actorfähiges Audit und
+   Wartungsentnahme ohne Benutzer.
 3. `M7.10 UI`: Low-Level-Menü, Admin-Toast, Notfallanlage, Wartung, Diagnose.
 4. `M7.11 TEST`: Schnittstellen-, Safety-, Neustart- und Raspberry-Pi-Abnahme.

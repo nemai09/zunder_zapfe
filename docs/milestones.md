@@ -100,7 +100,7 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
 | `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen und Registrierungsbegrüßung implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
 | `M7.8 PLAN/FEAT` | CR-003, externer Superadmin-Vertrag und unveränderliche lokale Kartenidentität |
-| `M7.9 DB/FEAT` | präsenzgebundene Backendzustände, actorfähiges Audit und Wartungsentnahme ohne Benutzer |
+| `M7.9 DB/FEAT` | präsenzgebundener Backendzustand und beidseitige Kartenkollisionssperre implementiert; actorfähiges Audit und Wartungsentnahme ohne Benutzer folgen |
 | `M7.10 UI` | Low-Level-Menü mit WLAN, Notfallanlage, Wartungszapfung und Diagnose; wirkungsloser normaler Admin-Button |
 | `M7.11 TEST` | vollständige Schnittstellen-, Smartphone-, Superadmin-, Neustart- und Zielsystemabnahme |
 

@@ -18,6 +18,7 @@ class TapState(StrEnum):
     IDLE = "idle"
     AUTHENTICATED = "authenticated"
     ADMIN = "admin"
+    SUPERADMIN = "superadmin"
     NFC_CAPTURE = "nfc_capture"
     MANUAL_POURING = "manual_pouring"
     PORTION_POURING = "portion_pouring"
@@ -234,6 +235,33 @@ class TapController:
             self._require_state(TapState.ADMIN)
             self._session_last_active_at = self._clock()
             self._state = TapState.AUTHENTICATED
+
+    def enter_superadmin_mode(self) -> bool:
+        """Enter local maintenance access without creating a user session."""
+        with self._mutex:
+            self._synchronize_emergency_stop()
+            if self._state is not TapState.IDLE:
+                return False
+            self._hardware.valve.close()
+            self._session = None
+            self._session_last_active_at = None
+            self._top_up_deadline = None
+            self._state = TapState.SUPERADMIN
+            return True
+
+    def exit_superadmin_mode(self) -> None:
+        """End local maintenance access while preserving safety locks."""
+        with self._mutex:
+            self._hardware.valve.close()
+            self._synchronize_emergency_stop()
+            if self._state is TapState.SUPERADMIN:
+                self._state = TapState.IDLE
+            elif self._state not in {
+                TapState.FAULT_LOCKED,
+                TapState.EMERGENCY_STOP,
+                TapState.STOPPED,
+            }:
+                raise InvalidTransition("No superadmin session is active")
 
     def set_admin_session_timeout(self, timeout_seconds: float) -> None:
         with self._mutex:

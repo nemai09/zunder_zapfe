@@ -9,9 +9,14 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import URL, Engine, event, select
+from sqlalchemy import URL, Engine, event, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.superadmin_identity import (
+    SuperadminIdentity,
+    load_superadmin_identity,
+    provision_superadmin_identity,
+)
 from zunder_zapfe.backend.tap_controller import TapLimits, TapState
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.configuration import KioskSettings
@@ -131,6 +136,9 @@ def seed_data(sessions: sessionmaker[Session]) -> dict[str, int]:
 def start_service(
     sessions: sessionmaker[Session],
     clock: ManualClock | None = None,
+    *,
+    superadmin_identity: SuperadminIdentity | None = None,
+    superadmin_removal_grace_seconds: float = 1.0,
 ) -> tuple[TapService, HardwareLayer, SimulatedNfcReader, SimulatedFlowMeter]:
     actual_clock = clock or ManualClock()
     hardware, nfc, flow_meter = simulated_hardware(actual_clock)
@@ -144,9 +152,21 @@ def start_service(
         monotonic_clock=actual_clock,
         timestamp_clock=lambda: FIXED_TIME,
         run_background=False,
+        superadmin_identity=superadmin_identity,
+        superadmin_removal_grace_seconds=superadmin_removal_grace_seconds,
     )
     service.start()
     return service, hardware, nfc, flow_meter
+
+
+def _superadmin_identity(tmp_path: Path, uid: str = "D00DCAFE") -> SuperadminIdentity:
+    credential_path = tmp_path / "superadmin.credential"
+    provision_superadmin_identity(uid, credential_path)
+    identity = load_superadmin_identity(
+        {"ZUNDER_ZAPFE_SUPERADMIN_CREDENTIAL_PATH": str(credential_path)}
+    )
+    assert identity is not None
+    return identity
 
 
 def stop_service(service: TapService, hardware: HardwareLayer) -> None:
@@ -174,6 +194,54 @@ def test_zz_aut_002_007_008_nfc_resolves_only_active_known_cards(
 
         assert service.authenticate_card("04AABBCC") is False
         assert hardware.valve.snapshot().is_open is False
+    finally:
+        stop_service(service, hardware)
+
+
+def test_zz_aut_013_014_superadmin_card_has_precedence_and_requires_presence(
+    database: tuple[Engine, sessionmaker[Session]],
+    tmp_path: Path,
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    with sessions.begin() as session:
+        user = Repository(session).create_user("Legacy Collision")
+        Repository(session).add_nfc_card(user.id, "D00DCAFE")
+    clock = ManualClock()
+    service, hardware, nfc, _flow_meter = start_service(
+        sessions,
+        clock,
+        superadmin_identity=_superadmin_identity(tmp_path),
+    )
+    try:
+        nfc.present_card("D00DCAFE")
+        assert service.process_nfc_snapshot() is True
+        status = service.status_dict()
+        assert status["state"] is TapState.SUPERADMIN
+        assert status["superadmin_active"] is True
+        assert status["user_id"] is None
+        assert status["is_admin"] is False
+        assert status["valve_open"] is False
+        service.require_superadmin_presence()
+
+        nfc.remove_card()
+        assert service.process_nfc_snapshot() is False
+        clock.advance(0.9)
+        assert service.process_nfc_snapshot() is False
+        assert service.status_dict()["state"] is TapState.SUPERADMIN
+        clock.advance(0.2)
+        assert service.process_nfc_snapshot() is True
+        assert service.status_dict()["state"] is TapState.IDLE
+        assert service.status_dict()["superadmin_active"] is False
+        with pytest.raises(PermissionError):
+            service.require_superadmin_presence()
+
+        with sessions() as session:
+            event_types = list(
+                session.scalars(select(TechnicalEvent.event_type).order_by(TechnicalEvent.id))
+            )
+        assert "superadmin.session_started" in event_types
+        assert "superadmin.session_ended" in event_types
     finally:
         stop_service(service, hardware)
 
@@ -733,3 +801,21 @@ def test_alpha_demo_seed_only_populates_an_empty_database(
     with sessions.begin() as session:
         with pytest.raises(DemoSeedRefused, match="requires an empty database"):
             seed_demo_data(session, year=2026)
+
+
+def test_zz_aut_013_demo_seed_cannot_assign_superadmin_card(
+    database: tuple[Engine, sessionmaker[Session]],
+    tmp_path: Path,
+) -> None:
+    _engine, sessions = database
+    with sessions.begin() as session:
+        with pytest.raises(DemoSeedRefused, match="Superadmin-Karte"):
+            seed_demo_data(
+                session,
+                year=2026,
+                admin_card_uid="D00DCAFE",
+                superadmin_identity=_superadmin_identity(tmp_path),
+            )
+
+    with sessions() as session:
+        assert session.scalar(select(func.count(User.id))) == 0

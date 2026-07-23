@@ -8,6 +8,10 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from zunder_zapfe.backend.superadmin_identity import (
+    SuperadminIdentity,
+    load_superadmin_identity,
+)
 from zunder_zapfe.persistence import create_database_engine, create_session_factory
 from zunder_zapfe.persistence.models import Beverage, Event, Keg, NfcCard, User, UserRole
 from zunder_zapfe.persistence.repository import Repository
@@ -23,8 +27,13 @@ def seed_demo_data(
     year: int | None = None,
     user_card_uid: str = "D00DCAFE",
     admin_card_uid: str = "C0DEC0DE",
+    superadmin_identity: SuperadminIdentity | None = None,
 ) -> dict[str, object]:
     """Create a complete demo tap context, but only in an empty database."""
+    if superadmin_identity is not None and any(
+        superadmin_identity.matches(uid) for uid in (user_card_uid, admin_card_uid)
+    ):
+        raise DemoSeedRefused("Die Superadmin-Karte kann keinem Demo-Benutzer zugeordnet werden")
     populated_tables = [
         model.__tablename__
         for model in (Event, User, NfcCard, Beverage, Keg)
@@ -71,6 +80,7 @@ def run() -> None:
     arguments = parser.parse_args()
     engine = create_database_engine()
     sessions = create_session_factory(engine)
+    superadmin_identity = load_superadmin_identity()
     try:
         with sessions.begin() as session:
             result = seed_demo_data(
@@ -78,6 +88,7 @@ def run() -> None:
                 year=arguments.year,
                 user_card_uid=arguments.user_card,
                 admin_card_uid=arguments.admin_card,
+                superadmin_identity=superadmin_identity,
             )
     finally:
         engine.dispose()

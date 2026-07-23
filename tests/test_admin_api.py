@@ -10,6 +10,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.superadmin_identity import (
+    load_superadmin_identity,
+    provision_superadmin_identity,
+)
 from zunder_zapfe.backend.wifi_mode_service import WifiStatus
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
@@ -28,6 +32,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADMIN_UID = "04DDEEFF"
 USER_UID = "04AABBCC"
 NEW_UID = "11223344"
+SUPERADMIN_UID = "D00DCAFE"
 
 
 class FakeWifiModeService:
@@ -80,6 +85,12 @@ def admin_api(
         flow_meter=SimulatedFlowMeter(),
         emergency_stop=SimulatedEmergencyStop(),
     )
+    credential_path = tmp_path / "superadmin.credential"
+    provision_superadmin_identity(SUPERADMIN_UID, credential_path)
+    superadmin_identity = load_superadmin_identity(
+        {"ZUNDER_ZAPFE_SUPERADMIN_CREDENTIAL_PATH": str(credential_path)}
+    )
+    assert superadmin_identity is not None
     application = create_app(
         hardware,
         sessions,
@@ -87,6 +98,7 @@ def admin_api(
         run_background=False,
         kiosk_settings=KioskSettings(admin_session_timeout_seconds=30),
         wifi_mode_service=FakeWifiModeService(),
+        superadmin_identity=superadmin_identity,
     )
     try:
         with TestClient(application, client=("127.0.0.1", 50000)) as client:
@@ -188,6 +200,26 @@ def test_live_nfc_capture_requires_removal_and_never_returns_full_uid(
         audit = session.scalars(select(AdminAuditEntry).order_by(AdminAuditEntry.id)).all()
         assert audit[-1].action == "nfc_card.assigned"
         assert NEW_UID not in (audit[-1].new_values_json or "")
+
+
+def test_zz_aut_013_normal_capture_rejects_superadmin_card(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, ids = admin_api
+    enter_admin(client)
+    capture_path = f"/api/admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    assert client.post(capture_path).json()["state"] == "remove_card"
+    remove(client)
+    assert client.post(capture_path).json()["state"] == "waiting"
+    present(client, SUPERADMIN_UID)
+
+    response = client.post(capture_path)
+
+    assert response.status_code == 409
+    assert "Superadmin-Karte" in response.json()["detail"]
+    with sessions() as session:
+        assert Repository(session).find_nfc_card(SUPERADMIN_UID) is None
 
 
 def test_nfc_assignment_can_be_removed_audited_and_reused(

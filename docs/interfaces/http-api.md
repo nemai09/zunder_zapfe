@@ -43,7 +43,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 
 | Feld | Typ | Bedeutung |
 | --- | --- | --- |
-| `state` | `str` | Zustand aus dem Zustandsautomaten, einschließlich des ventilgesperrten `nfc_capture` |
+| `state` | `str` | Zustand aus dem Zustandsautomaten, einschließlich `nfc_capture` und des benutzerlosen `superadmin` |
 | `user_id` | `str | null` | intern angemeldeter Benutzer |
 | `is_admin` | `bool` | Rolle der aktuellen Sitzung |
 | `valve_open` | `bool` | angeforderter Ventilzustand |
@@ -60,6 +60,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `last_booking` | `object | null` | letzte im Prozess persistierte Buchung |
 | `nfc_feedback` | `"unknown" | "blocked" | null` | kurzlebige Ablehnungsursache für die Idle-WebUI |
 | `registration_welcome` | `str | null` | kurzlebiger Anzeigename nach erfolgreicher Armbandzuordnung; keine Anmeldung |
+| `superadmin_active` | `bool` | externe Superadmin-Karte ist im präsenzgebundenen Backendzustand aktiv |
 
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
@@ -146,6 +147,8 @@ muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächst
 kurz aufgelegte Armband übernommen wird. So kann ein noch aufliegendes
 Admin-Armband nicht versehentlich zugeordnet werden. Vollständige UIDs werden
 weder in Adminantworten noch in Admin-Auditwerten ausgegeben.
+Die externe Superadmin-Karte wird vor jeder lokalen und entfernten Zuordnung
+abgewiesen und erscheint ebenfalls nicht in der Antwort.
 Eine entfernte UID darf danach neu zugeordnet werden. Das letzte aktive
 Armband eines aktiven Admins kann weder gesperrt noch entfernt werden.
 Ein zugeordnetes oder bereits anderweitig vergebenes Armband wird nach Ende

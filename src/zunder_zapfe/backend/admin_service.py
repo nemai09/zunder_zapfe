@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.superadmin_identity import SuperadminIdentity
 from zunder_zapfe.backend.tap_service import TapService
 from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
 from zunder_zapfe.hardware import HardwareLayer
@@ -59,12 +60,14 @@ class AdminService:
         *,
         default_timeout_seconds: int = 30,
         wifi_mode_service: WifiModeService | None = None,
+        superadmin_identity: SuperadminIdentity | None = None,
     ) -> None:
         self._hardware = hardware
         self._sessions = sessions
         self._tap_service = tap_service
         self._default_timeout_seconds = self._validate_timeout(default_timeout_seconds)
         self._wifi_mode_service = wifi_mode_service or WifiModeService()
+        self._superadmin_identity = superadmin_identity
         self._capture: _NfcCapture | None = None
         self._capture_sequence = 0
         self._capture_timer: threading.Timer | None = None
@@ -727,6 +730,9 @@ class AdminService:
             except ValueError as error:
                 self._cancel_capture_unlocked()
                 raise AdminConflict("The reader returned an invalid NFC UID") from error
+            if self._superadmin_identity is not None and self._superadmin_identity.matches(uid):
+                self._cancel_capture_unlocked()
+                raise AdminConflict("Die Superadmin-Karte kann keinem Benutzer zugeordnet werden")
 
             with self._sessions.begin() as session:
                 repository = Repository(session)

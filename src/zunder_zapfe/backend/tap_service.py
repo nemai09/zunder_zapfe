@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.superadmin_identity import SuperadminIdentity
 from zunder_zapfe.backend.tap_controller import (
     PourRecord,
     TapController,
@@ -89,9 +90,13 @@ class TapService:
         timestamp_clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         run_background: bool = True,
         background_interval_seconds: float = 0.05,
+        superadmin_identity: SuperadminIdentity | None = None,
+        superadmin_removal_grace_seconds: float = 1.0,
     ) -> None:
         if background_interval_seconds <= 0:
             raise ValueError("Background interval must be greater than zero")
+        if not 0 < superadmin_removal_grace_seconds <= 2:
+            raise ValueError("Superadmin removal grace must be between zero and two seconds")
         self._hardware = hardware
         self._sessions = sessions
         self._calibration = calibration or FlowCalibration()
@@ -103,6 +108,8 @@ class TapService:
         self._timestamp_clock = timestamp_clock
         self._run_background = run_background
         self._background_interval_seconds = background_interval_seconds
+        self._superadmin_identity = superadmin_identity
+        self._superadmin_removal_grace_seconds = superadmin_removal_grace_seconds
         self._mutex = threading.RLock()
         self._background_stop = threading.Event()
         self._background_thread: threading.Thread | None = None
@@ -110,6 +117,7 @@ class TapService:
         self._login_session_id: str | None = None
         self._pending_booking: _PendingBooking | None = None
         self._last_presented_uid: str | None = None
+        self._superadmin_absent_since: float | None = None
         self._nfc_login_suppressed_until_removal = False
         self._nfc_feedback: str | None = None
         self._nfc_feedback_until: float | None = None
@@ -155,9 +163,29 @@ class TapService:
             self._authenticated_user = None
             self._login_session_id = None
             self._pending_booking = None
+            self._superadmin_absent_since = None
 
     def authenticate_card(self, uid: str) -> bool:
         canonical_uid = canonicalize_nfc_uid(uid)
+        if self.is_superadmin_uid(canonical_uid):
+            accepted = self._controller.enter_superadmin_mode()
+            with self._mutex:
+                if accepted:
+                    self._authenticated_user = None
+                    self._login_session_id = None
+                    self._pending_booking = None
+                    self._last_presented_uid = canonical_uid
+                    self._superadmin_absent_since = None
+                    self._clear_nfc_feedback()
+                    self._clear_registration_welcome()
+            if accepted:
+                self._record_technical_event(
+                    severity="info",
+                    event_type="superadmin.session_started",
+                    message="Lokaler Superadmin-Zugang gestartet",
+                )
+            return accepted
+
         with self._sessions() as session:
             repository = Repository(session)
             card = repository.find_nfc_card(canonical_uid)
@@ -187,9 +215,12 @@ class TapService:
             return accepted
 
     def process_nfc_snapshot(self) -> bool:
-        if self._controller.snapshot().state is TapState.NFC_CAPTURE:
-            return False
+        controller_state = self._controller.snapshot().state
         nfc = self._hardware.nfc.snapshot()
+        if controller_state is TapState.SUPERADMIN:
+            return self._process_superadmin_presence(nfc)
+        if controller_state is TapState.NFC_CAPTURE:
+            return False
         if nfc.state != "card" or not nfc.uid:
             with self._mutex:
                 self._last_presented_uid = None
@@ -217,6 +248,24 @@ class TapService:
                 return False
             self._last_presented_uid = uid
         return self.authenticate_card(uid)
+
+    def is_superadmin_uid(self, uid: str) -> bool:
+        identity = self._superadmin_identity
+        return identity is not None and identity.matches(uid)
+
+    def require_superadmin_presence(self) -> None:
+        status = self._controller.snapshot()
+        nfc = self._hardware.nfc.snapshot()
+        if status.state is not TapState.SUPERADMIN or nfc.state != "card" or not nfc.uid:
+            raise PermissionError("A presented superadmin card is required")
+        try:
+            canonical_uid = canonicalize_nfc_uid(nfc.uid)
+        except ValueError as error:
+            raise PermissionError("A valid superadmin card is required") from error
+        with self._mutex:
+            expected_uid = self._last_presented_uid
+        if canonical_uid != expected_uid or not self.is_superadmin_uid(canonical_uid):
+            raise PermissionError("A presented superadmin card is required")
 
     def logout(self) -> None:
         self._controller.logout()
@@ -406,6 +455,7 @@ class TapService:
                     "last_booking": self._last_booking,
                     "nfc_feedback": nfc_feedback,
                     "registration_welcome": registration_welcome,
+                    "superadmin_active": status["state"] is TapState.SUPERADMIN,
                     "measured_volume_ml": self._calibration.measured_volume_ml(
                         int(status["measured_pulses"])
                     ),
@@ -413,6 +463,39 @@ class TapService:
                 }
             )
         return status
+
+    def _process_superadmin_presence(self, nfc: Any) -> bool:
+        presented_uid: str | None = None
+        if nfc.state == "card" and nfc.uid:
+            try:
+                presented_uid = canonicalize_nfc_uid(nfc.uid)
+            except ValueError:
+                presented_uid = None
+
+        with self._mutex:
+            expected_uid = self._last_presented_uid
+            if presented_uid is not None and presented_uid == expected_uid:
+                self._superadmin_absent_since = None
+                return False
+            now = self._monotonic_clock()
+            if self._superadmin_absent_since is None:
+                self._superadmin_absent_since = now
+                return False
+            if now - self._superadmin_absent_since < self._superadmin_removal_grace_seconds:
+                return False
+
+        self._controller.exit_superadmin_mode()
+        with self._mutex:
+            self._superadmin_absent_since = None
+            self._last_presented_uid = None
+            self._nfc_login_suppressed_until_removal = presented_uid is not None
+        self._record_technical_event(
+            severity="info",
+            event_type="superadmin.session_ended",
+            message="Lokaler Superadmin-Zugang durch Kartenentfernung beendet",
+            details={"reader_state": nfc.state},
+        )
+        return True
 
     def _set_nfc_feedback(self, feedback: str) -> None:
         with self._mutex:

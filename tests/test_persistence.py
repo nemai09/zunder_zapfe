@@ -27,6 +27,7 @@ from zunder_zapfe.persistence.models import (
     UserRole,
 )
 from zunder_zapfe.persistence.repository import NewTapBooking, Repository
+from zunder_zapfe.superadmin_card import ensure_uid_is_not_assigned
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -108,6 +109,24 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     }
     assert booking_columns["login_session_id"]["nullable"] is False
     command.check(alembic_config(str(migrated_engine.url)))
+
+
+def test_zz_aut_013_superadmin_provisioning_rejects_existing_user_card(
+    migrated_engine: Engine,
+) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        user = repository.create_user("Bereits zugeordnet")
+        repository.add_nfc_card(user.id, "D00DCAFE")
+
+    with pytest.raises(
+        RuntimeError,
+        match="bereits einem Benutzer zugeordnet",
+    ):
+        ensure_uid_is_not_assigned("d0-0d-ca-fe", sessions)
+
+    ensure_uid_is_not_assigned("DEADBEEF", sessions)
 
 
 def test_initial_migration_creates_missing_database_directory(tmp_path: Path) -> None:

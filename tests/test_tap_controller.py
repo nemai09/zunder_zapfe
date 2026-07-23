@@ -109,6 +109,22 @@ def test_manual_abort_records_only_measured_pulses() -> None:
     assert controller.snapshot().state is TapState.AUTHENTICATED
 
 
+def test_zz_aut_014_superadmin_state_has_no_user_session_and_keeps_valve_closed() -> None:
+    controller, hardware, _clock, _flow_meter, _emergency_stop = tap_setup()
+
+    assert controller.enter_superadmin_mode() is True
+
+    status = controller.snapshot()
+    assert status.state is TapState.SUPERADMIN
+    assert status.user_id is None
+    assert status.is_admin is False
+    assert hardware.valve.snapshot().is_open is False
+    assert controller.present_authenticated_card("user-1") is False
+
+    controller.exit_superadmin_mode()
+    assert controller.snapshot().state is TapState.IDLE
+
+
 def test_zz_tap_013_manual_pour_stops_on_release_and_records_actual_pulses() -> None:
     controller, hardware, _clock, flow_meter, _emergency_stop = tap_setup()
     controller.present_authenticated_card("user-1")

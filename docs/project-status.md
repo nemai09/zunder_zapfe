@@ -65,6 +65,11 @@ Phase: Alpha-Entwicklung
   der Benutzer- und NFC-Tabellen
 - lokales, nicht überschreibendes Einrichtungswerkzeug, das die
   Superadmin-Karte direkt am ACR122U erfasst und ihre UID nicht ausgibt
+- Datenbank-Kollisionsprüfung bei der Superadmin-Einrichtung sowie umgekehrte
+  Sperre der Superadmin-Karte in lokaler und Smartphone-NFC-Zuordnung
+- eigener benutzerloser `SUPERADMIN`-Backendzustand mit technischer
+  Start-/Ende-Protokollierung und einer Sekunde Entprellung bei Karten- oder
+  Leserentfernung
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -80,7 +85,8 @@ Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
 einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe,
 der Loginbuchungen und der Laufzeitoptimierung in `M7.7` bestehen 136 Tests.
 Die externe Credential-Grundlage aus `M7.8` erhöht den lokal geprüften Stand
-auf 142 Tests; ihre ACR122U- und Zielsystemabnahme ist noch offen.
+auf 142 Tests. Mit präsenzgebundenem Zustand und Kollisionssperren aus M7.9
+bestehen 148 Tests; ihre ACR122U- und Zielsystemabnahme ist noch offen.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -88,7 +94,7 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit, Sicherheitsreset und externe Superadmin-Credential-Grundlage | Superadmin-Laufzeitautorisierung, Notfallanlage, lokale Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit, Sicherheitsreset sowie externe und präsenzgebundene Superadmin-Identität | Superadmin-Wartungszapfung, actorfähiges Audit, Notfallanlage, lokale Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
@@ -97,8 +103,8 @@ auf dem Raspberry Pi demonstriert werden.
 
 - vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
   Point, Login und NFC-Zuordnung
-- präsenzgebundener Superadmin-Zustandsautomat, Notfall-Benutzeranlage,
-  Superadmin-Wartungszapfung und neues Low-Level-Menü
+- Notfall-Benutzeranlage, Superadmin-Wartungszapfung, actorfähiges Audit und
+  neues Low-Level-Menü
 - Verwaltungsoberflächen für Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
@@ -145,5 +151,5 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   ausschließlich durch die Superadmin-Karte geöffnet.
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
   Clientprofile verwenden. Die Bindung an die externe Superadmin-Karte ist
-  beschlossen, aber im aktuellen M7.8-Grundlagenstand noch nicht zur Laufzeit
-  aktiviert.
+  im Backendzustand vorbereitet, aber noch nicht auf die bestehende WLAN-Seite
+  und deren Auditmodell umgestellt.

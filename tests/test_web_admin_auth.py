@@ -13,6 +13,10 @@ from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend import admin_service as admin_service_module
+from zunder_zapfe.backend.superadmin_identity import (
+    load_superadmin_identity,
+    provision_superadmin_identity,
+)
 from zunder_zapfe.backend.web_auth_service import WebAuthenticationError, WebAuthService
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
@@ -40,6 +44,7 @@ from zunder_zapfe.persistence.repository import NewTapBooking, Repository
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADMIN_PASSWORD = "Alpha-Admin-2026"
 NEW_ADMIN_PASSWORD = "Neues-Admin-2026"
+SUPERADMIN_UID = "D00DCAFE"
 
 
 @pytest.fixture
@@ -69,12 +74,19 @@ def web_admin_api(
         flow_meter=SimulatedFlowMeter(),
         emergency_stop=SimulatedEmergencyStop(),
     )
+    credential_path = tmp_path / "superadmin.credential"
+    provision_superadmin_identity(SUPERADMIN_UID, credential_path)
+    superadmin_identity = load_superadmin_identity(
+        {"ZUNDER_ZAPFE_SUPERADMIN_CREDENTIAL_PATH": str(credential_path)}
+    )
+    assert superadmin_identity is not None
     application = create_app(
         hardware,
         sessions,
         enable_simulator_api=True,
         run_background=False,
         kiosk_settings=KioskSettings(admin_session_timeout_seconds=30),
+        superadmin_identity=superadmin_identity,
     )
     try:
         with TestClient(application, client=("10.42.0.2", 50000)) as client:
@@ -341,6 +353,25 @@ def test_web_admin_can_assign_wristband_while_tap_is_safely_locked(
     cards = client.get(f"/api/web-admin/users/{ids['user_id']}/nfc-cards").json()
     assert len(cards) == 1
     assert cards[0]["uid_hint"] == "…C3D4"
+
+
+def test_zz_aut_013_remote_capture_rejects_superadmin_card(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    path = f"/api/web-admin/users/{ids['user_id']}/nfc-cards/capture"
+
+    assert client.post(path, headers=headers).json()["state"] == "waiting"
+    client.post("/api/simulator/nfc/present", json={"uid": SUPERADMIN_UID})
+    response = client.post(path, headers=headers)
+
+    assert response.status_code == 409
+    assert "Superadmin-Karte" in response.json()["detail"]
+    assert client.get("/api/tap/status").json()["state"] == "idle"
+    with sessions() as session:
+        assert Repository(session).find_nfc_card(SUPERADMIN_UID) is None
 
 
 def test_zz_aut_004_assigned_wristband_must_be_removed_before_it_can_log_in(

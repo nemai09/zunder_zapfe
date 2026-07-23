@@ -1621,6 +1621,10 @@
             "title": "State",
             "type": "string"
           },
+          "superadmin_active": {
+            "title": "Superadmin Active",
+            "type": "boolean"
+          },
           "target_pulses": {
             "anyOf": [
               {
@@ -1698,7 +1702,8 @@
           "persistence_error",
           "last_booking",
           "nfc_feedback",
-          "registration_welcome"
+          "registration_welcome",
+          "superadmin_active"
         ],
         "title": "TapStatusResponse",
         "type": "object"

@@ -1,6 +1,6 @@
 # Zapf-Zustandsautomat
 
-Stand: 2026-07-23
+Stand: 2026-07-24
 
 Der Zustandsautomat ist die einzige Backend-Komponente, die Ventil und
 Durchflussmessung zu einem Zapfvorgang koordiniert. Die WebUI fordert nur
@@ -14,6 +14,7 @@ stateDiagram-v2
     state "Bereit, wartet auf Karte<br/>IDLE" as IDLE
     state "Benutzer angemeldet<br/>AUTHENTICATED" as AUTHENTICATED
     state "Lokale Administration<br/>ADMIN" as ADMIN
+    state "Superadmin-Karte präsent<br/>SUPERADMIN" as SUPERADMIN
     state "Armbandzuordnung<br/>NFC_CAPTURE" as NFC_CAPTURE
     state "Manuelles Zapfen<br/>MANUAL_POURING" as MANUAL_POURING
     state "Automatische Portion<br/>PORTION_POURING" as PORTION_POURING
@@ -30,6 +31,8 @@ stateDiagram-v2
     STARTING --> EMERGENCY_STOP: Not-Aus beim Start aktiv
 
     IDLE --> AUTHENTICATED: bekannte aktive Karte
+    IDLE --> SUPERADMIN: externe Superadmin-Karte<br/>Ventil geschlossen
+    SUPERADMIN --> IDLE: Karte oder Leser 1 s abwesend
     AUTHENTICATED --> IDLE: Logout oder Inaktivität
     AUTHENTICATED --> ADMIN: Admin öffnet Verwaltung<br/>Ventil bleibt geschlossen
     ADMIN --> AUTHENTICATED: Zurück zum Zapfen
@@ -65,6 +68,7 @@ stateDiagram-v2
     IDLE --> EMERGENCY_STOP: Not-Aus
     AUTHENTICATED --> EMERGENCY_STOP: Not-Aus
     ADMIN --> EMERGENCY_STOP: Not-Aus
+    SUPERADMIN --> EMERGENCY_STOP: Not-Aus
     NFC_CAPTURE --> EMERGENCY_STOP: Not-Aus
     MANUAL_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
     PORTION_POURING --> EMERGENCY_STOP: Not-Aus<br/>Ventil sofort schließen
@@ -93,6 +97,8 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `STARTING` | `start` | Not-Aus frei | `IDLE` | Ventil schließen, Hardware bereit |
 | `STARTING` | `start` | Not-Aus aktiv | `EMERGENCY_STOP` | Ventil schließen, Grund speichern |
 | `IDLE` | bekannte aktive Karte | Benutzer aktiv | `AUTHENTICATED` | Sitzung aufbauen |
+| `IDLE` | konfigurierte Superadmin-Karte | externe Identität stimmt | `SUPERADMIN` | keine Benutzersitzung; Ventil geschlossen halten |
+| `SUPERADMIN` | Karte oder Leser bestätigt abwesend | 1 s Entprellung | `IDLE` | lokale Berechtigung vollständig löschen |
 | `AUTHENTICATED` | `logout` oder Inaktivitätszeit | – | `IDLE` | Sitzung löschen |
 | `AUTHENTICATED` | Touchaktivität | – | `AUTHENTICATED` | Inaktivitätszeit zurücksetzen |
 | `AUTHENTICATED` | `enter_admin_mode` | Admin | `ADMIN` | Ventil schließen, Admin-Timeout starten |
@@ -147,6 +153,10 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
 8. `NFC_CAPTURE` öffnet niemals das Ventil. Kartenereignisse werden in diesem
    Zustand ausschließlich für die kurzlebige Adminzuordnung verarbeitet und
    starten keine Kiosksitzung. Sein Ende hebt keinen Safety-Lock auf.
+9. `SUPERADMIN` besitzt weder Benutzer-ID noch normale Adminsitzung. Eine
+   gleichlautende UID in der Benutzerdatenbank wird nicht zur Anmeldung
+   verwendet. Der Zustand hält das Ventil geschlossen; Wartungszapfung und
+   NFC-Übergabe werden erst als eigene kontrollierte Folgezustände ergänzt.
 
 ## Integration und verbleibende Grenzen
 
@@ -155,6 +165,12 @@ Zustandsautomaten abgeschlossenen `PourRecord`-Objekte als unveraenderliche
 Zapfbuchungen. Der aktive Veranstaltungs-, Fass-, Getraenke- und Preiskontext
 wird dazu beim Zapfstart festgehalten. Der vollstaendige Fluss ist unter
 [`backend-core-integration.md`](backend-core-integration.md) beschrieben.
+
+Vor der Benutzerauflösung prüft `TapService` die externe
+`SuperadminIdentity`. Bei Übereinstimmung entsteht ausschließlich
+`SUPERADMIN`. `AdminService` weist dieselbe Karte bei lokaler und entfernter
+Live-Zuordnung ab. Die bestätigte Kartenabwesenheit wird im unabhängigen
+Backendzyklus ausgewertet und benötigt keinen Browserrequest.
 
 Die in `development_limits()` enthaltenen Werte und die Demonstrator-Kalibrierung
 sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
@@ -170,9 +186,9 @@ Zapfung oder das Nachfüllfenster werden nicht durch den Sitzungstimer beendet.
 ## Traceability
 
 Der aktuelle Stand deckt die Struktur und simulatorischen Tests fuer
-`ZZ-AUT-008` bis `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`, `ZZ-HW-003` bis
-`ZZ-HW-005`, `ZZ-SAF-003` bis `ZZ-SAF-009`, `ZZ-MNT-001`, `ZZ-MNT-002`,
-`ZZ-NFR-001` und `ZZ-NFR-002` ab. Persistenz und NFC-Benutzerzuordnung sind nun
-simulatorisch integriert. Eine Anforderung gilt erst nach Integration der noch
-fehlenden Benutzeroberflaechen und realen Zapfhardware als vollstaendig
-umgesetzt.
+`ZZ-AUT-008` bis `ZZ-AUT-010`, `ZZ-AUT-013`, `ZZ-AUT-014`, `ZZ-TAP-008`,
+`ZZ-TAP-013`, `ZZ-TAP-014`, `ZZ-HW-003` bis `ZZ-HW-005`, `ZZ-SAF-003` bis
+`ZZ-SAF-009`, `ZZ-MNT-001`, `ZZ-MNT-002`, `ZZ-NFR-001` und `ZZ-NFR-002` ab.
+Persistenz und NFC-Benutzerzuordnung sind simulatorisch integriert. Eine
+Anforderung gilt erst nach Integration der noch fehlenden Benutzeroberflächen
+und realen Zapfhardware als vollständig umgesetzt.

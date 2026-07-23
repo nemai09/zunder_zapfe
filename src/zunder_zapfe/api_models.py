@@ -110,6 +110,7 @@ class TapStatusResponse(BaseModel):
     last_booking: BookingSummaryResponse | None
     nfc_feedback: str | None
     registration_welcome: str | None
+    superadmin_active: bool
 
 
 class SessionStatusResponse(BaseModel):

@@ -61,6 +61,10 @@ from zunder_zapfe.api_models import (
     WifiStatusResponse,
 )
 from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
+from zunder_zapfe.backend.superadmin_identity import (
+    SuperadminIdentity,
+    load_superadmin_identity,
+)
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.backend.web_auth_service import (
@@ -96,6 +100,7 @@ def create_app(
     run_background: bool = True,
     kiosk_settings: KioskSettings | None = None,
     wifi_mode_service: WifiModeService | None = None,
+    superadmin_identity: SuperadminIdentity | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -112,6 +117,7 @@ def create_app(
     )
     resolved_kiosk_settings = kiosk_settings or load_kiosk_settings()
     resolved_wifi_mode_service = wifi_mode_service or WifiModeService()
+    resolved_superadmin_identity = superadmin_identity or load_superadmin_identity()
     tap_service = TapService(
         hardware_layer,
         sessions,
@@ -126,6 +132,7 @@ def create_app(
         ),
         standard_portions_ml=resolved_kiosk_settings.standard_portions_ml,
         run_background=run_background,
+        superadmin_identity=resolved_superadmin_identity,
     )
     admin_service = AdminService(
         hardware_layer,
@@ -133,6 +140,7 @@ def create_app(
         tap_service,
         default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
         wifi_mode_service=resolved_wifi_mode_service,
+        superadmin_identity=resolved_superadmin_identity,
     )
     web_auth_service = WebAuthService(sessions)
 
