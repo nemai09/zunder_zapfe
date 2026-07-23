@@ -200,6 +200,31 @@ Löschzeitpunkt erhalten und aus der Verwaltung ausgeblendet, damit
 unveränderliche Buchungen weiterhin eindeutig referenzierbar bleiben. Der
 angemeldete Admin darf sich nicht selbst löschen.
 
+## Smartphone-Betriebsverwaltung
+
+Diese Routen benötigen ebenfalls eine gültige Websitzung; schreibende Methoden
+zusätzlich den CSRF-Header. Mengen werden in Millilitern und Preise in Cent pro
+Liter übertragen.
+
+| Methode und Pfad | Wirkung |
+| --- | --- |
+| `GET /api/web-admin/events` | Veranstaltungen auflisten |
+| `POST /api/web-admin/events` | Veranstaltung mit Name, Jahr, optionalem Zeitraum und Aktivstatus anlegen |
+| `PATCH /api/web-admin/events/{id}` | Veranstaltung vollständig ändern oder aktivieren |
+| `GET /api/web-admin/beverages` | Getränke einschließlich inaktiver Stammdaten auflisten |
+| `POST /api/web-admin/beverages` | Getränk mit Standardfassgröße und Literpreis anlegen |
+| `PATCH /api/web-admin/beverages/{id}` | Getränk, Standardfassgröße, Preis oder Aktivstatus ändern |
+| `GET /api/web-admin/kegs` | Fasshistorie mit rechnerischer Restmenge auflisten |
+| `POST /api/web-admin/kegs/switch` | bisherigen Fasskontext schließen und ausgewähltes neues Fass aktivieren |
+
+Der Fasswechsel erwartet `event_id`, `beverage_id` und
+`initial_volume_ml`. Er aktiviert die gewählte Veranstaltung, beendet das
+bisher aktive Fass und legt das neue Fass atomar an. Ein inaktives Getränk
+oder eine ungültige Menge wird abgelehnt. Eine aktive Veranstaltung mit
+laufendem Fass kann nicht unabhängig vom geführten Fasswechsel deaktiviert
+oder ausgetauscht werden. Änderungen an Veranstaltungen, Getränken und Fässern
+werden mit alten und neuen Werten auditiert.
+
 ## Wartung und Sicherheit
 
 | Methode und Pfad | Vorbedingung | Ergebnis |

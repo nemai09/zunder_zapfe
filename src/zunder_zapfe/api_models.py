@@ -162,6 +162,64 @@ class AdminSettingsUpdateRequest(BaseModel):
     admin_session_timeout_seconds: int = Field(ge=10, le=3600)
 
 
+class AdminEventCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    year: int = Field(ge=2000, le=9999)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    active: bool = False
+
+
+class AdminEventUpdateRequest(AdminEventCreateRequest):
+    pass
+
+
+class AdminEventResponse(BaseModel):
+    id: int
+    name: str
+    year: int
+    starts_at: datetime | None
+    ends_at: datetime | None
+    active: bool
+
+
+class AdminBeverageCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    default_keg_size_ml: int = Field(gt=0)
+    price_per_liter_cents: int = Field(ge=0)
+
+
+class AdminBeverageUpdateRequest(AdminBeverageCreateRequest):
+    active: bool = True
+
+
+class AdminBeverageResponse(BaseModel):
+    id: int
+    name: str
+    default_keg_size_ml: int
+    price_per_liter_cents: int
+    active: bool
+
+
+class AdminKegSwitchRequest(BaseModel):
+    event_id: int = Field(gt=0)
+    beverage_id: int = Field(gt=0)
+    initial_volume_ml: int = Field(gt=0)
+
+
+class AdminKegResponse(BaseModel):
+    id: int
+    event_id: int
+    event_name: str
+    beverage_id: int
+    beverage_name: str
+    initial_volume_ml: int
+    remaining_volume_ml: int
+    active: bool
+    opened_at: datetime
+    closed_at: datetime | None
+
+
 class WebAdminLoginOptionResponse(BaseModel):
     id: int
     display_name: str

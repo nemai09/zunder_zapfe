@@ -78,20 +78,75 @@ class Repository:
         self.session = session
 
     def create_event(self, name: str, year: int, *, active: bool = False) -> Event:
-        event = Event(name=_required_text(name, "Event name"), year=year, active=False)
+        if not 2000 <= year <= 9999:
+            raise ValueError("Event year must be between 2000 and 9999")
+        normalized_name = _required_text(name, "Event name")
+        duplicate = self.session.scalar(
+            select(Event.id).where(Event.name == normalized_name, Event.year == year)
+        )
+        if duplicate is not None:
+            raise ValueError("An event with this name and year already exists")
+        event = Event(name=normalized_name, year=year, active=False)
         self.session.add(event)
         self.session.flush()
         if active:
             self.activate_event(event.id)
         return event
 
-    def activate_event(self, event_id: int) -> Event:
+    def get_event(self, event_id: int) -> Event:
         event = self.session.get(Event, event_id)
         if event is None:
             raise LookupError(f"Event {event_id} does not exist")
+        return event
+
+    def list_events(self) -> list[Event]:
+        return list(
+            self.session.scalars(
+                select(Event).order_by(Event.active.desc(), Event.year.desc(), Event.name)
+            )
+        )
+
+    def activate_event(self, event_id: int) -> Event:
+        event = self.get_event(event_id)
         for current_event in self.session.scalars(select(Event).where(Event.active.is_(True))):
             current_event.active = False
         event.active = True
+        self.session.flush()
+        return event
+
+    def update_event(
+        self,
+        event_id: int,
+        *,
+        name: str,
+        year: int,
+        starts_at: datetime | None,
+        ends_at: datetime | None,
+        active: bool,
+    ) -> Event:
+        event = self.get_event(event_id)
+        if not 2000 <= year <= 9999:
+            raise ValueError("Event year must be between 2000 and 9999")
+        normalized_name = _required_text(name, "Event name")
+        duplicate = self.session.scalar(
+            select(Event.id).where(
+                Event.name == normalized_name,
+                Event.year == year,
+                Event.id != event_id,
+            )
+        )
+        if duplicate is not None:
+            raise ValueError("An event with this name and year already exists")
+        if starts_at is not None and ends_at is not None and ends_at < starts_at:
+            raise ValueError("Event end must not be before its start")
+        event.name = normalized_name
+        event.year = year
+        event.starts_at = starts_at
+        event.ends_at = ends_at
+        if active:
+            self.activate_event(event.id)
+        else:
+            event.active = False
         self.session.flush()
         return event
 
@@ -243,13 +298,62 @@ class Repository:
     def create_beverage(
         self, name: str, *, default_keg_size_ml: int, price_per_liter_cents: int
     ) -> Beverage:
+        if default_keg_size_ml <= 0:
+            raise ValueError("Default keg size must be greater than zero")
+        if price_per_liter_cents < 0:
+            raise ValueError("Price per liter must not be negative")
+        normalized_name = _required_text(name, "Beverage name")
+        duplicate = self.session.scalar(select(Beverage.id).where(Beverage.name == normalized_name))
+        if duplicate is not None:
+            raise ValueError("A beverage with this name already exists")
         beverage = Beverage(
-            name=_required_text(name, "Beverage name"),
+            name=normalized_name,
             default_keg_size_ml=default_keg_size_ml,
             price_per_liter_cents=price_per_liter_cents,
             active=True,
         )
         self.session.add(beverage)
+        self.session.flush()
+        return beverage
+
+    def get_beverage(self, beverage_id: int) -> Beverage:
+        beverage = self.session.get(Beverage, beverage_id)
+        if beverage is None:
+            raise LookupError(f"Beverage {beverage_id} does not exist")
+        return beverage
+
+    def list_beverages(self) -> list[Beverage]:
+        return list(
+            self.session.scalars(select(Beverage).order_by(Beverage.active.desc(), Beverage.name))
+        )
+
+    def update_beverage(
+        self,
+        beverage_id: int,
+        *,
+        name: str,
+        default_keg_size_ml: int,
+        price_per_liter_cents: int,
+        active: bool,
+    ) -> Beverage:
+        beverage = self.get_beverage(beverage_id)
+        if default_keg_size_ml <= 0:
+            raise ValueError("Default keg size must be greater than zero")
+        if price_per_liter_cents < 0:
+            raise ValueError("Price per liter must not be negative")
+        normalized_name = _required_text(name, "Beverage name")
+        duplicate = self.session.scalar(
+            select(Beverage.id).where(
+                Beverage.name == normalized_name,
+                Beverage.id != beverage_id,
+            )
+        )
+        if duplicate is not None:
+            raise ValueError("A beverage with this name already exists")
+        beverage.name = normalized_name
+        beverage.default_keg_size_ml = default_keg_size_ml
+        beverage.price_per_liter_cents = price_per_liter_cents
+        beverage.active = active
         self.session.flush()
         return beverage
 
@@ -286,6 +390,14 @@ class Repository:
         initial_volume_ml: int,
         opened_at: datetime | None = None,
     ) -> Keg:
+        event = self.get_event(event_id)
+        beverage = self.get_beverage(beverage_id)
+        if not event.active:
+            raise ValueError("The selected event must be active")
+        if not beverage.active:
+            raise ValueError("The selected beverage must be active")
+        if initial_volume_ml <= 0:
+            raise ValueError("Initial keg volume must be greater than zero")
         timestamp = opened_at or datetime.now(UTC)
         for current_keg in self.session.scalars(select(Keg).where(Keg.active.is_(True))):
             current_keg.active = False
@@ -300,6 +412,19 @@ class Repository:
         self.session.add(keg)
         self.session.flush()
         return keg
+
+    def get_keg(self, keg_id: int) -> Keg:
+        keg = self.session.get(Keg, keg_id)
+        if keg is None:
+            raise LookupError(f"Keg {keg_id} does not exist")
+        return keg
+
+    def list_kegs(self) -> list[Keg]:
+        return list(
+            self.session.scalars(
+                select(Keg).order_by(Keg.active.desc(), Keg.opened_at.desc(), Keg.id.desc())
+            )
+        )
 
     def add_tap_booking(self, values: NewTapBooking) -> TapBooking:
         keg = self.session.get(Keg, values.keg_id)

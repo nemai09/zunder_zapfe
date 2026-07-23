@@ -3,6 +3,9 @@
 const model = {
   session: null,
   users: [],
+  events: [],
+  beverages: [],
+  kegs: [],
   selectedUserId: null,
   cards: [],
   captureActive: false,
@@ -21,6 +24,9 @@ const elements = {
   welcomeName: document.querySelector("#welcome-name"),
   userCount: document.querySelector("#user-count"),
   cardCount: document.querySelector("#card-count"),
+  activeEventName: document.querySelector("#active-event-name"),
+  activeKegName: document.querySelector("#active-keg-name"),
+  activeKegRemaining: document.querySelector("#active-keg-remaining"),
   backendStatus: document.querySelector("#backend-status"),
   buildVersion: document.querySelector("#build-version"),
   views: [...document.querySelectorAll("[data-view]")],
@@ -48,6 +54,26 @@ const elements = {
   resetPassword: document.querySelector("#reset-password"),
   cardsSection: document.querySelector("#cards-section"),
   cardList: document.querySelector("#card-list"),
+  eventForm: document.querySelector("#event-form"),
+  eventId: document.querySelector("#event-id"),
+  eventName: document.querySelector("#event-name"),
+  eventYear: document.querySelector("#event-year"),
+  eventActive: document.querySelector("#event-active"),
+  eventList: document.querySelector("#event-list"),
+  beverageForm: document.querySelector("#beverage-form"),
+  beverageId: document.querySelector("#beverage-id"),
+  beverageName: document.querySelector("#beverage-name"),
+  beverageKegLiters: document.querySelector("#beverage-keg-liters"),
+  beveragePriceEuros: document.querySelector("#beverage-price-euros"),
+  beverageActive: document.querySelector("#beverage-active"),
+  beverageList: document.querySelector("#beverage-list"),
+  kegSwitchForm: document.querySelector("#keg-switch-form"),
+  kegEvent: document.querySelector("#keg-event"),
+  kegBeverage: document.querySelector("#keg-beverage"),
+  kegVolumeLiters: document.querySelector("#keg-volume-liters"),
+  kegList: document.querySelector("#keg-list"),
+  operationsActiveKeg: document.querySelector("#operations-active-keg"),
+  operationsActiveKegDetail: document.querySelector("#operations-active-keg-detail"),
   captureDialog: document.querySelector("#capture-dialog"),
   captureInstruction: document.querySelector("#capture-instruction"),
   ownPasswordForm: document.querySelector("#own-password-form"),
@@ -156,6 +182,8 @@ async function login(event) {
     elements.loginPassword.value = "";
     showApp();
     await loadWorkspace();
+    resetEventForm();
+    resetBeverageForm();
   } catch (error) {
     elements.loginMessage.textContent =
       error.message === "Invalid admin credentials"
@@ -175,14 +203,21 @@ async function logout() {
 
 async function loadWorkspace() {
   try {
-    const [users, health] = await Promise.all([
+    const [users, events, beverages, kegs, health] = await Promise.all([
       api("/api/web-admin/users"),
+      api("/api/web-admin/events"),
+      api("/api/web-admin/beverages"),
+      api("/api/web-admin/kegs"),
       api("/api/health"),
     ]);
     model.users = users;
+    model.events = events;
+    model.beverages = beverages;
+    model.kegs = kegs;
     elements.backendStatus.textContent = "Bereit";
     elements.buildVersion.textContent = health.build;
     renderUsers();
+    renderOperations();
     renderMetrics();
   } catch (error) {
     showToast(error.message, true);
@@ -194,6 +229,13 @@ function renderMetrics() {
   elements.cardCount.textContent = String(
     model.users.reduce((total, user) => total + user.active_nfc_card_count, 0),
   );
+  const activeEvent = model.events.find((event) => event.active);
+  const activeKeg = model.kegs.find((keg) => keg.active);
+  elements.activeEventName.textContent = activeEvent?.name || "Nicht gewählt";
+  elements.activeKegName.textContent = activeKeg?.beverage_name || "Keines";
+  elements.activeKegRemaining.textContent = activeKeg
+    ? `${formatLiters(activeKeg.remaining_volume_ml)} L rechnerisch übrig`
+    : "";
 }
 
 function filteredUsers() {
@@ -477,6 +519,262 @@ function stopCapture(notifyBackend = true) {
   }
 }
 
+function formatLiters(volumeMl) {
+  return (volumeMl / 1000).toLocaleString("de-DE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  });
+}
+
+function formatEuros(amountCents) {
+  return (amountCents / 100).toLocaleString("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  });
+}
+
+function formatDateTime(value) {
+  if (!value) return "–";
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function recordRow(title, detail, buttonLabel, onClick, inactive = false) {
+  const row = document.createElement("article");
+  row.className = "record-row";
+  row.classList.toggle("is-inactive", inactive);
+  const text = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  const small = document.createElement("small");
+  small.textContent = detail;
+  text.append(strong, small);
+  row.append(text);
+  if (buttonLabel) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button button-quiet button-small";
+    button.textContent = buttonLabel;
+    button.addEventListener("click", onClick);
+    row.append(button);
+  }
+  return row;
+}
+
+function renderOperations() {
+  renderEvents();
+  renderBeverages();
+  renderKegs();
+}
+
+function renderEvents() {
+  elements.eventList.replaceChildren();
+  if (!model.events.length) {
+    elements.eventList.append(recordRow("Noch keine Veranstaltung", "Bitte zuerst anlegen."));
+  }
+  for (const event of model.events) {
+    const state = event.active ? "aktiv" : "inaktiv";
+    elements.eventList.append(
+      recordRow(
+        event.name,
+        `${event.year} · ${state}`,
+        "Bearbeiten",
+        () => editEvent(event.id),
+        !event.active,
+      ),
+    );
+  }
+  const currentId = Number(elements.kegEvent.value);
+  elements.kegEvent.replaceChildren(new Option("Veranstaltung wählen", ""));
+  for (const event of model.events) {
+    elements.kegEvent.add(new Option(`${event.name} (${event.year})`, String(event.id)));
+  }
+  const activeEvent = model.events.find((event) => event.active);
+  elements.kegEvent.value = String(
+    model.events.some((event) => event.id === currentId)
+      ? currentId
+      : activeEvent?.id || "",
+  );
+}
+
+function resetEventForm() {
+  elements.eventForm.reset();
+  elements.eventId.value = "";
+  elements.eventYear.value = String(new Date().getFullYear());
+  elements.eventActive.checked = model.events.length === 0;
+}
+
+function editEvent(eventId) {
+  const event = model.events.find((item) => item.id === eventId);
+  if (!event) return;
+  elements.eventId.value = String(event.id);
+  elements.eventName.value = event.name;
+  elements.eventYear.value = String(event.year);
+  elements.eventActive.checked = event.active;
+  elements.eventName.focus();
+}
+
+async function saveEvent(event) {
+  event.preventDefault();
+  const eventId = Number(elements.eventId.value) || null;
+  const existing = model.events.find((item) => item.id === eventId);
+  const payload = {
+    name: elements.eventName.value.trim(),
+    year: Number(elements.eventYear.value),
+    starts_at: existing?.starts_at || null,
+    ends_at: existing?.ends_at || null,
+    active: elements.eventActive.checked,
+  };
+  try {
+    await api(
+      eventId === null ? "/api/web-admin/events" : `/api/web-admin/events/${eventId}`,
+      {
+        method: eventId === null ? "POST" : "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
+    await loadWorkspace();
+    resetEventForm();
+    showToast(eventId === null ? "Veranstaltung angelegt." : "Veranstaltung gespeichert.");
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+function renderBeverages() {
+  elements.beverageList.replaceChildren();
+  if (!model.beverages.length) {
+    elements.beverageList.append(recordRow("Noch kein Getränk", "Bitte zuerst anlegen."));
+  }
+  for (const beverage of model.beverages) {
+    elements.beverageList.append(
+      recordRow(
+        beverage.name,
+        `${formatLiters(beverage.default_keg_size_ml)} L · `
+          + `${formatEuros(beverage.price_per_liter_cents)} / L`,
+        "Bearbeiten",
+        () => editBeverage(beverage.id),
+        !beverage.active,
+      ),
+    );
+  }
+  const currentId = Number(elements.kegBeverage.value);
+  elements.kegBeverage.replaceChildren(new Option("Getränk wählen", ""));
+  for (const beverage of model.beverages.filter((item) => item.active)) {
+    elements.kegBeverage.add(new Option(beverage.name, String(beverage.id)));
+  }
+  if (model.beverages.some((beverage) => beverage.id === currentId && beverage.active)) {
+    elements.kegBeverage.value = String(currentId);
+  }
+  applyBeverageDefaultVolume();
+}
+
+function resetBeverageForm() {
+  elements.beverageForm.reset();
+  elements.beverageId.value = "";
+  elements.beverageActive.checked = true;
+}
+
+function editBeverage(beverageId) {
+  const beverage = model.beverages.find((item) => item.id === beverageId);
+  if (!beverage) return;
+  elements.beverageId.value = String(beverage.id);
+  elements.beverageName.value = beverage.name;
+  elements.beverageKegLiters.value = String(beverage.default_keg_size_ml / 1000);
+  elements.beveragePriceEuros.value = (beverage.price_per_liter_cents / 100).toFixed(2);
+  elements.beverageActive.checked = beverage.active;
+  elements.beverageName.focus();
+}
+
+async function saveBeverage(event) {
+  event.preventDefault();
+  const beverageId = Number(elements.beverageId.value) || null;
+  const payload = {
+    name: elements.beverageName.value.trim(),
+    default_keg_size_ml: Math.round(Number(elements.beverageKegLiters.value) * 1000),
+    price_per_liter_cents: Math.round(Number(elements.beveragePriceEuros.value) * 100),
+  };
+  if (beverageId !== null) payload.active = elements.beverageActive.checked;
+  try {
+    await api(
+      beverageId === null
+        ? "/api/web-admin/beverages"
+        : `/api/web-admin/beverages/${beverageId}`,
+      {
+        method: beverageId === null ? "POST" : "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
+    await loadWorkspace();
+    resetBeverageForm();
+    showToast(beverageId === null ? "Getränk angelegt." : "Getränk gespeichert.");
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+function renderKegs() {
+  elements.kegList.replaceChildren();
+  const activeKeg = model.kegs.find((keg) => keg.active);
+  elements.operationsActiveKeg.textContent = activeKeg
+    ? `${activeKeg.beverage_name} · ${activeKeg.event_name}`
+    : "Kein aktives Fass";
+  elements.operationsActiveKegDetail.textContent = activeKeg
+    ? `${formatLiters(activeKeg.remaining_volume_ml)} von `
+      + `${formatLiters(activeKeg.initial_volume_ml)} L rechnerisch übrig`
+    : "Vor dem Zapfen ein Fass aktivieren.";
+  if (!model.kegs.length) {
+    elements.kegList.append(recordRow("Noch keine Fasshistorie", "Der erste Wechsel legt sie an."));
+  }
+  for (const keg of model.kegs.slice(0, 12)) {
+    elements.kegList.append(
+      recordRow(
+        `${keg.beverage_name} · ${formatLiters(keg.initial_volume_ml)} L`,
+        `${keg.active ? "AKTIV · " : ""}${keg.event_name} · `
+          + `geöffnet ${formatDateTime(keg.opened_at)} · `
+          + `${formatLiters(keg.remaining_volume_ml)} L übrig`,
+        "",
+        () => {},
+        !keg.active,
+      ),
+    );
+  }
+}
+
+function applyBeverageDefaultVolume() {
+  const beverageId = Number(elements.kegBeverage.value);
+  const beverage = model.beverages.find((item) => item.id === beverageId);
+  if (beverage) {
+    elements.kegVolumeLiters.value = String(beverage.default_keg_size_ml / 1000);
+  }
+}
+
+async function switchKeg(event) {
+  event.preventDefault();
+  const activeKeg = model.kegs.find((keg) => keg.active);
+  const confirmation = activeKeg
+    ? `${activeKeg.beverage_name} schließen und das neue Fass aktivieren? `
+      + "Ein rechnerischer Restbestand wird nicht übertragen."
+    : "Dieses Fass als erstes aktives Fass verwenden?";
+  if (!window.confirm(confirmation)) return;
+  try {
+    await api("/api/web-admin/kegs/switch", {
+      method: "POST",
+      body: JSON.stringify({
+        event_id: Number(elements.kegEvent.value),
+        beverage_id: Number(elements.kegBeverage.value),
+        initial_volume_ml: Math.round(Number(elements.kegVolumeLiters.value) * 1000),
+      }),
+    });
+    await loadWorkspace();
+    showToast("Neues Fass ist aktiv.");
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 async function changeOwnPassword(event) {
   event.preventDefault();
   elements.accountMessage.classList.remove("error");
@@ -507,6 +805,8 @@ async function initialize() {
     model.session = await api("/api/web-auth/session");
     showApp();
     await loadWorkspace();
+    resetEventForm();
+    resetBeverageForm();
   } catch (_error) {
     showLogin();
   }
@@ -521,6 +821,12 @@ elements.deleteUserButton.addEventListener("click", deleteUser);
 elements.resetPasswordForm.addEventListener("submit", resetPassword);
 elements.userSearch.addEventListener("input", renderUsers);
 elements.userFilter.addEventListener("change", renderUsers);
+elements.eventForm.addEventListener("submit", saveEvent);
+document.querySelector("#reset-event-button").addEventListener("click", resetEventForm);
+elements.beverageForm.addEventListener("submit", saveBeverage);
+document.querySelector("#reset-beverage-button").addEventListener("click", resetBeverageForm);
+elements.kegBeverage.addEventListener("change", applyBeverageDefaultVolume);
+elements.kegSwitchForm.addEventListener("submit", switchKeg);
 document.querySelector("#capture-card-button").addEventListener("click", beginCapture);
 document.querySelector("#cancel-capture-button").addEventListener("click", () => stopCapture());
 elements.ownPasswordForm.addEventListener("submit", changeOwnPassword);

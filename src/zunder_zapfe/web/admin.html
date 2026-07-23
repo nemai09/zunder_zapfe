@@ -53,6 +53,15 @@
               <span>Aktive Armbänder</span>
               <strong id="card-count">–</strong>
             </article>
+            <article class="metric-card">
+              <span>Veranstaltung</span>
+              <strong class="metric-text" id="active-event-name">Nicht gewählt</strong>
+            </article>
+            <article class="metric-card">
+              <span>Aktives Fass</span>
+              <strong class="metric-text" id="active-keg-name">Keines</strong>
+              <small id="active-keg-remaining"></small>
+            </article>
             <article class="metric-card wide">
               <span>Backend</span>
               <strong id="backend-status">Wird geprüft …</strong>
@@ -66,7 +75,11 @@
               <strong>Benutzer &amp; Armbänder</strong>
               <small>Anlegen, sperren und live zuweisen</small>
             </button>
-            <article class="area-card"><span>M7.5</span><strong>Veranstaltung &amp; Fass</strong><small>Folgt im nächsten Arbeitspaket</small></article>
+            <button class="area-card is-ready" type="button" data-open-view="operations">
+              <span>Jetzt verfügbar</span>
+              <strong>Veranstaltung &amp; Fass</strong>
+              <small>Stammdaten pflegen und Fass wechseln</small>
+            </button>
             <article class="area-card"><span>M7.6</span><strong>Buchungen &amp; Statistik</strong><small>Folgt im nächsten Arbeitspaket</small></article>
             <article class="area-card"><span>M7.7</span><strong>Diagnose &amp; Einstellungen</strong><small>Folgt im nächsten Arbeitspaket</small></article>
           </div>
@@ -94,6 +107,91 @@
           <p class="empty-state" id="user-empty" hidden>Keine passenden Benutzer gefunden.</p>
         </section>
 
+        <section class="view" data-view="operations" aria-labelledby="operations-title">
+          <p class="eyebrow">Betrieb</p>
+          <h1 id="operations-title">Veranstaltung &amp; Fass</h1>
+          <div class="management-grid">
+            <section class="panel management-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Veranstaltungen</h2>
+                  <p class="muted">Jahresbezogene Abrechnungskontexte.</p>
+                </div>
+                <button class="button button-quiet button-small" id="reset-event-button" type="button">+ Neu</button>
+              </div>
+              <form class="form-stack compact-form" id="event-form">
+                <input id="event-id" type="hidden">
+                <label for="event-name">Name</label>
+                <input id="event-name" maxlength="120" placeholder="Zunder 2026" required>
+                <label for="event-year">Jahr</label>
+                <input id="event-year" type="number" min="2000" max="9999" required>
+                <label class="toggle single-toggle">
+                  <input id="event-active" type="checkbox">
+                  <span>Als aktive Veranstaltung verwenden</span>
+                </label>
+                <button class="button button-primary" type="submit">Veranstaltung speichern</button>
+              </form>
+              <div class="record-list" id="event-list"></div>
+            </section>
+
+            <section class="panel management-section">
+              <div class="section-heading">
+                <div>
+                  <h2>Getränke</h2>
+                  <p class="muted">Fassgröße und Preis werden ganzzahlig gespeichert.</p>
+                </div>
+                <button class="button button-quiet button-small" id="reset-beverage-button" type="button">+ Neu</button>
+              </div>
+              <form class="form-stack compact-form" id="beverage-form">
+                <input id="beverage-id" type="hidden">
+                <label for="beverage-name">Getränk</label>
+                <input id="beverage-name" maxlength="120" placeholder="Pils" required>
+                <div class="split-fields">
+                  <div>
+                    <label for="beverage-keg-liters">Standardfass in Liter</label>
+                    <input id="beverage-keg-liters" type="number" min="0.001" step="0.001" inputmode="decimal" required>
+                  </div>
+                  <div>
+                    <label for="beverage-price-euros">Preis je Liter in €</label>
+                    <input id="beverage-price-euros" type="number" min="0" step="0.01" inputmode="decimal" required>
+                  </div>
+                </div>
+                <label class="toggle single-toggle">
+                  <input id="beverage-active" type="checkbox" checked>
+                  <span>Getränk aktiv und auswählbar</span>
+                </label>
+                <button class="button button-primary" type="submit">Getränk speichern</button>
+              </form>
+              <div class="record-list" id="beverage-list"></div>
+            </section>
+
+            <section class="panel management-section management-wide">
+              <div class="section-heading">
+                <div>
+                  <h2>Geführter Fasswechsel</h2>
+                  <p class="muted">Das bisherige Fass wird geschlossen. Restbestand wird nicht übertragen.</p>
+                </div>
+              </div>
+              <article class="active-context" id="active-keg-card">
+                <span>Aktuell am Hahn</span>
+                <strong id="operations-active-keg">Kein aktives Fass</strong>
+                <small id="operations-active-keg-detail">Vor dem Zapfen ein Fass aktivieren.</small>
+              </article>
+              <form class="form-stack" id="keg-switch-form">
+                <label for="keg-event">Veranstaltung</label>
+                <select id="keg-event" required></select>
+                <label for="keg-beverage">Getränk</label>
+                <select id="keg-beverage" required></select>
+                <label for="keg-volume-liters">Fassinhalt in Liter</label>
+                <input id="keg-volume-liters" type="number" min="0.001" step="0.001" inputmode="decimal" required>
+                <button class="button button-primary" type="submit">Neues Fass aktivieren</button>
+              </form>
+              <h3 class="subheading">Fasshistorie</h3>
+              <div class="record-list" id="keg-list"></div>
+            </section>
+          </div>
+        </section>
+
         <section class="view" data-view="account" aria-labelledby="account-title">
           <p class="eyebrow">Persönliches Konto</p>
           <h1 id="account-title">Passwort ändern</h1>
@@ -114,6 +212,7 @@
       <nav class="bottom-nav" aria-label="Admin-Navigation">
         <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
         <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
+        <button type="button" data-nav-view="operations"><span>●</span>Betrieb</button>
         <button type="button" data-nav-view="account"><span>●</span>Konto</button>
       </nav>
     </div>

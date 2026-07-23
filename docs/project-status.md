@@ -38,6 +38,12 @@ Phase: Alpha-Entwicklung
   einer normalen Zapfanmeldung ausgeschlossen
 - fachliches Löschen von Benutzern bei erhaltenen Buchungen und dauerhaft
   einmaligen internen Benutzer-IDs
+- Smartphone-Verwaltung für Veranstaltungen und Getränke mit validierten,
+  auditierten Stammdatenänderungen
+- geführter Fasswechsel mit atomarem Abschluss des bisherigen Fasses,
+  Aktivierung der Veranstaltung und Anlage des neuen Fasses
+- Fasshistorie, rechnerischer Restbestand sowie aktiver Veranstaltungs- und
+  Fasskontext in der Smartphone-Übersicht
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
 und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
@@ -49,7 +55,7 @@ Prüfung von kurz aufgelegten NFC-Armbändern, Leser-Hotplug und PC/SC-Recovery.
 Milestone 6 umfasst 97 bestandene automatisierte Tests sowie die erfolgreiche
 Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
-Der lokale Stand nach `M7.4` umfasst 124 bestandene automatisierte Tests.
+Der lokale Stand nach `M7.5` umfasst 126 bestandene automatisierte Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -57,7 +63,7 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung und Sicherheitsreset | Veranstaltung, Fass, Buchungen, Diagnose und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel und Sicherheitsreset | Buchungen, Diagnose und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle und Admin-WLAN-Installer | Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Buchungen und Summen | Einzelabrechnung, Storno und Export |
@@ -66,8 +72,7 @@ auf dem Raspberry Pi demonstriert werden.
 
 - vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
   Point, Login und NFC-Zuordnung
-- Verwaltungsoberflächen für Veranstaltung, Getränke, Fässer, Buchungen,
-  Einstellungen, Diagnose und Wartung
+- Verwaltungsoberflächen für Buchungen, Einstellungen, Diagnose und Wartung
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware

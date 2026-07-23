@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend.tap_service import TapService
 from zunder_zapfe.hardware import HardwareLayer
-from zunder_zapfe.persistence.models import NfcCard, User, UserRole
+from zunder_zapfe.persistence.models import Beverage, Event, Keg, NfcCard, User, UserRole
 from zunder_zapfe.persistence.repository import Repository, canonicalize_nfc_uid
 
 ADMIN_TIMEOUT_SETTING = "session.admin_timeout_seconds"
@@ -89,6 +89,202 @@ class AdminService:
         with self._sessions() as session:
             repository = Repository(session)
             return [self._user_snapshot(repository, user) for user in repository.list_users()]
+
+    def list_events(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            return [self._event_snapshot(event) for event in Repository(session).list_events()]
+
+    def create_event(
+        self,
+        *,
+        name: str,
+        year: int,
+        starts_at: datetime | None,
+        ends_at: datetime | None,
+        active: bool,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        starts_at = _as_utc(starts_at)
+        ends_at = _as_utc(ends_at)
+        if starts_at is not None and ends_at is not None and ends_at < starts_at:
+            raise ValueError("Event end must not be before its start")
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            if active and session.scalar(select(Keg.id).where(Keg.active.is_(True))) is not None:
+                raise AdminConflict("An event with an active keg can only change via keg switch")
+            event = repository.create_event(name, year, active=active)
+            event.starts_at = starts_at
+            event.ends_at = ends_at
+            snapshot = self._event_snapshot(event)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="event.created",
+                entity_type="event",
+                entity_id=str(event.id),
+                new_values=snapshot,
+            )
+            return snapshot
+
+    def update_event(
+        self,
+        event_id: int,
+        *,
+        name: str,
+        year: int,
+        starts_at: datetime | None,
+        ends_at: datetime | None,
+        active: bool,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        starts_at = _as_utc(starts_at)
+        ends_at = _as_utc(ends_at)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            event = repository.get_event(event_id)
+            active_keg = session.scalar(select(Keg).where(Keg.active.is_(True)))
+            if active_keg is not None and (
+                (not active and active_keg.event_id == event_id)
+                or (active and active_keg.event_id != event_id)
+            ):
+                raise AdminConflict("The active keg and event must remain assigned to each other")
+            old_values = self._event_snapshot(event)
+            event = repository.update_event(
+                event_id,
+                name=name,
+                year=year,
+                starts_at=starts_at,
+                ends_at=ends_at,
+                active=active,
+            )
+            snapshot = self._event_snapshot(event)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="event.updated",
+                entity_type="event",
+                entity_id=str(event.id),
+                old_values=old_values,
+                new_values=snapshot,
+            )
+            return snapshot
+
+    def list_beverages(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            return [
+                self._beverage_snapshot(beverage)
+                for beverage in Repository(session).list_beverages()
+            ]
+
+    def create_beverage(
+        self,
+        *,
+        name: str,
+        default_keg_size_ml: int,
+        price_per_liter_cents: int,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            beverage = repository.create_beverage(
+                name,
+                default_keg_size_ml=default_keg_size_ml,
+                price_per_liter_cents=price_per_liter_cents,
+            )
+            snapshot = self._beverage_snapshot(beverage)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="beverage.created",
+                entity_type="beverage",
+                entity_id=str(beverage.id),
+                new_values=snapshot,
+            )
+            return snapshot
+
+    def update_beverage(
+        self,
+        beverage_id: int,
+        *,
+        name: str,
+        default_keg_size_ml: int,
+        price_per_liter_cents: int,
+        active: bool,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            beverage = repository.get_beverage(beverage_id)
+            if not active:
+                active_keg = session.scalar(
+                    select(Keg).where(
+                        Keg.active.is_(True),
+                        Keg.beverage_id == beverage_id,
+                    )
+                )
+                if active_keg is not None:
+                    raise AdminConflict("The beverage of the active keg cannot be disabled")
+            old_values = self._beverage_snapshot(beverage)
+            beverage = repository.update_beverage(
+                beverage_id,
+                name=name,
+                default_keg_size_ml=default_keg_size_ml,
+                price_per_liter_cents=price_per_liter_cents,
+                active=active,
+            )
+            snapshot = self._beverage_snapshot(beverage)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="beverage.updated",
+                entity_type="beverage",
+                entity_id=str(beverage.id),
+                old_values=old_values,
+                new_values=snapshot,
+            )
+            return snapshot
+
+    def list_kegs(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            repository = Repository(session)
+            return [self._keg_snapshot(repository, keg) for keg in repository.list_kegs()]
+
+    def switch_keg(
+        self,
+        *,
+        event_id: int,
+        beverage_id: int,
+        initial_volume_ml: int,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        admin_id = self._require_admin_id(admin_user_id)
+        with self._sessions.begin() as session:
+            repository = Repository(session)
+            event = repository.get_event(event_id)
+            beverage = repository.get_beverage(beverage_id)
+            if not beverage.active:
+                raise AdminConflict("Only an active beverage can be assigned to a new keg")
+            old_keg = session.scalar(select(Keg).where(Keg.active.is_(True)))
+            old_values = self._keg_snapshot(repository, old_keg) if old_keg is not None else None
+            repository.activate_event(event.id)
+            keg = repository.activate_new_keg(
+                event_id=event.id,
+                beverage_id=beverage.id,
+                initial_volume_ml=initial_volume_ml,
+            )
+            snapshot = self._keg_snapshot(repository, keg)
+            repository.record_admin_action(
+                admin_user_id=admin_id,
+                action="keg.switched",
+                entity_type="keg",
+                entity_id=str(keg.id),
+                old_values=old_values,
+                new_values=snapshot,
+            )
+            return snapshot
 
     def create_user(
         self,
@@ -414,6 +610,44 @@ class AdminService:
         }
 
     @staticmethod
+    def _event_snapshot(event: Event) -> dict[str, Any]:
+        return {
+            "id": event.id,
+            "name": event.name,
+            "year": event.year,
+            "starts_at": event.starts_at.isoformat() if event.starts_at else None,
+            "ends_at": event.ends_at.isoformat() if event.ends_at else None,
+            "active": event.active,
+        }
+
+    @staticmethod
+    def _beverage_snapshot(beverage: Beverage) -> dict[str, Any]:
+        return {
+            "id": beverage.id,
+            "name": beverage.name,
+            "default_keg_size_ml": beverage.default_keg_size_ml,
+            "price_per_liter_cents": beverage.price_per_liter_cents,
+            "active": beverage.active,
+        }
+
+    @staticmethod
+    def _keg_snapshot(repository: Repository, keg: Keg) -> dict[str, Any]:
+        event = repository.get_event(keg.event_id)
+        beverage = repository.get_beverage(keg.beverage_id)
+        return {
+            "id": keg.id,
+            "event_id": event.id,
+            "event_name": event.name,
+            "beverage_id": beverage.id,
+            "beverage_name": beverage.name,
+            "initial_volume_ml": keg.initial_volume_ml,
+            "remaining_volume_ml": repository.remaining_keg_volume_ml(keg.id),
+            "active": keg.active,
+            "opened_at": keg.opened_at.isoformat(),
+            "closed_at": keg.closed_at.isoformat() if keg.closed_at else None,
+        }
+
+    @staticmethod
     def _user_snapshot(repository: Repository, user: User) -> dict[str, Any]:
         cards = repository.list_nfc_cards(user.id)
         return {
@@ -469,3 +703,11 @@ class AdminService:
                 return
             self._expired_capture = (capture.admin_user_id, capture.target_user_id)
             self._cancel_capture_unlocked()
+
+
+def _as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)

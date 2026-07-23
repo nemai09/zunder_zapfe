@@ -18,6 +18,14 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe import __version__
 from zunder_zapfe.api_models import (
+    AdminBeverageCreateRequest,
+    AdminBeverageResponse,
+    AdminBeverageUpdateRequest,
+    AdminEventCreateRequest,
+    AdminEventResponse,
+    AdminEventUpdateRequest,
+    AdminKegResponse,
+    AdminKegSwitchRequest,
     AdminNfcCaptureResponse,
     AdminNfcCardResponse,
     AdminNfcCardStatusRequest,
@@ -502,6 +510,115 @@ def create_app(
         identity = require_web_admin(request, write=True)
         return admin_service.update_settings(
             admin_session_timeout_seconds=request_body.admin_session_timeout_seconds,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/events",
+        response_model=list[AdminEventResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_events(request: Request) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_events(admin_user_id=identity.user_id)
+
+    @application.post(
+        "/api/web-admin/events",
+        response_model=AdminEventResponse,
+        status_code=201,
+        responses=web_admin_responses,
+    )
+    async def create_web_admin_event(
+        request_body: AdminEventCreateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.create_event(
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.patch(
+        "/api/web-admin/events/{event_id}",
+        response_model=AdminEventResponse,
+        responses=web_admin_responses,
+    )
+    async def update_web_admin_event(
+        event_id: int,
+        request_body: AdminEventUpdateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.update_event(
+            event_id,
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/beverages",
+        response_model=list[AdminBeverageResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_beverages(request: Request) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_beverages(admin_user_id=identity.user_id)
+
+    @application.post(
+        "/api/web-admin/beverages",
+        response_model=AdminBeverageResponse,
+        status_code=201,
+        responses=web_admin_responses,
+    )
+    async def create_web_admin_beverage(
+        request_body: AdminBeverageCreateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.create_beverage(
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.patch(
+        "/api/web-admin/beverages/{beverage_id}",
+        response_model=AdminBeverageResponse,
+        responses=web_admin_responses,
+    )
+    async def update_web_admin_beverage(
+        beverage_id: int,
+        request_body: AdminBeverageUpdateRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.update_beverage(
+            beverage_id,
+            **request_body.model_dump(),
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/kegs",
+        response_model=list[AdminKegResponse],
+        responses=web_admin_responses,
+    )
+    async def list_web_admin_kegs(request: Request) -> list[dict[str, Any]]:
+        identity = require_web_admin(request)
+        return admin_service.list_kegs(admin_user_id=identity.user_id)
+
+    @application.post(
+        "/api/web-admin/kegs/switch",
+        response_model=AdminKegResponse,
+        status_code=201,
+        responses=web_admin_responses,
+    )
+    async def switch_web_admin_keg(
+        request_body: AdminKegSwitchRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return admin_service.switch_keg(
+            **request_body.model_dump(),
             admin_user_id=identity.user_id,
         )
 

@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.4` implementiert; weitere Fachbereiche geplant
+Status: `M7.2` bis `M7.5` implementiert; weitere Fachbereiche geplant
 
 ## Ziel und Abgrenzung
 
@@ -105,14 +105,15 @@ Bildschirmen dieselben Ansichten mit mehrspaltigem Layout. Für die erste
 Ausbaustufe bleibt sie bei HTML, CSS und JavaScript ohne zusätzlichen
 Frontend-Buildschritt.
 
-### Übersicht (`M7.4`)
+### Übersicht (`M7.4` und `M7.5`)
 
 - Backendbereitschaft und Buildstring;
 - Anzahl bekannter Benutzer und aktiver Armbänder;
+- aktive Veranstaltung und aktives Fass;
 - klare Kennzeichnung der folgenden Arbeitspakete.
 
-Event, Fass, Störung und Summen werden mit den zugehörigen Fach-APIs in
-`M7.5` bis `M7.7` ergänzt.
+Störung und Summen werden mit den zugehörigen Fach-APIs in `M7.6` und `M7.7`
+ergänzt.
 
 ### Benutzer und Armbänder (`M7.4`)
 
@@ -130,12 +131,19 @@ Beim Löschen weist eine Bestätigung darauf hin, dass vorhandene Buchungen
 erhalten bleiben. Der aktuell angemeldete Admin kann sich nicht selbst
 löschen.
 
-### Veranstaltungen, Getränke und Fässer
+### Veranstaltungen, Getränke und Fässer (`M7.5`)
 
 - Veranstaltungen anlegen, auswählen und aktivieren;
 - Getränke mit Fassgröße und Preis anlegen und pflegen;
 - Fasshistorie und rechnerischen Restbestand anzeigen;
 - geführter Fasswechsel mit bewusstem Abschluss des bisherigen Fasses.
+
+Der geführte Fasswechsel wählt Veranstaltung, Getränk und Anfangsvolumen
+gemeinsam aus. Er schließt ein bisher aktives Fass, aktiviert die gewählte
+Veranstaltung und legt das neue Fass in einer Transaktion an. Die API lehnt
+inaktive Getränke, nichtpositive Volumen und widersprüchliche
+Aktivierungswechsel ab. Alle Änderungen werden mit dem angemeldeten Admin
+auditiert.
 
 ### Buchungen und Abrechnung
 
