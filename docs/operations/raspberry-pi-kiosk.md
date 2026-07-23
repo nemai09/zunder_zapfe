@@ -234,7 +234,12 @@ sudo ./scripts/deploy-update.sh
 Das Deployment-Skript aktualisiert den aktuell ausgecheckten Branch nur per
 Fast-Forward, installiert geaenderte Abhaengigkeiten beziehungsweise
 Systemdateien, startet den Webdienst neu und fuehrt die Zielsystem-Verifikation
-aus. Bei reinen Python-, HTML- oder CSS-Aenderungen wird nur der Dienst neu
+aus. Den letzten erfolgreich verifizierten Commit speichert es unter
+`/var/lib/zunder-zapfe/deployed-revision`. Dadurch erkennt es notwendige
+Neuinstallationen auch dann, wenn vor dem Aufruf bereits auf einen anderen
+Branch gewechselt wurde. Fehlende Laufzeitabhängigkeiten erzwingen ebenfalls
+eine vollständige Installation. Bei reinen Python-, HTML- oder CSS-Aenderungen
+wird nur der Dienst neu
 gestartet. Ein Neustart des Raspberry Pi ist nicht erforderlich.
 
 Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und

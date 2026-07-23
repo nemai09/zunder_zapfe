@@ -10,6 +10,7 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd -- "${script_dir}/.." && pwd)"
 repo_user="$(stat -c '%U' "${repo_dir}")"
 kiosk_user="${1:-${SUDO_USER:-}}"
+deployed_revision_path="/var/lib/zunder-zapfe/deployed-revision"
 
 if [[ -z "${kiosk_user}" ]] || [[ "${kiosk_user}" == "root" ]] || ! id "${kiosk_user}" >/dev/null 2>&1; then
   echo "Aufruf: sudo $0 <desktop-benutzer>" >&2
@@ -31,20 +32,29 @@ branch="$(git_as_owner symbolic-ref --quiet --short HEAD)" || {
   exit 1
 }
 
-old_revision="$(git_as_owner rev-parse HEAD)"
 echo "Aktualisiere ${branch} aus origin"
 git_as_owner fetch origin "${branch}"
 git_as_owner merge --ff-only "origin/${branch}"
 new_revision="$(git_as_owner rev-parse HEAD)"
+deployed_revision=""
+if [[ -f "${deployed_revision_path}" ]]; then
+  deployed_revision="$(tr -d '[:space:]' <"${deployed_revision_path}")"
+fi
 
 echo "Installiere Commit $(git_as_owner rev-parse --short HEAD)"
 needs_full_install=false
 if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
-  || ! "${repo_dir}/.venv/bin/python" -c "import smartcard" >/dev/null 2>&1 \
+  || ! "${repo_dir}/.venv/bin/python" -c \
+    "import alembic, fastapi, pwdlib, smartcard, sqlalchemy, uvicorn" \
+    >/dev/null 2>&1 \
   || ! command -v pcsc_scan >/dev/null 2>&1; then
   needs_full_install=true
-elif [[ "${old_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
-  "${old_revision}" "${new_revision}" -- \
+elif [[ -z "${deployed_revision}" ]] \
+  || ! git_as_owner cat-file -e "${deployed_revision}^{commit}" 2>/dev/null; then
+  echo "Kein gueltiger vorheriger Deployment-Stand gespeichert."
+  needs_full_install=true
+elif [[ "${deployed_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
+  "${deployed_revision}" "${new_revision}" -- \
   pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh \
   deploy/systemd deploy/kiosk deploy/nginx config/web.env.example; then
   needs_full_install=true
@@ -60,5 +70,7 @@ fi
 echo "Starte Webdienst mit dem neuen Stand neu"
 systemctl restart zunder-zapfe-web.service
 "${repo_dir}/scripts/pi-verify.sh"
+printf '%s\n' "${new_revision}" >"${deployed_revision_path}"
+chmod 0644 "${deployed_revision_path}"
 
 echo "Deployment erfolgreich. Ein Neustart des Raspberry Pi ist nicht erforderlich."

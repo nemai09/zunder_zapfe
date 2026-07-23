@@ -63,3 +63,12 @@ def test_pi_verification_checks_configured_admin_wifi() -> None:
     assert "ZUNDER_ZAPFE" in verification
     assert "10.42.0.1/24" in verification
     assert "http://10.42.0.1/api/health" in verification
+
+
+def test_deployment_detects_branch_switches_and_missing_runtime_dependencies() -> None:
+    deployment = read("scripts/deploy-update.sh")
+
+    assert 'deployed_revision_path="/var/lib/zunder-zapfe/deployed-revision"' in deployment
+    assert "import alembic, fastapi, pwdlib, smartcard, sqlalchemy, uvicorn" in deployment
+    assert '"${deployed_revision}" "${new_revision}"' in deployment
+    assert 'printf \'%s\\n\' "${new_revision}" >"${deployed_revision_path}"' in deployment
