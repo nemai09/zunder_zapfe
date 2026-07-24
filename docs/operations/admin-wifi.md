@@ -1,7 +1,7 @@
 # Admin-WLAN auf dem Raspberry Pi
 
-Status: Access Point in `M7.3 OPS`, lokaler Moduswechsel in `M7.7 OPS`;
-Zielsystemprüfung ausstehend
+Status: Access Point, lokaler Moduswechsel und Smartphone-Zugang in Milestone 7
+auf dem Raspberry Pi geprüft
 
 ## Ziel
 
@@ -148,7 +148,8 @@ Nach der bewussten Ersteinrichtung:
 Vor der Ersteinrichtung überspringt die Prüfung nur die beiden WLAN-Schritte
 mit einem eindeutigen Hinweis. Nach gesetzter Markierung sind sie verbindlich.
 
-Die Zielsystemprüfung wird um folgende Punkte ergänzt:
+Die in Milestone 7 durchgeführte und für spätere Updates wiederholbare
+Zielsystemprüfung umfasst:
 
 1. Der vom Systemhelfer gemeldete Modus ist `ap` oder `client`.
 2. Im AP-Modus ist `zunder-zapfe-ap` an `wlan0` aktiv, die SSID lautet exakt
@@ -164,15 +165,18 @@ Die Zielsystemprüfung wird um folgende Punkte ergänzt:
     nach bewusster Bestätigung wechseln.
 11. Der neue aktive Fasskontext erscheint anschließend im Kiosk und in der
     Smartphone-Übersicht.
-12. Die Datenansicht trennt Buchungen und Summen nach Veranstaltung und
+12. Der Bereich „Buchungen“ trennt Buchungen und Summen nach Veranstaltung und
     kombiniert Benutzer-, Fass-, Art-, Abschluss- und Zeitraumfilter.
-13. Audit und technische Ereignisse sind lesbar; Buchungen bieten weder
-    Bearbeiten noch Löschen an.
-14. Ein NFC-angemeldeter Admin erreicht über den blauen Button das
+13. Top 10, Einzelanalyse nach Getränk und CSV-Gesamtauszug sind plausibel;
+    Buchungen bieten weder Bearbeiten noch Löschen an.
+14. Audit und technische Ereignisse sind unter Diagnose standardmäßig
+    eingeklappt, lesbar und bei langen Einträgen ohne horizontales Scrollen
+    dargestellt.
+15. Ein NFC-angemeldeter Admin erreicht über den blauen Button das
     Low-Level-Menü; ein normaler Benutzer nicht.
-15. AP → Client → AP funktioniert, sofern ein bekanntes Clientprofil vorhanden
+16. AP → Client → AP funktioniert, sofern ein bekanntes Clientprofil vorhanden
     ist. Der Kioskindikator folgt dem jeweils aktiven Modus.
-16. Ein absichtlich unerreichbares Clientprofil führt zu einer verständlichen
+17. Ein absichtlich unerreichbares Clientprofil führt zu einer verständlichen
     Fehlermeldung und reaktiviert soweit möglich `ZUNDER_ZAPFE`.
 
 ## Offizielle Referenzen

@@ -41,7 +41,10 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 Der Admin-Timeout ist bereits über die Admin-WebUI auditiert in
 `settings["session.admin_timeout_seconds"]` pflegbar; der Umgebungswert ist der
 Fallback für eine noch nicht gesetzte Datenbank. Standardportionen, normale
-Sitzungszeit und manuelle Alpha-Grenzwerte folgen in Milestone 7.
+Sitzungszeit und manuelle Alpha-Grenzwerte sind als Startkonfiguration
+vorhanden. Eine administrative Bedienung hardwareabhängiger Kalibrier-,
+Plausibilitäts- und Safety-Werte folgt erst nach Festlegung der realen Adapter
+in Milestone 8 beziehungsweise der Kalibrierung in Milestone 9.
 
 Die zeitlich begrenzte Abweichung für Tests ohne Durchflusshardware ist unter
 [`../operations/debug-without-flow-hardware.md`](../operations/debug-without-flow-hardware.md)

@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.11
-Stand: 2026-07-24
-Status: Milestone 7 in Umsetzung gemaess CR-002
+Version: 0.12
+Stand: 2026-07-25
+Status: Milestone 7 abgeschlossen; Hardwareintegration in Vorbereitung
 
 1. ZWECK UND FORMAT
 ===================
@@ -609,6 +609,9 @@ Abnahme: Die akzeptierten Adminablaeufe sind auf einer ueblichen
 Smartphone-Breite ohne horizontales Scrollen bedienbar. Vertagte oder noch nicht
 ausreichend spezifizierte Funktionen werden nicht als bereits verfuegbar
 dargestellt.
+Hinweis: Hardwareabhaengige Kalibrier-, Plausibilitaets- und Safety-Einstellungen
+werden erst mit den realen Adaptern in Milestone 8 beziehungsweise bei der
+Kalibrierung in Milestone 9 verbindlich bedienbar gemacht.
 
 [ZZ-UI-009] Rueckmeldung nach Armbandzuordnung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION

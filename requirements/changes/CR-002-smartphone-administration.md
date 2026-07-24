@@ -1,10 +1,10 @@
 # CR-002: Smartphone statt lokaler Administration
 
-Status: angenommen; um begrenztes lokales Systemmenü und Bediengrenzen ergänzt
+Status: angenommen und mit Milestone 7 umgesetzt
 
 Datum: 2026-07-23
 
-Anforderungskatalog: Version 0.8
+Anforderungskatalog: Version 0.12
 
 ## Anlass
 
@@ -135,7 +135,7 @@ Zusätzlich bleibt als `OD-014` offen, welche besondere NFC-Rolle oder Karte
 das Low-Level-Systemmenü später öffnen darf. In der Alpha-Ausbaustufe ist der
 Zugriff für jeden aktiven Admin zulässig.
 
-## Vorläufige Abnahmekriterien
+## Abnahmekriterien
 
 1. Nur bei einem angemeldeten Admin bleibt der blaue Admin-Button sichtbar.
 2. Der Button öffnet nur das lokale WLAN-Systemmenü und nicht die vertagte
@@ -159,6 +159,6 @@ Zugriff für jeden aktiven Admin zulässig.
     Zugangsdaten und stellt bei einem gescheiterten Clientwechsel soweit
     möglich den Access Point wieder her.
 
-Die technische Umsetzung wird in den Arbeitspaketen von Milestone 7
-inkrementell abgenommen. `OD-013` wird in einem späteren Stakeholderentscheid
-geklärt.
+Die technische Umsetzung und Zielsystembedienung wurden mit Milestone 7
+abgenommen. `OD-013` und `OD-014` bleiben für spätere Stakeholderentscheidungen
+offen und blockieren den abgeschlossenen Smartphone-Umfang nicht.
