@@ -19,6 +19,8 @@ def test_zz_ui_008_smartphone_admin_assets_are_offline_and_responsive() -> None:
     assert 'id="login-form"' in html
     assert 'data-view="users"' in html
     assert 'data-view="kegs"' in html
+    assert 'data-view="bookings"' in html
+    assert 'data-view="diagnostics"' in html
     assert 'data-view="settings"' in html
     assert 'id="capture-dialog"' in html
     assert 'id="own-password-form"' in html
@@ -57,11 +59,28 @@ def test_reporting_wraps_audit_text_and_groups_login_bookings() -> None:
     script = (WEB_ROOT / "admin-app.js").read_text(encoding="utf-8")
     styles = (WEB_ROOT / "admin-styles.css").read_text(encoding="utf-8")
 
-    assert "eines NFC-Logins zusammengefasst" in html
+    assert "pro NFC-Anmeldung zusammengefasst" in html
     assert "/api/web-admin/booking-sessions" in script
+    assert "/api/web-admin/reports/participants" in script
+    assert "/api/web-admin/reports/participants.csv" in script
     assert "booking.pour_count" in script
+    assert 'id="top-ten-list"' in html
+    assert 'id="participant-report-user"' in html
+    assert 'id="download-participant-report"' in html
+    assert "<details" in html
+    assert 'data-view="diagnostics"' in html
     assert "white-space: pre-wrap" in styles
     assert "overflow-wrap: anywhere" in styles
+    assert "Jetzt verfügbar" not in html
+    assert "bewusst kein" not in html
+
+    reporting_source = script[
+        script.index("async function loadReporting()") : script.index(
+            "async function loadDiagnostics()"
+        )
+    ]
+    assert "/api/web-admin/audit" not in reporting_source
+    assert "/api/web-admin/technical-events" not in reporting_source
 
 
 def test_smartphone_user_list_supports_event_sized_collections() -> None:

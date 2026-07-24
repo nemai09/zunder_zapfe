@@ -529,6 +529,34 @@ def test_zz_saf_003_007_and_dat_004_admin_card_resets_and_logs_latched_fault(
         stop_service(service, hardware)
 
 
+def test_zz_saf_003_007_authenticated_web_admin_resets_latched_fault(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    ids = seed_data(sessions)
+    clock = ManualClock()
+    service, hardware, _nfc, _flow_meter = start_service(sessions, clock)
+    try:
+        service.authenticate_card("04AABBCC")
+        service.start_portion(20)
+        clock.advance(2)
+        service.heartbeat()
+        assert service.poll()["state"] is TapState.FAULT_LOCKED
+
+        with pytest.raises(TapUnavailable, match="active admin"):
+            service.reset_safety_lock(admin_user_id=ids["user_id"])
+        status = service.reset_safety_lock(admin_user_id=ids["admin_id"])
+
+        assert status["state"] is TapState.IDLE
+        assert hardware.valve.snapshot().is_open is False
+        with sessions() as session:
+            events = list(session.scalars(select(TechnicalEvent)))
+            reset_event = next(event for event in events if event.event_type == "tap.safety_reset")
+            assert '"authorization":"web_session"' in (reset_event.details_json or "")
+    finally:
+        stop_service(service, hardware)
+
+
 def test_zz_dat_001_persistence_failure_safely_locks_the_tap(
     database: tuple[Engine, sessionmaker[Session]],
 ) -> None:

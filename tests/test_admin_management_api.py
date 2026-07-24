@@ -309,7 +309,18 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
         keg_id = keg.id
 
     assert client.get("/api/web-admin/bookings").status_code == 401
-    login(client, admin_id)
+    headers = login(client, admin_id)
+    diagnostics = client.get("/api/web-admin/diagnostics/tap")
+    assert diagnostics.status_code == 200
+    assert diagnostics.json()["state"] == "idle"
+    assert client.post("/api/web-admin/diagnostics/safety-reset").status_code == 403
+    assert (
+        client.post(
+            "/api/web-admin/diagnostics/safety-reset",
+            headers=headers,
+        ).status_code
+        == 409
+    )
     bookings = client.get(
         "/api/web-admin/bookings",
         params={
@@ -389,3 +400,124 @@ def test_zz_dat_002_003_004_and_bil_002_003_reporting_is_read_only_and_filterabl
     assert technical.status_code == 200
     assert technical.json()[0]["message"] == "Simulierter Sensorhinweis"
     assert technical.json()[0]["details"] == {"channel": 1}
+
+
+def test_zz_bil_004_participant_report_and_csv_are_grouped_by_beverage(
+    management_api: tuple[TestClient, sessionmaker[Session], int],
+) -> None:
+    client, sessions, admin_id = management_api
+    occurred_at = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        event = repository.create_event("Zunder 2026", 2026, active=True)
+        pils = repository.create_beverage(
+            "Pils",
+            default_keg_size_ml=50_000,
+            price_per_liter_cents=450,
+        )
+        radler = repository.create_beverage(
+            "Radler",
+            default_keg_size_ml=30_000,
+            price_per_liter_cents=400,
+        )
+        pils_keg = repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=pils.id,
+            initial_volume_ml=50_000,
+        )
+        berta = repository.create_user("Berta", last_name="Bier")
+        repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=berta.id,
+                beverage_id=pils.id,
+                keg_id=pils_keg.id,
+                occurred_at=occurred_at,
+                target_volume_ml=None,
+                measured_volume_ml=1_000,
+                measured_pulses=500,
+                price_per_liter_cents=450,
+                kind=BookingKind.MANUAL,
+                completion=BookingCompletion.RELEASED,
+                chargeable=True,
+                login_session_id="berta-pils",
+            )
+        )
+        radler_keg = repository.activate_new_keg(
+            event_id=event.id,
+            beverage_id=radler.id,
+            initial_volume_ml=30_000,
+        )
+        repository.add_tap_booking(
+            NewTapBooking(
+                event_id=event.id,
+                user_id=berta.id,
+                beverage_id=radler.id,
+                keg_id=radler_keg.id,
+                occurred_at=occurred_at + timedelta(minutes=1),
+                target_volume_ml=None,
+                measured_volume_ml=500,
+                measured_pulses=250,
+                price_per_liter_cents=400,
+                kind=BookingKind.MANUAL,
+                completion=BookingCompletion.RELEASED,
+                chargeable=True,
+                login_session_id="berta-radler",
+            )
+        )
+        event_id = event.id
+        user_id = berta.id
+
+    assert (
+        client.get(
+            "/api/web-admin/reports/participants",
+            params={"event_id": event_id},
+        ).status_code
+        == 401
+    )
+    login(client, admin_id)
+    report = client.get(
+        "/api/web-admin/reports/participants",
+        params={"event_id": event_id, "user_id": user_id},
+    )
+    assert report.status_code == 200
+    assert report.json()["event_name"] == "Zunder 2026"
+    assert report.json()["rows"] == [
+        {
+            "user_id": user_id,
+            "user_display_name": "Berta Bier",
+            "first_name": "Berta",
+            "last_name": "Bier",
+            "beverage_id": pils.id,
+            "beverage_name": "Pils",
+            "booking_count": 1,
+            "measured_volume_ml": 1_000,
+            "amount_cents": 450,
+        },
+        {
+            "user_id": user_id,
+            "user_display_name": "Berta Bier",
+            "first_name": "Berta",
+            "last_name": "Bier",
+            "beverage_id": radler.id,
+            "beverage_name": "Radler",
+            "booking_count": 1,
+            "measured_volume_ml": 500,
+            "amount_cents": 200,
+        },
+    ]
+
+    export = client.get(
+        "/api/web-admin/reports/participants.csv",
+        params={"event_id": event_id},
+    )
+    assert export.status_code == 200
+    assert export.headers["content-type"].startswith("text/csv")
+    assert export.headers["content-disposition"] == (
+        f'attachment; filename="zunder-zapfe-abrechnung-{event_id}.csv"'
+    )
+    assert export.content.startswith(b"\xef\xbb\xbf")
+    csv_text = export.content.decode("utf-8-sig")
+    assert "Teilnehmer-ID;Vorname;Nachname;Anzeigename" in csv_text
+    assert f"{user_id};Berta;Bier;Berta Bier;{pils.id};Pils;1;1000;1,000;450;4,50" in csv_text
+    assert f"{user_id};Berta;Bier;Berta Bier;{radler.id};Radler;1;500;0,500;200;2,00" in csv_text

@@ -70,25 +70,30 @@
           </div>
           <h2>Verwaltungsbereiche</h2>
           <div class="area-grid">
-            <button class="area-card is-ready" type="button" data-open-view="users">
-              <span>Jetzt verfügbar</span>
+            <button class="area-card" type="button" data-open-view="users">
+              <span>Personen</span>
               <strong>Benutzer &amp; Armbänder</strong>
               <small>Anlegen, sperren und live zuweisen</small>
             </button>
-            <button class="area-card is-ready" type="button" data-open-view="kegs">
-              <span>Jetzt verfügbar</span>
+            <button class="area-card" type="button" data-open-view="kegs">
+              <span>Betrieb</span>
               <strong>Fass am Hahn</strong>
               <small>Anzapfen, Bestand prüfen und abzapfen</small>
             </button>
-            <button class="area-card is-ready" type="button" data-open-view="data">
-              <span>Jetzt verfügbar</span>
-              <strong>Buchungen &amp; Statistik</strong>
-              <small>Abrechnung, Audit und technische Ereignisse</small>
+            <button class="area-card" type="button" data-open-view="bookings">
+              <span>Abrechnung</span>
+              <strong>Buchungen &amp; Auswertung</strong>
+              <small>Letzte Buchungen, Teilnehmer und Export</small>
             </button>
-            <button class="area-card is-ready" type="button" data-open-view="settings">
+            <button class="area-card" type="button" data-open-view="settings">
               <span>Stammdaten</span>
               <strong>Einstellungen</strong>
               <small>Veranstaltungen, Getränke und eigenes Konto</small>
+            </button>
+            <button class="area-card" type="button" data-open-view="diagnostics">
+              <span>System</span>
+              <strong>Diagnose</strong>
+              <small>Anlagenstatus, Fehlerreset und Protokolle</small>
             </button>
           </div>
         </section>
@@ -130,7 +135,7 @@
                 Aktives Fass abzapfen
               </button>
               <p class="muted operational-note">
-                Danach ist bewusst kein Getränk am Hahn aktiv. Historie und Buchungen bleiben erhalten.
+                Danach ist kein Getränk am Hahn aktiv. Historie und Buchungen bleiben erhalten.
               </p>
             </section>
 
@@ -229,18 +234,23 @@
           </div>
         </section>
 
-        <section class="view" data-view="data" aria-labelledby="data-title">
+        <section class="view" data-view="bookings" aria-labelledby="bookings-title">
           <div class="view-heading reporting-heading">
             <div>
-              <p class="eyebrow">Daten</p>
-              <h1 id="data-title">Buchungen &amp; Statistik</h1>
+              <p class="eyebrow">Abrechnung</p>
+              <h1 id="bookings-title">Buchungen &amp; Auswertung</h1>
             </div>
             <button class="button button-quiet button-small" id="refresh-reporting-button" type="button">Aktualisieren</button>
           </div>
 
           <section class="panel reporting-context">
-            <label for="report-event">Veranstaltung auswerten</label>
-            <select id="report-event"></select>
+            <div>
+              <label for="report-event">Veranstaltung auswerten</label>
+              <select id="report-event"></select>
+            </div>
+            <button class="button button-secondary" id="download-participant-report" type="button">
+              Gesamtauszug als CSV
+            </button>
           </section>
 
           <div class="metric-grid report-metrics">
@@ -265,17 +275,11 @@
           </div>
 
           <div class="report-grid">
-            <section class="panel report-section">
-              <h2>Abrechnung pro Benutzer</h2>
-              <p class="muted">Kostenpflichtige Istmengen der ausgewählten Veranstaltung.</p>
-              <div class="record-list" id="billing-user-list"></div>
-            </section>
-
             <section class="panel report-section report-wide">
               <div class="section-heading">
                 <div>
-                  <h2>Buchungen</h2>
-                  <p class="muted">Alle Zapfungen eines NFC-Logins zusammengefasst, neueste zuerst.</p>
+                  <h2>Letzte Buchungen</h2>
+                  <p class="muted">Laufende Übersicht, pro NFC-Anmeldung zusammengefasst.</p>
                 </div>
                 <small class="muted">max. 100</small>
               </div>
@@ -312,26 +316,64 @@
             </section>
 
             <section class="panel report-section">
-              <div class="section-heading">
-                <div>
-                  <h2>Admin-Audit</h2>
-                  <p class="muted">Nachvollziehbare Verwaltungsaktionen.</p>
-                </div>
-                <small class="muted">letzte 50</small>
-              </div>
-              <div class="record-list dense-list" id="audit-list"></div>
+              <h2>Top 10 Zapfmenge</h2>
+              <p class="muted">Teilnehmer mit der höchsten kostenpflichtigen Gesamtmenge.</p>
+              <div class="record-list" id="top-ten-list"></div>
             </section>
 
             <section class="panel report-section">
-              <div class="section-heading">
-                <div>
-                  <h2>Technische Ereignisse</h2>
-                  <p class="muted">Warnungen und Laufzeitmeldungen.</p>
-                </div>
-                <small class="muted">letzte 50</small>
-              </div>
-              <div class="record-list dense-list" id="technical-event-list"></div>
+              <h2>Teilnehmer nachschauen</h2>
+              <p class="muted">Kosten und Zapfmenge getrennt nach Getränk.</p>
+              <label for="participant-report-user">Teilnehmer</label>
+              <select id="participant-report-user">
+                <option value="">Teilnehmer wählen</option>
+              </select>
+              <p class="result-count" id="participant-report-total"></p>
+              <div class="record-list" id="participant-beverage-list"></div>
             </section>
+          </div>
+        </section>
+
+        <section class="view" data-view="diagnostics" aria-labelledby="diagnostics-title">
+          <div class="view-heading reporting-heading">
+            <div>
+              <p class="eyebrow">System</p>
+              <h1 id="diagnostics-title">Diagnose</h1>
+            </div>
+            <button class="button button-quiet button-small" id="refresh-diagnostics-button" type="button">Aktualisieren</button>
+          </div>
+
+          <section class="panel diagnostic-status">
+            <h2>Zapfsteuerung</h2>
+            <div class="active-context">
+              <span>Aktueller Zustand</span>
+              <strong id="diagnostic-tap-state">Wird geladen …</strong>
+              <small id="diagnostic-safety-reason"></small>
+            </div>
+            <button class="button button-danger" id="safety-reset-button" type="button" disabled>
+              Fehlersperre zurücksetzen
+            </button>
+            <p class="muted">Der Reset ist nur bei einer verriegelten Fehlersperre verfügbar.</p>
+          </section>
+
+          <div class="diagnostic-log-grid">
+            <details class="panel diagnostic-details">
+              <summary>
+                <span>Admin-Audit</span>
+                <small>letzte 50</small>
+              </summary>
+              <p class="muted">Nachvollziehbare Verwaltungsaktionen.</p>
+              <div class="record-list dense-list" id="audit-list"></div>
+            </details>
+
+            <details class="panel diagnostic-details">
+              <summary>
+                <span>Technische Ereignisse</span>
+                <small>letzte 50</small>
+              </summary>
+              <p class="muted">Warnungen, Fehler und Laufzeitmeldungen.</p>
+              <div class="record-list dense-list" id="technical-event-list"></div>
+            </details>
           </div>
         </section>
 
@@ -341,8 +383,8 @@
         <button class="is-active" type="button" data-nav-view="overview"><span>●</span>Übersicht</button>
         <button type="button" data-nav-view="users"><span>●</span>Benutzer</button>
         <button type="button" data-nav-view="kegs"><span>●</span>Fass</button>
-        <button type="button" data-nav-view="data"><span>●</span>Daten</button>
-        <button type="button" data-nav-view="settings"><span>●</span>Mehr</button>
+        <button type="button" data-nav-view="bookings"><span>●</span>Buchungen</button>
+        <button type="button" data-nav-view="diagnostics"><span>●</span>Diagnose</button>
       </nav>
     </div>
 

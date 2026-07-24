@@ -434,6 +434,75 @@ class AdminService:
                 ),
             }
 
+    def participant_beverage_report(
+        self,
+        event_id: int,
+        *,
+        user_id: int | None = None,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Aggregate chargeable participant consumption per beverage."""
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            repository = Repository(session)
+            event = repository.get_event(event_id)
+            if user_id is not None and session.get(User, user_id) is None:
+                raise LookupError(f"User {user_id} does not exist")
+            bookings = repository.list_tap_bookings(
+                event_id=event_id,
+                user_id=user_id,
+                limit=None,
+            )
+            totals: dict[tuple[int, int], dict[str, Any]] = {}
+            for booking in bookings:
+                if not booking.chargeable:
+                    continue
+                user = session.get(User, booking.user_id)
+                beverage = session.get(Beverage, booking.beverage_id)
+                summary = totals.setdefault(
+                    (booking.user_id, booking.beverage_id),
+                    {
+                        "user_id": booking.user_id,
+                        "user_display_name": (
+                            user.display_name if user is not None else f"Benutzer {booking.user_id}"
+                        ),
+                        "first_name": (
+                            user.first_name if user is not None else f"Benutzer {booking.user_id}"
+                        ),
+                        "last_name": user.last_name if user is not None else None,
+                        "beverage_id": booking.beverage_id,
+                        "beverage_name": (
+                            beverage.name
+                            if beverage is not None
+                            else f"Getränk {booking.beverage_id}"
+                        ),
+                        "booking_count": 0,
+                        "measured_volume_ml": 0,
+                        "amount_cents": 0,
+                        "_session_ids": set(),
+                    },
+                )
+                summary["_session_ids"].add(booking.login_session_id)
+                summary["measured_volume_ml"] += booking.measured_volume_ml
+                summary["amount_cents"] += booking.amount_cents
+            rows = []
+            for summary in totals.values():
+                summary["booking_count"] = len(summary.pop("_session_ids"))
+                rows.append(summary)
+            rows.sort(
+                key=lambda item: (
+                    item["user_display_name"].casefold(),
+                    item["beverage_name"].casefold(),
+                    item["user_id"],
+                    item["beverage_id"],
+                )
+            )
+            return {
+                "event_id": event.id,
+                "event_name": event.name,
+                "rows": rows,
+            }
+
     def list_audit_entries(
         self,
         *,

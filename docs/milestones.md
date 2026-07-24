@@ -96,17 +96,18 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
-| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen, Registrierungsbegrüßung und lokaler Fehlbedienungsschutz für einen Admin implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
+| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen, Registrierungsbegrüßung, lokaler Adminschutz sowie Smartphone-Abrechnung mit Top 10, Einzelanalyse, CSV-Gesamtauszug und Diagnose/Safety-Reset implementiert; technische Einstellungen und lokale Kiosk-Wartungszapfung folgen |
 | `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
 Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
 wird erst nach wirksamer Webauthentifizierung aktiviert. Abgeschlossene
 Zapfvorgänge bleiben als unveränderliche Rohdatensätze erhalten und werden
-über ihre NFC-Anmeldesitzung fachlich zusammengefasst. Storno, verbindlicher
-Export, Backup,
-Happy-Hour-Regeln und lokaler Notzugang bleiben entsprechend ihrem
-Anforderungsstatus außerhalb des verbindlichen Milestone-7-Umfangs.
+über ihre NFC-Anmeldesitzung fachlich zusammengefasst. Der Teilnehmerexport
+ist als Alpha-CSV-Vertrag Bestandteil von `M7.7`. Storno, Korrektur,
+allgemeines Backup und Wiederherstellung, Happy-Hour-Regeln und lokaler
+Notzugang bleiben entsprechend ihrem Anforderungsstatus außerhalb des
+verbindlichen Milestone-7-Umfangs.
 
 Technische Details stehen unter
 [`Smartphone-Admin-WebUI`](architecture/smartphone-admin-webui.md) und

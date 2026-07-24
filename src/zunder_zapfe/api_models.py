@@ -296,6 +296,24 @@ class AdminEventStatisticsResponse(BaseModel):
     users: list[AdminUserStatisticsResponse]
 
 
+class AdminParticipantBeverageReportRowResponse(BaseModel):
+    user_id: int
+    user_display_name: str
+    first_name: str
+    last_name: str | None
+    beverage_id: int
+    beverage_name: str
+    booking_count: int
+    measured_volume_ml: int
+    amount_cents: int
+
+
+class AdminParticipantReportResponse(BaseModel):
+    event_id: int
+    event_name: str
+    rows: list[AdminParticipantBeverageReportRowResponse]
+
+
 class AdminAuditEntryResponse(BaseModel):
     id: int
     occurred_at: datetime

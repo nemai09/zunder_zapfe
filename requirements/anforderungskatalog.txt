@@ -1,5 +1,5 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.10
+Version: 0.11
 Stand: 2026-07-24
 Status: Milestone 7 in Umsetzung gemaess CR-002
 
@@ -471,8 +471,10 @@ davon unberuehrt.
 [ZZ-MNT-001] Wartungsmodus
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Admins muessen einen Wartungsmodus fuer Spuelungen und Testzapfungen aktivieren
-koennen.
-Abnahme: Nur ein Admin kann den Wartungsmodus starten und beenden.
+koennen. Die Ventilbedienung erfolgt ausschliesslich lokal an der Zapfanlage;
+die Smartphone-WebUI darf keine Wartungszapfung starten oder stoppen.
+Abnahme: Nur ein Admin kann den lokalen Wartungsmodus starten und beenden; die
+Smartphone-WebUI bietet keine Ventilbedienung an.
 
 [ZZ-MNT-002] Wartungsmengen
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -504,12 +506,12 @@ veraendert werden.
 Abnahme: Die Anwendung bietet keine Aenderung einer abgeschlossenen Buchung an.
 
 [ZZ-BIL-004] Einzelabrechnung
-Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
-Das System muss fuer jeden Benutzer eine Einzelabrechnung ueber Mengen und
-Betraege einer Veranstaltung erzeugen koennen. Format und Detailinhalt werden
-spaeter festgelegt.
-Abnahme: Fuer einen Benutzer kann eine nachvollziehbare Gesamtabrechnung erzeugt
-werden.
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss fuer jeden Benutzer einer Veranstaltung die kostenpflichtigen
+Mengen und Betraege insgesamt sowie getrennt nach Getraenk darstellen koennen.
+Wartungsentnahmen duerfen nicht in die Teilnehmerabrechnung einfliessen.
+Abnahme: Ein Admin waehlt eine Veranstaltung und einen Benutzer aus und erhaelt
+eine nachvollziehbare Gesamtsumme sowie die Aufteilung nach Getraenk.
 
 [ZZ-BIL-005] Happy Hour
 Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
@@ -597,9 +599,12 @@ Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Alle akzeptierten Adminfunktionen muessen ueber eine einfache, uebersichtliche
 und responsive WebUI im lokalen Admin-WLAN bedienbar sein. Dazu gehoeren
 mindestens Benutzer und Armbaender, Veranstaltungen, Getraenke, Faesser,
-Buchungen und Abrechnungssummen, Einstellungen, Diagnose, Wartung, Safety-Reset,
-Audit und technische Ereignisse. Die primaere Zielbedienung ist ein Smartphone;
-eine Internetverbindung darf nicht erforderlich sein.
+Buchungen, Abrechnung und Teilnehmerexport, Einstellungen, Diagnose,
+Safety-Reset, Audit und technische Ereignisse. Audit und technische Ereignisse
+werden im Diagnosebereich standardmaessig eingeklappt dargestellt. Die
+Smartphone-WebUI darf keine Zapf- oder Wartungszapfung ausloesen. Die primaere
+Zielbedienung ist ein Smartphone; eine Internetverbindung darf nicht
+erforderlich sein.
 Abnahme: Die akzeptierten Adminablaeufe sind auf einer ueblichen
 Smartphone-Breite ohne horizontales Scrollen bedienbar. Vertagte oder noch nicht
 ausreichend spezifizierte Funktionen werden nicht als bereits verfuegbar
@@ -721,6 +726,18 @@ Abnahme: Zwei Zapfungen ohne zwischenzeitlichen Logout erscheinen als eine
 summierte Buchung; nach Logout und erneuter Anmeldung entsteht eine weitere
 Buchung. Rohmengen, Betraege und Fasszuordnungen bleiben vollstaendig erhalten.
 
+[ZZ-DAT-010] Teilnehmerabrechnungsexport
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Fuer eine Veranstaltung muss ein vollstaendiger, lokal herunterladbarer
+Gesamtauszug aller Teilnehmerabrechnungen erzeugt werden koennen. Eine Zeile
+fasst einen Teilnehmer und ein Getraenk zusammen und enthaelt stabile
+Teilnehmer- und Getraenke-IDs, Namen, Anzahl der Anmeldesitzungen,
+kostenpflichtige Menge in Millilitern und Betrag in Cent. Als Alpha-Format wird
+eine semikolongetrennte UTF-8-CSV-Datei mit BOM verwendet. Wartungsentnahmen
+werden nicht exportiert; die unveraenderlichen Rohbuchungen bleiben die Quelle.
+Abnahme: Der Export einer Veranstaltung enthaelt die Kosten und Zapfmengen jedes
+Teilnehmers getrennt nach Getraenk und keine Daten einer anderen Veranstaltung.
+
 
 12. ZEITBASIS UND OPTIONALE ERWEITERUNGEN
 =========================================
@@ -784,7 +801,7 @@ festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
 spaeter zu bewerten.
 OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
 OD-004: Detailregeln der Happy Hour.
-OD-005: Format und Inhalt der Einzelabrechnung.
+OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
 OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.

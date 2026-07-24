@@ -1,6 +1,6 @@
 # CR-002: Smartphone statt lokaler Administration
 
-Status: angenommen; um begrenztes lokales Systemmenü ergänzt
+Status: angenommen; um begrenztes lokales Systemmenü und Bediengrenzen ergänzt
 
 Datum: 2026-07-23
 
@@ -56,7 +56,13 @@ Hauptzugang zur Administration ausgerichtet werden.
   Registrierung beziehungsweise Zuordnung eines Veranstaltungsarmbands.
 - Die Smartphone-WebUI soll alle akzeptierten Adminanforderungen abdecken,
   insbesondere Benutzer-, Veranstaltungs-, Getränke-, Fass-, Buchungs-,
-  Einstellungs-, Diagnose-, Wartungs-, Audit- und Statistikfunktionen.
+  Einstellungs-, Diagnose-, Audit- und Statistikfunktionen.
+- Das Smartphone dient nicht als Zapfbedienung. Wartungszapfungen werden später
+  als lokaler Ablauf am Kiosk ergänzt; der Webadmin darf weder das Ventil noch
+  eine Wartungszapfung starten oder stoppen.
+- Sicherheitsreset, Adminaudit und technische Ereignisse gehören in den
+  Diagnosebereich. Die beiden Protokolllisten sind dort standardmäßig
+  eingeklappt.
 
 ## Auswirkungen auf Anforderungen
 
@@ -68,9 +74,10 @@ Hauptzugang zur Administration ausgerichtet werden.
 - `ZZ-AUT-003`, `ZZ-NET-001` bis `ZZ-NET-003` bilden die Grundlage für
   passwortgeschützten Zugriff im lokalen WLAN.
 - `ZZ-AUT-004` bis `ZZ-AUT-007`, `ZZ-SYS-006`, `ZZ-KEG-002`,
-  `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001` und `ZZ-DAT-003` bleiben fachlich
-  erforderlich. Ihr bevorzugter Bedienweg verschiebt sich zur
-  Smartphone-WebUI.
+  `ZZ-SAF-003`, `ZZ-SAF-007` und `ZZ-DAT-003` bleiben fachlich erforderlich
+  und werden über die Smartphone-WebUI bedient.
+- `ZZ-MNT-001` und `ZZ-MNT-002` bleiben fachlich erforderlich, ihre
+  Ventilbedienung verbleibt jedoch lokal an der Zapfanlage.
 - `ZZ-SYS-001` bleibt unverändert: Zapfen und Administration müssen ohne
   Internetverbindung funktionieren.
 
@@ -105,8 +112,9 @@ Hauptzugang zur Administration ausgerichtet werden.
 - Zugangsdaten dürfen weder im Repository noch in Logs, URLs oder
   Frontendquellen stehen.
 - Administrative Aktionen dürfen eine laufende Zapfung nicht unkontrolliert
-  verändern. Ventil-, Wartungs- und Fehlerreset-Aktionen benötigen weiterhin
-  die vorhandenen serverseitigen Zustands- und Safety-Prüfungen.
+  verändern. Die Smartphone-WebUI bietet keine Ventil- oder Wartungsbedienung
+  an. Fehlerreset-Aktionen benötigen weiterhin die vorhandenen serverseitigen
+  Zustands- und Safety-Prüfungen.
 - Der Server wird für den Smartphone-Zugriff nicht unkontrolliert in fremde
   Netze freigegeben. Das Backend bleibt an Loopback gebunden; ausschließlich
   der lokale Webzugang des Access Points wird weitergeleitet.

@@ -118,8 +118,8 @@ Durchfluss-, Zeit- und Watchdoggrenzen.
 | `MAINTENANCE` | `exit_maintenance` | – | `AUTHENTICATED` | Wartungsmodus verlassen |
 | aktiver Zapfzustand | Safety-Fehler | kein aktiver Not-Aus | `FAULT_LOCKED` | Ventil schließen, Fehlerabschluss buchen |
 | beliebiger Betriebszustand | Not-Aus erkannt | – | `EMERGENCY_STOP` | Ventil sofort schließen, verriegeln |
-| `FAULT_LOCKED` | `reset_safety_lock` | aktive Admin-Karte, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
-| `EMERGENCY_STOP` | `reset_safety_lock` | aktive Admin-Karte, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
+| `FAULT_LOCKED` | `reset_safety_lock` | aktive Admin-Karte oder autorisierte Webadmin-Sitzung, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
+| `EMERGENCY_STOP` | `reset_safety_lock` | aktive Admin-Karte oder autorisierte Webadmin-Sitzung, Not-Aus frei | `IDLE` | Grund löschen, keine Sitzung starten |
 | beliebiger Zustand | `shutdown` | – | `STOPPED` | zuerst Ventil schließen; aktiven Vorgang abschließen |
 
 Nicht aufgeführte Aktionen sind ungültig und führen zu `409`, nicht zu einem
@@ -136,8 +136,9 @@ Unabhaengig vom dargestellten Ausgangszustand gelten folgende Regeln:
    abgelaufener Steuerungs-Watchdog schliessen das Ventil. Eine vom WebUI-Thread
    unabhaengige Hintergrundueberwachung wertet diese Bedingungen zyklisch aus.
 3. `EMERGENCY_STOP` und `FAULT_LOCKED` bleiben verriegelt. Das Beheben der
-   Ursache allein reicht nicht; fuer den Reset muss eine aktive Admin-Karte
-   tatsaechlich auf dem NFC-Leser liegen. Danach startet keine Sitzung
+   Ursache allein reicht nicht; der Reset benötigt entweder eine tatsächlich
+   auf dem NFC-Leser liegende aktive Admin-Karte oder eine serverseitig
+   autorisierte Webadmin-Sitzung mit CSRF-Prüfung. Danach startet keine Sitzung
    automatisch.
 4. Weitere Kartenereignisse veraendern einen laufenden Zapfvorgang nicht.
 5. Buchungen verwenden die gemessenen Impulse, auch bei Abbruch und Fehler.

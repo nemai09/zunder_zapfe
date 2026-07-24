@@ -350,21 +350,26 @@ class TapService:
     def register_activity(self) -> None:
         self._controller.register_activity()
 
-    def reset_safety_lock(self) -> dict[str, Any]:
-        """Reset a latched safety state while an active admin card is present."""
-        nfc = self._hardware.nfc.snapshot()
-        if nfc.state != "card" or not nfc.uid:
-            raise TapUnavailable("Safety reset requires a presented admin card")
-
-        try:
-            canonical_uid = canonicalize_nfc_uid(nfc.uid)
-        except ValueError as error:
-            raise TapUnavailable("Safety reset requires a valid admin card") from error
-
-        with self._sessions() as session:
-            user = Repository(session).find_active_user_by_card(canonical_uid)
-            if user is None or user.role is not UserRole.ADMIN:
-                raise TapUnavailable("Safety reset requires an active admin card")
+    def reset_safety_lock(self, *, admin_user_id: int | None = None) -> dict[str, Any]:
+        """Reset a latched safety state with a physical card or authenticated web admin."""
+        canonical_uid: str | None = None
+        if admin_user_id is None:
+            nfc = self._hardware.nfc.snapshot()
+            if nfc.state != "card" or not nfc.uid:
+                raise TapUnavailable("Safety reset requires a presented admin card")
+            try:
+                canonical_uid = canonicalize_nfc_uid(nfc.uid)
+            except ValueError as error:
+                raise TapUnavailable("Safety reset requires a valid admin card") from error
+            with self._sessions() as session:
+                user = Repository(session).find_active_user_by_card(canonical_uid)
+                if user is None or user.role is not UserRole.ADMIN:
+                    raise TapUnavailable("Safety reset requires an active admin card")
+        else:
+            with self._sessions() as session:
+                user = Repository(session).get_user(admin_user_id)
+                if not user.active or user.role is not UserRole.ADMIN:
+                    raise TapUnavailable("Safety reset requires an active admin")
 
         previous = self._controller.snapshot()
         self._controller.reset_safety_lock(is_admin=True)
@@ -377,10 +382,11 @@ class TapService:
         self._record_technical_event(
             severity="info",
             event_type="tap.safety_reset",
-            message="Sicherheitssperre durch Admin-Karte zurueckgesetzt",
+            message="Sicherheitssperre durch Admin zurueckgesetzt",
             details={
                 "previous_state": previous.state.value,
                 "admin_user_id": user.id,
+                "authorization": "nfc_card" if canonical_uid is not None else "web_session",
             },
         )
         return self.status_dict()

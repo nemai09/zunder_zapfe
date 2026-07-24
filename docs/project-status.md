@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-23
+Stand: 2026-07-24
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -12,7 +12,7 @@ Phase: Alpha-Entwicklung
 - bekannte, aktive NFC-Karten und Benutzer-/Adminrollen
 - manuelles Push-to-Fill sowie kompatible Portion, Abbruch, Nachfüllen und Wartungszapfung im Backend
 - Watchdog-, Durchfluss-, Zeit- und Not-Aus-Verriegelung
-- bewusster Sicherheitsreset mit aufgelegter Admin-Karte
+- Sicherheitsreset mit aufgelegter Admin-Karte oder geschützter Webadminsitzung
 - SQLite-Schema, Migrationen und unveränderliche Zapfbuchungen
 - Verbrauchssummen, Preisberechnung und rechnerischer Fassbestand
 - automatisierter lokaler Smoke-Test mit realem NFC oder NFC-Simulator
@@ -53,7 +53,12 @@ Phase: Alpha-Entwicklung
   Einzelvorgänge für Diagnose und Bestand erhält
 - Veranstaltungs- und Benutzersummen für kostenpflichtige Istmengen und
   Beträge mit getrennt ausgewiesener Wartungsentnahme
-- Smartphone-Ansichten für auditierte Adminaktionen und technische Ereignisse
+- Smartphone-Gesamtstatistik und Top-10-Liste nach kostenpflichtiger Zapfmenge
+- Einzelanalyse je Teilnehmer mit Kosten und Menge, getrennt nach Getränk
+- vollständiger CSV-Teilnehmerauszug je Veranstaltung mit ganzzahligen Mengen
+  und Beträgen
+- Smartphone-Diagnose mit Steuerungszustand, Safety-Reset sowie standardmäßig
+  eingeklapptem Adminaudit und technischen Ereignissen
 - lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
   `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
@@ -76,7 +81,8 @@ Zielsystemprüfung von Adminsitzung, Benutzer- und Armbandverwaltung,
 Suche/Filter und den Rückmeldungen für unbekannte und gesperrte Armbänder.
 Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
 einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe,
-der Loginbuchungen und der Laufzeitoptimierung in `M7.7` bestehen 136 Tests.
+der Loginbuchungen, der Laufzeitoptimierung, des Adminschutzes sowie
+Teilnehmerabrechnung und Diagnose in `M7.7` bestehen 142 Tests.
 Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
 auf dem Raspberry Pi demonstriert werden.
 
@@ -84,31 +90,31 @@ auf dem Raspberry Pi demonstriert werden.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Statistik, Audit und Sicherheitsreset | Diagnose, Einstellungen und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | technische Einstellungen und weitere priorisierte Fachbereiche |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
-| Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter und Summen je Veranstaltung und Benutzer | verbindliches Einzelabrechnungsformat, Storno und Export |
+| Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
 ## Nicht implementiert
 
-- vollständige weitere Smartphone-Fachbereiche; Zielsystemabnahme von Access
-  Point, Login und NFC-Zuordnung
-- Verwaltungsoberflächen für Einstellungen, Diagnose und Wartung
+- technische Smartphone-Einstellungen; Zielsystemabnahme von Access Point,
+  Login, NFC-Zuordnung, Abrechnung und Diagnose
+- lokale Kiosk-Bedienung für Wartungszapfungen
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
-- Happy Hour, Storno, Export, Backup und Wiederherstellung
+- Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
 - optionale Fasswaage und MQTT-Vertrag
 - verbindliche Offline-Zeitquelle
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Milestone 7 gemäß den festgelegten Arbeitspaketen mit Webauthentifizierung
-   vor Netzwerkfreigabe umsetzen; danach Smartphone-UI und Verwaltungsbereiche
-   inkrementell ergänzen.
-2. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
+1. Milestone 7 mit technischen Einstellungen und vollständiger Smartphone-,
+   Neustart- und Zielsystemabnahme abschließen.
+2. Lokale Wartungszapfung in die Kiosk-UI integrieren.
+3. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
    festlegen.
-3. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
+4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
    prüfen.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
