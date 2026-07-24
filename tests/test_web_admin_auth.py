@@ -271,6 +271,48 @@ def test_zz_aut_012_admin_can_set_another_admin_password(
     )
 
 
+def test_zz_aut_012_protected_admin_password_uses_own_change_or_local_reset(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    with sessions.begin() as session:
+        repository = Repository(session)
+        target = repository.get_user(ids["user_id"])
+        target.role = UserRole.ADMIN
+        repository.add_nfc_card(target.id, "ABCD1234")
+        repository.protect_admin_account(target.id)
+    WebAuthService(sessions).set_initial_password(
+        user_id=ids["user_id"],
+        password=NEW_ADMIN_PASSWORD,
+    )
+
+    actor_csrf = login(client, ids["admin_id"])
+    reset = client.put(
+        f"/api/web-admin/users/{ids['user_id']}/password",
+        json={"new_password": ADMIN_PASSWORD},
+        headers=csrf_headers(actor_csrf),
+    )
+    assert reset.status_code == 403
+
+    target_csrf = login(client, ids["user_id"], NEW_ADMIN_PASSWORD)
+    changed = client.post(
+        "/api/web-auth/password",
+        json={
+            "current_password": NEW_ADMIN_PASSWORD,
+            "new_password": ADMIN_PASSWORD,
+        },
+        headers=csrf_headers(target_csrf),
+    )
+    assert changed.status_code == 204
+    assert (
+        client.post(
+            "/api/web-auth/login",
+            json={"user_id": ids["user_id"], "password": ADMIN_PASSWORD},
+        ).status_code
+        == 200
+    )
+
+
 def test_zz_aut_003_repeated_failed_logins_are_rate_limited(
     web_admin_api: tuple[object, ...],
 ) -> None:

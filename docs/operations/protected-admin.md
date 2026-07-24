@@ -7,6 +7,9 @@ ist kein separates Konto und verändert weder Passwort noch Zapfverhalten.
 Nach Installation beziehungsweise Update und ausgeführter Datenbankmigration:
 
 ```bash
+set -a
+source /etc/zunder-zapfe/web.env
+set +a
 .venv/bin/zunder-zapfe-protect-admin --user-id 2
 ```
 
@@ -23,6 +26,13 @@ gesperrt noch entfernt werden; entsprechende direkte Requests werden mit HTTP
 `409 Conflict` abgewiesen.
 
 Ein Kartenwechsel bleibt möglich: Zuerst wird ein weiteres Armband zugeordnet,
-danach darf das alte gesperrt oder entfernt werden. Namen, Zusatzfeld, Passwort
-und weitere Armbänder bleiben normal verwaltbar. Datenbanken dürfen nicht
-manuell bearbeitet werden, um den Schutz zu umgehen.
+danach darf das alte gesperrt oder entfernt werden. Namen, Zusatzfeld und
+weitere Armbänder bleiben normal verwaltbar.
+
+Andere Webadmins können das Passwort des geschützten Kontos nicht zurücksetzen.
+Der geschützte Admin kann sein eigenes Passwort mit dem bisherigen Passwort
+ändern. Falls dieses nicht mehr bekannt ist, bleibt nach dem oben gezeigten
+Laden der Dienstumgebung der lokale interaktive Befehl
+`.venv/bin/zunder-zapfe-admin-password` als Wiederherstellungsweg verfügbar.
+
+Datenbanken dürfen nicht manuell bearbeitet werden, um den Schutz zu umgehen.

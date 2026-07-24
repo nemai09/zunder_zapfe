@@ -184,13 +184,19 @@ Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Ein angemeldeter Admin muss sein eigenes Passwort nach Eingabe des bisherigen
 Passworts aendern koennen. Ein Admin muss fuer einen anderen Admin ein neues
 Passwort setzen koennen, wenn dieser seinen Zugang nicht mehr verwenden kann.
+Ausgenommen ist ein lokal gegen Fehlbedienung geschuetzter Admin: Sein Passwort
+darf nicht durch einen anderen Webadmin zurueckgesetzt werden. Er kann es selbst
+mit dem bisherigen Passwort aendern; der lokale interaktive CLI-Reset bleibt
+als Wiederherstellungsweg erhalten.
 Passwoerter duerfen ausschliesslich als geeignete, individuell gesalzene Hashes
 gespeichert werden. Passwortaenderung, administrativer Reset und fehlgeschlagene
 Anmeldeversuche muessen nachvollziehbar protokolliert werden, ohne Passwoerter
 oder Hashes in Protokolle aufzunehmen.
 Abnahme: Passwortwechsel und Reset machen den neuen Zugang wirksam, widerrufen
 bestehende Sitzungen des betroffenen Admins und hinterlassen einen Audit- oder
-technischen Protokolleintrag ohne vertrauliche Werte.
+technischen Protokolleintrag ohne vertrauliche Werte. Beim geschuetzten Admin
+wird ein Webreset durch einen anderen Admin abgewiesen, waehrend eigener
+Passwortwechsel und lokaler Reset funktionieren.
 
 
 4. GETRAENKE, FAESSER UND BESTAND

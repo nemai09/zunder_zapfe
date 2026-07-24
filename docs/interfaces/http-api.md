@@ -216,6 +216,13 @@ deaktiviert noch herabgestuft werden. Sein letztes aktives Armband kann weder
 gesperrt noch entfernt werden; nach Zuordnung eines Ersatzarmbands bleibt ein
 Kartenwechsel möglich.
 
+Das Passwort eines lokal geschützten Admins kann nicht über
+`PUT /api/web-admin/users/{id}/password` durch einen anderen Webadmin
+zurückgesetzt werden. Der geschützte Admin darf sein eigenes Passwort weiterhin
+über `POST /api/web-auth/password` ändern. Der lokale interaktive
+Provisionierungsbefehl bleibt der Wiederherstellungsweg bei vergessenem
+Passwort.
+
 ## Smartphone-Betriebsverwaltung
 
 Diese Routen benötigen ebenfalls eine gültige Websitzung; schreibende Methoden

@@ -343,10 +343,13 @@ async function openUser(userId = null) {
   elements.deleteUserHint.hidden = !deleteHint;
   elements.deleteUserButton.title = deleteHint;
   elements.passwordSection.hidden = !user?.is_admin;
+  elements.resetPasswordForm.hidden = administrationProtected;
   elements.cardsSection.hidden = !user;
-  elements.passwordState.textContent = user?.has_password
-    ? "Ein persönliches Passwort ist gesetzt."
-    : "Noch kein persönliches Passwort gesetzt.";
+  elements.passwordState.textContent = administrationProtected
+    ? "Das geschützte Konto ändert sein Passwort selbst; lokal bleibt ein CLI-Reset möglich."
+    : user?.has_password
+      ? "Ein persönliches Passwort ist gesetzt."
+      : "Noch kein persönliches Passwort gesetzt.";
   elements.resetPassword.value = "";
   elements.userSheet.hidden = false;
   if (user) await loadCards();
