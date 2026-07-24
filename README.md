@@ -18,7 +18,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Bereich | Status |
 | --- | --- |
 | ACR122U-NFC-Leser | Ereignisgesteuert, Hotplug-fähig und auf dem Raspberry Pi getestet |
-| Ventil, Durchfluss, Not-Aus | Stabile Verträge und Simulatoren vorhanden |
+| Ventil, Durchfluss, Not-Aus | Stabile Verträge und Simulatoren; ESP8266-HIL für den Durchfluss in Umsetzung |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
@@ -26,7 +26,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
 | Admin-WebUI | Milestone 7 abgeschlossen: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose auf dem Pi geprüft |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil auf dem Pi geprüft |
-| Reale Zapfhardware | Noch nicht implementiert |
+| Reale Zapfhardware | Milestone 8 gestartet; Pi-Adapter und elektrische Abnahme noch offen |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
 [Projektstatus](docs/project-status.md).

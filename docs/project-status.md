@@ -93,7 +93,7 @@ damit abgeschlossen.
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
-| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
+| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik und ESP8266-HIL-Firmware | Firmware- und Prüfstandsabnahme, reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -111,8 +111,8 @@ damit abgeschlossen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. ESP8266-Durchflussemulator als Hardware-in-the-Loop-Testmittel härten und
-   elektrisch freigeben.
+1. Gehärtete ESP8266-HIL-Firmware bauen und am Prüfstand abnehmen; anschließend
+   den Connector elektrisch freigeben.
 2. Reale Ventil-, Durchfluss- und Not-Aus-Adapter festlegen und implementieren.
 3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
    integrieren.

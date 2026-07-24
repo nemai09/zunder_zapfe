@@ -14,7 +14,7 @@ bestanden sind.
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
 | 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
-| 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Vorbereitung |
+| 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Umsetzung |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
 
 `PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
@@ -126,3 +126,44 @@ Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
 `ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
 und `ZZ-DAT-009` bis `ZZ-DAT-010`.
+
+## Milestone 8: Hardwareintegration
+
+Milestone 8 führt die bisher simulierten Zapfsignale kontrolliert an reale
+Ein-/Ausgänge heran. Der erste Checkpoint ist ein ESP8266 als
+Hardware-in-the-Loop-Durchflussemulator. Er reagiert auf das angeforderte
+Ventilsignal und erzeugt sensorähnliche Impulse, ohne selbst ein Ventil oder
+eine Safety-Funktion zu steuern.
+
+Konkrete Raspberry-Pi-GPIOs, Pegelstufen und Treiber werden erst nach
+elektrischer Freigabe festgelegt. Alle neuen Adapter bleiben hinter den
+bestehenden Hardware-Protocols austauschbar; Simulatoren bleiben für
+automatisierte Tests erhalten.
+
+### Arbeitspakete
+
+| Paket | Ergebnis |
+| --- | --- |
+| `M8.1 HW` | ESP8266-HIL mit definiert inaktivem Ventileingang, offenem Impulsausgang und von WLAN unabhängiger Impulserzeugung |
+| `M8.2 PLAN` | geprüfter elektrischer Connectorvertrag einschließlich Pegeln, Trennung, Ruhezuständen und Fehlerfällen |
+| `M8.3 HW` | reale Ventil- und Durchflussadapter hinter den vorhandenen Protocols mit konfigurierbarer Pinbelegung |
+| `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
+| `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
+| `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |
+
+### Abnahmekriterien
+
+- Abgesteckte oder neu startende Komponenten lassen das Ventil geschlossen
+  beziehungsweise das HIL-Ventilsignal inaktiv.
+- Der ESP erzeugt Impulse auch ohne WLAN; WLAN-Ausfall beeinflusst nur seine
+  Diagnoseoberfläche.
+- Normaler HIL-Durchfluss wird als Menge gezählt und beim Loslassen korrekt
+  abgeschlossen.
+- Ausgeschaltetes Impulsfeedback führt mit aktivem
+  Durchfluss-Watchdog zu einer verriegelten Safety-Abschaltung.
+- Not-Aus, Steuerungs-Watchdog und Zeitlimit bleiben in allen Testmodi aktiv.
+- Vor Anschluss realer Ventilhardware steht
+  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=0`.
+
+Traceability: `ZZ-HW-002`, `ZZ-HW-004`, `ZZ-HW-005`, `ZZ-SAF-001`,
+`ZZ-SAF-004`, `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009` und `ZZ-MNT-002`.

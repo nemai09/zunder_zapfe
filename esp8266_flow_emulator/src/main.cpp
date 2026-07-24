@@ -15,7 +15,7 @@ namespace {
 // Anschluss anhand der Pegel des Pi-Adapters freigegeben.
 constexpr uint8_t kValveCommandPin = D5;
 constexpr uint8_t kFlowPulsePin = D6;
-constexpr bool kValveCommandActiveHigh = true;
+constexpr uint8_t kValveCommandActiveLevel = LOW;
 
 // Der Pi verwendet aktuell standardmäßig 500 Impulse/Liter. 10 Hz entsprechen
 // damit 1,2 L/min und reichen für den Durchfluss-Watchdog und Buchungstests.
@@ -27,10 +27,11 @@ bool feedbackEnabled = true;
 bool pulseIsLow = false;
 unsigned long lastPulseChangeMs = 0;
 unsigned long generatedPulseCount = 0;
+bool wifiWasConnected = false;
+bool mdnsStarted = false;
 
 bool valveCommandActive() {
-  const bool levelHigh = digitalRead(kValveCommandPin) == HIGH;
-  return kValveCommandActiveHigh ? levelHigh : !levelHigh;
+  return digitalRead(kValveCommandPin) == kValveCommandActiveLevel;
 }
 
 // Das Ausgabesignal verhält sich wie ein offener Kollektor: LOW zieht die
@@ -93,19 +94,30 @@ void setFeedback() {
   server.send(303, "text/plain", "");
 }
 
-void connectWifi() {
+void beginWifiConnection() {
+  WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.hostname("zunder-flow-emulator");
+  WiFi.setAutoReconnect(true);
   WiFi.begin(ZUNDER_FLOW_EMULATOR_WIFI_SSID, ZUNDER_FLOW_EMULATOR_WIFI_PASSWORD);
+  Serial.println(F("WLAN-Verbindung wird im Hintergrund aufgebaut."));
+}
 
-  Serial.print(F("WLAN-Verbindung wird aufgebaut"));
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(250);
-    Serial.print('.');
+void updateWifiServices() {
+  const bool connected = WiFi.status() == WL_CONNECTED;
+  if (connected && !wifiWasConnected) {
+    Serial.print(F("Weboberfläche: http://"));
+    Serial.println(WiFi.localIP());
+    mdnsStarted = MDNS.begin("zunder-flow-emulator");
+    if (mdnsStarted) {
+      Serial.println(F("mDNS: http://zunder-flow-emulator.local"));
+    }
+  } else if (!connected && wifiWasConnected) {
+    Serial.println(F("WLAN getrennt; Impulserzeugung läuft unabhängig weiter."));
+    mdnsStarted = false;
   }
-  Serial.println();
-  Serial.print(F("Weboberfläche: http://"));
-  Serial.println(WiFi.localIP());
+  wifiWasConnected = connected;
+  if (connected && mdnsStarted) MDNS.update();
 }
 
 void updatePulseGenerator() {
@@ -129,18 +141,20 @@ void updatePulseGenerator() {
 
 void setup() {
   Serial.begin(115200);
-  pinMode(kValveCommandPin, INPUT);
+  // Aktives LOW mit internem Pull-up stellt ohne angeschlossene Quelle einen
+  // definierten inaktiven Zustand her. Die externe Testquelle darf den Eingang
+  // ausschließlich über Open-Drain/Open-Collector oder Optokoppler auf LOW ziehen.
+  pinMode(kValveCommandPin, INPUT_PULLUP);
   releaseFlowPulseLine();
 
-  connectWifi();
-  MDNS.begin("zunder-flow-emulator");
   server.on("/", HTTP_GET, sendOverview);
   server.on("/feedback", HTTP_POST, setFeedback);
   server.begin();
+  beginWifiConnection();
 }
 
 void loop() {
-  server.handleClient();
-  MDNS.update();
   updatePulseGenerator();
+  updateWifiServices();
+  server.handleClient();
 }

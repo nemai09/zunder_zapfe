@@ -126,6 +126,24 @@ Simulatoren dürfen zusätzliche Testmethoden wie `present_card()`,
 `add_pulses()` oder `trigger()` anbieten. Produktionscode darf diese Methoden
 nicht über den gemeinsamen Vertrag voraussetzen.
 
+## Hardware-in-the-Loop-Vertrag für Milestone 8
+
+Der ESP8266-Durchflussemulator unter
+[`esp8266_flow_emulator`](../../esp8266_flow_emulator/README.md) ist ein
+externes Testmittel für die spätere Pi-Ein-/Ausgangsstufe. Er ist kein
+Produktionsadapter und keine Safety-Komponente.
+
+| Signal | HIL-Verhalten | Sicherer Ruhezustand |
+| --- | --- | --- |
+| `VALVE_COMMAND` | aktives LOW am ESP-Eingang; nur Open-Drain, Open-Collector oder Optokoppler zulässig | interner Pull-up, offen beziehungsweise abgesteckt ist inaktiv |
+| `FLOW_PULSE` | ESP zieht die Leitung für einen Impuls nach LOW und gibt sie danach frei; Auswertung auf fallender Flanke | hochohmig freigegeben, Pull-up liegt auf der Pi-Seite |
+
+Die Impulserzeugung darf nicht von WLAN, Weboberfläche oder mDNS abhängen.
+WLAN dient ausschließlich zur Diagnose und zum Ein-/Ausschalten des
+simulierten Impulsfeedbacks. Die konkrete Raspberry-Pi-Pinbelegung,
+Pegelwandlung, galvanische Trennung und Verdrahtung werden erst nach
+elektrischer Freigabe Teil des realen Adaptervertrags.
+
 ## Verfahren für Vertragserweiterungen
 
 1. Bedarf mit Anforderungs-ID oder dokumentierter offener Entscheidung
