@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.7` in Umsetzung; Diagnose und technische Einstellungen geplant
+Status: `M7.2` bis `M7.7` in Umsetzung; technische Einstellungen geplant
 
 ## Ziel und Abgrenzung
 
@@ -112,10 +112,7 @@ Frontend-Buildschritt.
 - Backendbereitschaft und Buildstring;
 - Anzahl bekannter Benutzer und aktiver Armbänder;
 - aktive Veranstaltung und aktives Fass;
-- klare Kennzeichnung der folgenden Arbeitspakete.
-
-Störung und Summen werden mit den zugehörigen Fach-APIs in `M7.6` und `M7.7`
-ergänzt.
+- direkter Einstieg in Benutzer, Fass, Buchungen, Stammdaten und Diagnose.
 
 ### Benutzer und Armbänder (`M7.4`)
 
@@ -152,12 +149,15 @@ allgemeinen Einstellungen. Die API lehnt inaktive Getränke, nichtpositive
 Volumen und widersprüchliche Aktivierungswechsel ab. An- und Abzapfen werden
 mit dem angemeldeten Admin auditiert.
 
-### Buchungen und Abrechnung (`M7.6`)
+### Buchungen und Abrechnung (`M7.6` und `M7.7`)
 
 - nach NFC-Anmeldesitzung zusammengefasste Buchungen nach Veranstaltung,
   Benutzer, Fass, Zeitraum, Art und Abschluss filtern;
-- Buchungsdetails und Summen pro Benutzer und Veranstaltung anzeigen;
-- Einzelabrechnung als nachvollziehbare Bildschirmansicht vorbereiten.
+- aktuelle Buchungsdetails und Gesamtsummen pro Veranstaltung anzeigen;
+- die zehn Teilnehmer mit der höchsten kostenpflichtigen Zapfmenge anzeigen;
+- einen Teilnehmer auswählen und Kosten und Menge insgesamt sowie nach Getränk
+  aufschlüsseln;
+- einen Gesamtauszug der Veranstaltung als CSV herunterladen.
 
 Die Smartphone-Ansicht zeigt für eine gewählte Veranstaltung
 kostenpflichtige Mengen und Beträge je Benutzer, Gesamtmengen,
@@ -169,9 +169,12 @@ erscheinen als eine summierte Buchung; die unveränderlichen Rohdatensätze
 bleiben für Diagnose, Fassbestand und Nachvollziehbarkeit erhalten.
 
 Abgeschlossene Zapfbuchungen bleiben unveränderlich. Bearbeiten und Löschen
-werden nicht angeboten. Storno, Korrektur und ein verbindliches Exportformat
-bleiben bis zu den Entscheidungen `OD-005` bis `OD-007` außerhalb des
-verbindlichen Umfangs.
+werden nicht angeboten. Der Teilnehmerauszug fasst ausschließlich
+kostenpflichtige Rohbuchungen einer Veranstaltung je Teilnehmer und Getränk
+zusammen. Er enthält stabile IDs, Namen, Anzahl der Anmeldesitzungen, Menge in
+Millilitern und Betrag in Cent. Die Alpha-WebUI liefert ihn zusätzlich als
+semikolongetrennte UTF-8-CSV-Datei mit BOM. Storno, Korrektur sowie allgemeines
+Backup und Wiederherstellung bleiben außerhalb dieses Umfangs.
 
 ### Einstellungen
 
@@ -181,25 +184,25 @@ verbindlichen Umfangs.
 - Safety- und Plausibilitätsgrenzen;
 - ausschließlich validierte, auditierte Änderungen.
 
-### Diagnose, Wartung und Safety
+### Diagnose und Safety (`M7.7`)
 
-- Hardware- und Dienststatus sowie technische Ereignisse;
-- verriegelte Fehlerursache und bewusster Safety-Reset;
-- Wartungsmodus und gemessene, nicht berechnete Wartungsentnahme;
+- Zustand der Zapfsteuerung und verriegelte Fehlerursache;
+- gezielter Safety-Reset durch die autorisierte Webadmin-Sitzung;
+- Adminaudit und technische Ereignisse in standardmäßig eingeklappten Listen;
 - keine Umgehung von Not-Aus, Watchdogs oder Zustandsprüfungen.
 
-### Audit und Statistik (`M7.6`)
+Die WebUI zeigt bei Bedarf jeweils die letzten 50 Audit- und technischen
+Ereignisse. Auditwerte enthalten den konkreten Admin und die gespeicherten
+alten beziehungsweise neuen Werte. Passwörter, Hashes und vollständige
+NFC-UIDs werden durch die schreibenden Fachservices weiterhin nicht
+protokolliert. Mehrzeilige Details umbrechen innerhalb ihrer Karten und
+erzeugen auch bei langen Auditwerten kein horizontales Seitenlayout.
 
-- Auditaktionen mit Admin, Zeitpunkt, Objekt und Änderung;
-- technische Ereignisse mit Schweregrad und Filter;
-- Verbrauch, Betrag und Mengen nach Veranstaltung, Benutzer, Getränk und Fass.
-
-Die WebUI zeigt jeweils die letzten 50 Audit- und technischen Ereignisse.
-Auditwerte enthalten den konkreten Admin und die gespeicherten alten
-beziehungsweise neuen Werte. Passwörter, Hashes und vollständige NFC-UIDs
-werden durch die schreibenden Fachservices weiterhin nicht protokolliert.
-Mehrzeilige Details umbrechen innerhalb ihrer Karten und erzeugen auch bei
-langen Auditwerten kein horizontales Seitenlayout.
+Eine Wartungszapfung wird nicht über das Smartphone bedient. Sie bleibt eine
+lokale, noch zu ergänzende Kioskfunktion, damit ein Smartphone niemals das
+Ventil startet oder stoppt. Bereits gemessene Wartungsmengen bleiben in
+Bestand und Gesamtstatistik sichtbar, aber außerhalb der
+Teilnehmerabrechnung.
 
 ## Schnittstellen- und Datenarbeit
 
@@ -209,8 +212,10 @@ Milestone 7 verwendet:
 - einen Authentifizierungsservice für Hashing, Login, Logout und Passwortpflege;
 - eine gemeinsame serverseitige Admin-Autorisierung;
 - listen- und filterfähige Repository-Operationen;
-- Verwaltungs-APIs für Veranstaltungen, Getränke, Fässer, Buchungen, Audit
-  und Statistik; Einstellungen, Diagnose und Wartung folgen in `M7.7`;
+- Verwaltungs-APIs für Veranstaltungen, Getränke, Fässer, Buchungen,
+  Teilnehmerabrechnung und -export, Audit, Statistik und Diagnose;
+- keine Ventil- oder Wartungssteuerung in der Smartphone-WebUI;
+- technische Einstellungen folgen in einem späteren Arbeitspaket;
 - aktualisierte OpenAPI- und menschenlesbare Verträge.
 
 Bestehende Fachinvarianten bleiben bestehen: höchstens eine aktive
@@ -229,4 +234,4 @@ Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-KEG-004`, `ZZ-KEG-006`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`,
 `ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
 `ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
-und `ZZ-DAT-009`.
+und `ZZ-DAT-009` bis `ZZ-DAT-010`.

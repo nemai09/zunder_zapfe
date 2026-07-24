@@ -273,6 +273,11 @@ class WebAuthService:
                 raise WebAuthorizationError("Aktiver Adminzugang erforderlich")
             if not target.active or target.role is not UserRole.ADMIN:
                 raise ValueError("Nur ein aktiver Admin kann ein Webpasswort erhalten")
+            if target.administration_protected:
+                raise WebAuthorizationError(
+                    "Das Passwort des geschützten Admins kann nicht durch "
+                    "einen anderen Webadmin zurückgesetzt werden"
+                )
             target.password_hash = self._password_hash.hash(normalized_password)
             repository.revoke_web_admin_sessions(target.id, revoked_at=now)
             repository.record_admin_action(

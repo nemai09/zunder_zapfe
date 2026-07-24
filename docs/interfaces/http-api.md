@@ -183,7 +183,7 @@ lokalen Verwaltungs-API.
 | `GET /api/web-admin/users` | Benutzer und maskierten Armbandstatus auflisten |
 | `POST /api/web-admin/users` | Benutzer anlegen |
 | `PATCH /api/web-admin/users/{id}` | Profil, Rolle und Aktivstatus ändern |
-| `DELETE /api/web-admin/users/{id}` | Benutzer fachlich löschen; Buchungen und interne ID erhalten |
+| `DELETE /api/web-admin/users/{id}` | Benutzer fachlich löschen; Buchungen und interne ID erhalten; lokal geschützte Admins werden mit `409` abgewiesen |
 | `PUT /api/web-admin/users/{id}/password` | persönliches Passwort eines anderen aktiven Admins setzen oder zurücksetzen |
 | `GET /api/web-admin/users/{id}/nfc-cards` | maskierte Armbandzuordnungen lesen |
 | `POST /api/web-admin/users/{id}/nfc-cards/capture` | ventilgesperrte Live-Zuordnung starten oder deren Status lesen |
@@ -208,7 +208,20 @@ Beim Löschen eines Benutzers entfernt die Fachlogik dessen Armbänder,
 Passwort und aktive Websitzungen. Die Benutzerzeile wird mit einem
 Löschzeitpunkt erhalten und aus der Verwaltung ausgeblendet, damit
 unveränderliche Buchungen weiterhin eindeutig referenzierbar bleiben. Der
-angemeldete Admin darf sich nicht selbst löschen.
+angemeldete Admin darf sich nicht selbst löschen. Benutzerantworten weisen mit
+`administration_protected` darauf hin, dass ein Admin bei der lokalen
+Bereitstellung dauerhaft gegen einfache Fehlbedienung geschützt wurde. Das Feld
+ist über HTTP ausschließlich lesbar. Ein geschützter Admin kann weder gelöscht,
+deaktiviert noch herabgestuft werden. Sein letztes aktives Armband kann weder
+gesperrt noch entfernt werden; nach Zuordnung eines Ersatzarmbands bleibt ein
+Kartenwechsel möglich.
+
+Das Passwort eines lokal geschützten Admins kann nicht über
+`PUT /api/web-admin/users/{id}/password` durch einen anderen Webadmin
+zurückgesetzt werden. Der geschützte Admin darf sein eigenes Passwort weiterhin
+über `POST /api/web-auth/password` ändern. Der lokale interaktive
+Provisionierungsbefehl bleibt der Wiederherstellungsweg bei vergessenem
+Passwort.
 
 ## Smartphone-Betriebsverwaltung
 
@@ -239,16 +252,22 @@ ungültige Menge wird abgelehnt. `detach` schließt nur das aktive Fass und
 überträgt keinen Restbestand. Änderungen an Veranstaltungen, Getränken und
 Fässern werden mit alten und neuen Werten auditiert.
 
-## Smartphone-Buchungen und Protokolle
+## Smartphone-Buchungen, Abrechnung und Diagnose
 
-Alle folgenden Routen sind ausschließlich lesend und benötigen eine gültige
-Websitzung. Sie verändern weder Buchungen noch Audit- oder Technikprotokolle.
+Alle lesenden Routen benötigen eine gültige Websitzung. Sie verändern weder
+Buchungen noch Audit- oder Technikprotokolle. Der Safety-Reset ist die einzige
+schreibende Route in diesem Abschnitt und benötigt zusätzlich einen gültigen
+CSRF-Header.
 
 | Methode und Pfad | Wirkung |
 | --- | --- |
 | `GET /api/web-admin/bookings` | unveränderliche Zapf-Rohdatensätze kombiniert filtern und neueste zuerst auflisten |
 | `GET /api/web-admin/booking-sessions` | Rohdatensätze je NFC-Anmeldesitzung summiert als fachliche Buchungen auflisten |
 | `GET /api/web-admin/statistics?event_id={id}` | Veranstaltungs-, Wartungs- und Abrechnungssummen je Benutzer liefern |
+| `GET /api/web-admin/reports/participants?event_id={id}&user_id={id}` | Teilnehmerabrechnung insgesamt oder optional für einen Benutzer nach Getränk aufteilen |
+| `GET /api/web-admin/reports/participants.csv?event_id={id}` | vollständigen Teilnehmerauszug der Veranstaltung als CSV herunterladen |
+| `GET /api/web-admin/diagnostics/tap` | Zustand der Zapfsteuerung und verriegelte Fehlerursache anzeigen |
+| `POST /api/web-admin/diagnostics/safety-reset` | verriegelten Fehler nach Zustandsprüfung als angemeldeter Webadmin zurücksetzen |
 | `GET /api/web-admin/audit` | Adminaktionen mit Admin, Objekt sowie alten und neuen Werten auflisten |
 | `GET /api/web-admin/technical-events` | technische Ereignisse mit Schweregrad und Details auflisten |
 
@@ -256,8 +275,9 @@ Websitzung. Sie verändern weder Buchungen noch Audit- oder Technikprotokolle.
 `keg_id`, `kind`, `completion`, `occurred_from` und `occurred_to`. `audit` kann nach
 `entity_type` und `action`, `technical-events` nach `severity` und
 `event_type` filtern. Alle Listen akzeptieren `limit` von 1 bis 500; die
-Smartphone-WebUI verwendet 100 zusammengefasste Anmeldebuchungen und jeweils
-50 Protokolleinträge.
+Smartphone-WebUI verwendet 100 zusammengefasste Anmeldebuchungen. Audit und
+technische Ereignisse stehen im Diagnosebereich standardmäßig eingeklappt und
+werden dort mit jeweils höchstens 50 Einträgen geladen.
 Zeitwerte sind ISO-8601-Zeitpunkte. Mengen und Preise bleiben ganzzahlige
 Milliliter beziehungsweise Centwerte.
 
@@ -267,6 +287,23 @@ Wartungsmenge sowie den gespeicherten Betrag getrennt aus. Benutzersummen
 enthalten ausschließlich kostenpflichtige Buchungen. Historische Namen bleiben
 auch nach dem fachlichen Löschen eines Benutzers auflösbar. Eine
 Buchungsänderungs- oder Löschroute existiert bewusst nicht.
+
+Der Teilnehmerbericht verwendet die unveränderlichen Rohbuchungen als Quelle
+und fasst ausschließlich kostenpflichtige Einträge je Teilnehmer und Getränk
+zusammen. Er liefert stabile IDs, Namen, die Anzahl unterschiedlicher
+NFC-Anmeldesitzungen, Istmenge in Millilitern und Betrag in Cent. Ein
+`user_id`-Filter ist für die Einzelanalyse optional. Der CSV-Gesamtauszug
+verwendet Semikolon als Trennzeichen, UTF-8 mit BOM und zusätzlich
+menschenlesbare Liter- und Eurospalten; die ganzzahligen Milliliter- und
+Centspalten bleiben verbindlich. Wartungsentnahmen und Daten anderer
+Veranstaltungen sind ausgeschlossen.
+
+Der Webadmin-Sicherheitsreset ist nur in `fault_locked` oder
+`emergency_stop` sinnvoll. Die Ursache muss behoben und ein aktiver Not-Aus
+frei sein. Die konkrete Webadmin-ID stammt aus der serverseitigen Sitzung und
+wird im technischen Ereignis als Webautorisierung nachvollziehbar
+protokolliert. Die Route öffnet das Ventil nicht und startet keine
+Kiosksitzung.
 
 ## Wartung und Sicherheit
 
@@ -279,7 +316,13 @@ Buchungsänderungs- oder Löschroute existiert bewusst nicht.
 | `POST /api/tap/safety/reset` | verriegelt, Ursache behoben, aktive Admin-Karte liegt auf | Zustand `idle`, keine Sitzung |
 
 Beim Sicherheitsreset werden weder UID, Benutzer-ID noch Admin-Flag im Request
-übergeben. Ein aktiver Not-Aus verhindert den Reset.
+übergeben. Ein aktiver Not-Aus verhindert den Reset. Diese Kioskroute verwendet
+weiterhin die physisch aufgelegte Admin-Karte; der Diagnosebereich verwendet
+stattdessen die getrennt autorisierte Webadmin-Route.
+
+Die Smartphone-WebUI stellt keine Wartungs- oder sonstige Ventilbedienung
+bereit. Die Wartungsrouten bleiben Backendvertrag für eine spätere lokale
+Kioskfunktion.
 
 ## Verbrauch und Fass
 

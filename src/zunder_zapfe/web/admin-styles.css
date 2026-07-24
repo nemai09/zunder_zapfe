@@ -169,8 +169,7 @@ main { width: min(100%, 72rem); margin: 0 auto; padding: 1.5rem 1rem 2rem; }
 button.area-card { border: 1px solid var(--line); }
 .area-card span, .area-card small { display: block; color: var(--muted); font-size: .78rem; }
 .area-card strong { display: block; margin: .3rem 0; }
-.area-card.is-ready { border-color: #9cc9b2; background: var(--green-soft); }
-.area-card.is-ready span { color: var(--green); font-weight: 800; }
+.area-card span { color: var(--green); font-weight: 800; }
 
 .view-heading, .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .view-heading h1 { margin-bottom: 0; }
@@ -240,8 +239,9 @@ button.user-card { border: 1px solid var(--line); }
 .keg-history { max-width: none; }
 
 .reporting-heading { margin-bottom: 1rem; }
-.reporting-context { margin-bottom: 1rem; }
+.reporting-context { display: grid; gap: .75rem; max-width: none; margin-bottom: 1rem; }
 .reporting-context label { margin-top: 0; }
+.reporting-context .button { width: 100%; }
 .report-metrics { margin-bottom: 1rem; }
 .report-grid { display: grid; gap: 1rem; }
 .report-section { max-width: none; }
@@ -258,6 +258,20 @@ button.user-card { border: 1px solid var(--line); }
 .record-meta .badge { font-size: .66rem; }
 .badge.warning { color: #825400; background: #fff0c7; }
 .badge.error, .badge.critical { color: var(--red); background: var(--red-soft); }
+.diagnostic-status { max-width: none; margin-bottom: 1rem; }
+.diagnostic-status .button { width: 100%; }
+.diagnostic-log-grid { display: grid; gap: 1rem; }
+.diagnostic-details { max-width: none; }
+.diagnostic-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  font-weight: 800;
+}
+.diagnostic-details summary small { color: var(--muted); font-weight: 600; }
+.diagnostic-details[open] summary { margin-bottom: 1rem; }
 
 .sheet-backdrop, .capture-backdrop {
   position: fixed;
@@ -347,6 +361,9 @@ button.user-card { border: 1px solid var(--line); }
   .management-wide { grid-column: 1 / -1; }
   .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .report-wide { grid-column: 1 / -1; }
+  .reporting-context { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+  .reporting-context .button { width: auto; }
+  .diagnostic-log-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .booking-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .booking-filters .button { grid-column: auto; }
   .sheet-backdrop { align-items: center; padding: 2rem; }

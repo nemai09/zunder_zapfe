@@ -27,6 +27,7 @@ from zunder_zapfe.persistence.models import (
     UserRole,
 )
 from zunder_zapfe.persistence.repository import NewTapBooking, Repository
+from zunder_zapfe.protect_admin import protect_admin
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -103,6 +104,7 @@ def test_initial_migration_creates_current_schema(migrated_engine: Engine) -> No
     }
     user_columns = {column["name"] for column in inspect(migrated_engine).get_columns("users")}
     assert "deleted_at" in user_columns
+    assert "administration_protected" in user_columns
     booking_columns = {
         column["name"]: column for column in inspect(migrated_engine).get_columns("tap_bookings")
     }
@@ -116,6 +118,67 @@ def test_initial_migration_creates_missing_database_directory(tmp_path: Path) ->
     command.upgrade(alembic_config(sqlite_url(database_path)), "head")
 
     assert database_path.is_file()
+
+
+def test_only_active_admin_account_can_be_protected(
+    migrated_engine: Engine,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sessions = create_session_factory(migrated_engine)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        user = repository.create_user("Normal")
+        admin = repository.create_user("Demo", last_name="Admin", role=UserRole.ADMIN)
+
+        with pytest.raises(ValueError, match="Only an active admin"):
+            repository.protect_admin_account(user.id)
+
+        admin_id = admin.id
+        with pytest.raises(ValueError, match="requires an active wristband"):
+            repository.protect_admin_account(admin_id)
+        repository.add_nfc_card(admin_id, "A1B2C3D4")
+
+    monkeypatch.setenv("ZUNDER_ZAPFE_DATABASE_URL", str(migrated_engine.url))
+    assert protect_admin(admin_id) == "Demo Admin"
+
+    with sessions.begin() as session:
+        repository = Repository(session)
+        protected = repository.get_user(admin_id)
+        assert protected.administration_protected is True
+        with pytest.raises(ValueError, match="locally protected"):
+            repository.soft_delete_user(admin_id)
+
+
+def test_admin_protection_migration_preserves_existing_users(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path / "upgrade-to-deletion-protection.db")
+    config = alembic_config(url)
+    command.upgrade(config, "e18c4f45a501")
+    engine = create_database_engine(url)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO users (
+                        display_name, first_name, last_name, note, role, active,
+                        special_portion_ml, password_hash, deleted_at, created_at, updated_at
+                    ) VALUES (
+                        'Demo Admin', 'Demo', 'Admin', NULL, 'admin', 1,
+                        NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+            )
+
+        command.upgrade(config, "head")
+
+        with engine.connect() as connection:
+            protected = connection.scalar(
+                text("SELECT administration_protected FROM users WHERE display_name = 'Demo Admin'")
+            )
+        assert protected == 0
+    finally:
+        engine.dispose()
 
 
 def test_manual_booking_migration_preserves_existing_bookings(tmp_path: Path) -> None:

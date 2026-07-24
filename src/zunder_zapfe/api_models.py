@@ -148,6 +148,7 @@ class AdminUserResponse(BaseModel):
     note: str | None
     is_admin: bool
     active: bool
+    administration_protected: bool
     has_password: bool
     nfc_card_count: int
     active_nfc_card_count: int
@@ -293,6 +294,24 @@ class AdminEventStatisticsResponse(BaseModel):
     maintenance_volume_ml: int
     amount_cents: int
     users: list[AdminUserStatisticsResponse]
+
+
+class AdminParticipantBeverageReportRowResponse(BaseModel):
+    user_id: int
+    user_display_name: str
+    first_name: str
+    last_name: str | None
+    beverage_id: int
+    beverage_name: str
+    booking_count: int
+    measured_volume_ml: int
+    amount_cents: int
+
+
+class AdminParticipantReportResponse(BaseModel):
+    event_id: int
+    event_name: str
+    rows: list[AdminParticipantBeverageReportRowResponse]
 
 
 class AdminAuditEntryResponse(BaseModel):

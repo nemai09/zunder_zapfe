@@ -434,6 +434,75 @@ class AdminService:
                 ),
             }
 
+    def participant_beverage_report(
+        self,
+        event_id: int,
+        *,
+        user_id: int | None = None,
+        admin_user_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Aggregate chargeable participant consumption per beverage."""
+        self._require_admin_id(admin_user_id)
+        with self._sessions() as session:
+            repository = Repository(session)
+            event = repository.get_event(event_id)
+            if user_id is not None and session.get(User, user_id) is None:
+                raise LookupError(f"User {user_id} does not exist")
+            bookings = repository.list_tap_bookings(
+                event_id=event_id,
+                user_id=user_id,
+                limit=None,
+            )
+            totals: dict[tuple[int, int], dict[str, Any]] = {}
+            for booking in bookings:
+                if not booking.chargeable:
+                    continue
+                user = session.get(User, booking.user_id)
+                beverage = session.get(Beverage, booking.beverage_id)
+                summary = totals.setdefault(
+                    (booking.user_id, booking.beverage_id),
+                    {
+                        "user_id": booking.user_id,
+                        "user_display_name": (
+                            user.display_name if user is not None else f"Benutzer {booking.user_id}"
+                        ),
+                        "first_name": (
+                            user.first_name if user is not None else f"Benutzer {booking.user_id}"
+                        ),
+                        "last_name": user.last_name if user is not None else None,
+                        "beverage_id": booking.beverage_id,
+                        "beverage_name": (
+                            beverage.name
+                            if beverage is not None
+                            else f"Getränk {booking.beverage_id}"
+                        ),
+                        "booking_count": 0,
+                        "measured_volume_ml": 0,
+                        "amount_cents": 0,
+                        "_session_ids": set(),
+                    },
+                )
+                summary["_session_ids"].add(booking.login_session_id)
+                summary["measured_volume_ml"] += booking.measured_volume_ml
+                summary["amount_cents"] += booking.amount_cents
+            rows = []
+            for summary in totals.values():
+                summary["booking_count"] = len(summary.pop("_session_ids"))
+                rows.append(summary)
+            rows.sort(
+                key=lambda item: (
+                    item["user_display_name"].casefold(),
+                    item["beverage_name"].casefold(),
+                    item["user_id"],
+                    item["beverage_id"],
+                )
+            )
+            return {
+                "event_id": event.id,
+                "event_name": event.name,
+                "rows": rows,
+            }
+
     def list_audit_entries(
         self,
         *,
@@ -574,6 +643,10 @@ class AdminService:
             repository = Repository(session)
             user = repository.get_user(user_id)
             next_role = UserRole.ADMIN if is_admin else UserRole.USER
+            if user.administration_protected and (not active or next_role is not UserRole.ADMIN):
+                raise AdminConflict(
+                    "This protected admin account must remain active and retain its role"
+                )
             if user.id == admin_id and (not active or next_role is not UserRole.ADMIN):
                 raise AdminConflict("The active admin cannot deactivate or demote itself")
             if (
@@ -624,6 +697,8 @@ class AdminService:
         with self._sessions.begin() as session:
             repository = Repository(session)
             user = repository.get_user(user_id)
+            if user.administration_protected:
+                raise AdminConflict("This admin account is locally protected")
             if user.id == admin_id:
                 raise AdminConflict("The active admin cannot delete itself")
             if user.role is UserRole.ADMIN and user.active:
@@ -768,14 +843,19 @@ class AdminService:
         with self._sessions.begin() as session:
             repository = Repository(session)
             card = repository.get_nfc_card(card_id)
-            if not active and card.user_id == admin_id:
+            user = repository.get_user(card.user_id)
+            if not active and card.active:
                 active_cards = session.scalar(
                     select(func.count(NfcCard.id)).where(
-                        NfcCard.user_id == admin_id,
+                        NfcCard.user_id == card.user_id,
                         NfcCard.active.is_(True),
                     )
                 )
-                if int(active_cards or 0) <= 1:
+                if user.administration_protected and int(active_cards or 0) <= 1:
+                    raise AdminConflict(
+                        "The protected admin account must retain an active wristband"
+                    )
+                if card.user_id == admin_id and int(active_cards or 0) <= 1:
                     raise AdminConflict("The active admin's last wristband cannot be disabled")
             old_active = card.active
             card = repository.set_nfc_card_active(card_id, active=active)
@@ -802,6 +882,10 @@ class AdminService:
                         NfcCard.active.is_(True),
                     )
                 )
+                if user.administration_protected and int(active_cards or 0) <= 1:
+                    raise AdminConflict(
+                        "The protected admin account must retain an active wristband"
+                    )
                 if int(active_cards or 0) <= 1:
                     raise AdminConflict(
                         "The last active wristband of an active admin cannot be removed"
@@ -854,6 +938,7 @@ class AdminService:
             "note": user.note,
             "role": user.role.value,
             "active": user.active,
+            "administration_protected": user.administration_protected,
         }
 
     @staticmethod
@@ -1011,6 +1096,7 @@ class AdminService:
             "note": user.note,
             "is_admin": user.role is UserRole.ADMIN,
             "active": user.active,
+            "administration_protected": user.administration_protected,
             "has_password": user.password_hash is not None,
             "nfc_card_count": len(cards),
             "active_nfc_card_count": sum(card.active for card in cards),

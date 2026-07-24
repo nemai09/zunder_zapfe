@@ -22,9 +22,9 @@ eine Weboberfläche für den Kioskbetrieb.
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
-| Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte integriert |
+| Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte oder in der geschützten Smartphone-Diagnose integriert |
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
-| Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer, eigener Fassbereich, zusammengefasste Buchungen, Abrechnung und Protokolle implementiert; Pi-Abnahme offen |
+| Admin-WebUI | Milestone 7: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose implementiert; Pi-Abnahme offen |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil implementiert; Pi-Abnahme offen |
 | Reale Zapfhardware | Noch nicht implementiert |
 
@@ -46,8 +46,8 @@ flowchart LR
 
 Die WebUI greift niemals direkt auf Hardware oder SQLite zu. `TapController`
 ist die einzige Komponente, die das Ventil anfordert. Hardwareadapter bleiben
-hinter typisierten Verträgen austauschbar; konkrete GPIOs sind bewusst noch
-nicht festgelegt.
+hinter typisierten Verträgen austauschbar; konkrete GPIOs sind noch nicht
+festgelegt.
 
 ## Schnellstart für Entwicklung
 

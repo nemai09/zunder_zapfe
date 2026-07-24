@@ -271,6 +271,48 @@ def test_zz_aut_012_admin_can_set_another_admin_password(
     )
 
 
+def test_zz_aut_012_protected_admin_password_uses_own_change_or_local_reset(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    with sessions.begin() as session:
+        repository = Repository(session)
+        target = repository.get_user(ids["user_id"])
+        target.role = UserRole.ADMIN
+        repository.add_nfc_card(target.id, "ABCD1234")
+        repository.protect_admin_account(target.id)
+    WebAuthService(sessions).set_initial_password(
+        user_id=ids["user_id"],
+        password=NEW_ADMIN_PASSWORD,
+    )
+
+    actor_csrf = login(client, ids["admin_id"])
+    reset = client.put(
+        f"/api/web-admin/users/{ids['user_id']}/password",
+        json={"new_password": ADMIN_PASSWORD},
+        headers=csrf_headers(actor_csrf),
+    )
+    assert reset.status_code == 403
+
+    target_csrf = login(client, ids["user_id"], NEW_ADMIN_PASSWORD)
+    changed = client.post(
+        "/api/web-auth/password",
+        json={
+            "current_password": NEW_ADMIN_PASSWORD,
+            "new_password": ADMIN_PASSWORD,
+        },
+        headers=csrf_headers(target_csrf),
+    )
+    assert changed.status_code == 204
+    assert (
+        client.post(
+            "/api/web-auth/login",
+            json={"user_id": ids["user_id"], "password": ADMIN_PASSWORD},
+        ).status_code
+        == 200
+    )
+
+
 def test_zz_aut_003_repeated_failed_logins_are_rate_limited(
     web_admin_api: tuple[object, ...],
 ) -> None:
@@ -555,3 +597,70 @@ def test_zz_aut_004_user_delete_preserves_bookings_and_never_reuses_id(
     )
     assert created.status_code == 201
     assert created.json()["id"] > ids["user_id"]
+
+
+def test_zz_aut_004_locally_protected_admin_retains_account_and_active_wristband(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        target = repository.get_user(ids["user_id"])
+        target.role = UserRole.ADMIN
+        card = repository.add_nfc_card(target.id, "ABCD1234")
+        card_id = card.id
+        repository.protect_admin_account(target.id)
+
+    users = client.get("/api/web-admin/users").json()
+    protected = next(user for user in users if user["id"] == ids["user_id"])
+    assert protected["administration_protected"] is True
+
+    for active, is_admin in ((False, True), (True, False)):
+        response = client.patch(
+            f"/api/web-admin/users/{ids['user_id']}",
+            json={
+                "first_name": "Uli",
+                "last_name": "User",
+                "note": None,
+                "is_admin": is_admin,
+                "active": active,
+            },
+            headers=headers,
+        )
+        assert response.status_code == 409
+
+    response = client.delete(
+        f"/api/web-admin/users/{ids['user_id']}",
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert "locally protected" in response.json()["detail"]
+    response = client.patch(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        json={"active": False},
+        headers=headers,
+    )
+    assert response.status_code == 409
+    response = client.delete(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        headers=headers,
+    )
+    assert response.status_code == 409
+    with sessions.begin() as session:
+        replacement = Repository(session).add_nfc_card(ids["user_id"], "DCBA4321")
+        replacement_id = replacement.id
+    response = client.delete(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        headers=headers,
+    )
+    assert response.status_code == 204
+    with sessions() as session:
+        repository = Repository(session)
+        stored_user = repository.get_user(ids["user_id"])
+        assert stored_user.deleted_at is None
+        assert stored_user.active is True
+        assert stored_user.role is UserRole.ADMIN
+        assert repository.get_nfc_card(replacement_id).active is True

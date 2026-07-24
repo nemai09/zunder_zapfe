@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import os
 from contextlib import asynccontextmanager
 from dataclasses import asdict
@@ -33,6 +35,7 @@ from zunder_zapfe.api_models import (
     AdminNfcCaptureResponse,
     AdminNfcCardResponse,
     AdminNfcCardStatusRequest,
+    AdminParticipantReportResponse,
     AdminSettingsResponse,
     AdminSettingsUpdateRequest,
     AdminTechnicalEventResponse,
@@ -745,6 +748,104 @@ def create_app(
         )
 
     @application.get(
+        "/api/web-admin/reports/participants",
+        response_model=AdminParticipantReportResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_participant_report(
+        request: Request,
+        event_id: int = Query(gt=0),
+        user_id: int | None = Query(default=None, gt=0),
+    ) -> dict[str, Any]:
+        identity = require_web_admin(request)
+        return admin_service.participant_beverage_report(
+            event_id,
+            user_id=user_id,
+            admin_user_id=identity.user_id,
+        )
+
+    @application.get(
+        "/api/web-admin/reports/participants.csv",
+        response_class=Response,
+        responses={
+            **web_admin_responses,
+            200: {
+                "description": "UTF-8 CSV participant statement grouped by beverage",
+                "content": {"text/csv": {}},
+            },
+        },
+    )
+    async def export_web_admin_participant_report(
+        request: Request,
+        event_id: int = Query(gt=0),
+    ) -> Response:
+        identity = require_web_admin(request)
+        report = admin_service.participant_beverage_report(
+            event_id,
+            admin_user_id=identity.user_id,
+        )
+        output = io.StringIO(newline="")
+        writer = csv.writer(output, delimiter=";", lineterminator="\r\n")
+        writer.writerow(
+            [
+                "Teilnehmer-ID",
+                "Vorname",
+                "Nachname",
+                "Anzeigename",
+                "Getränk-ID",
+                "Getränk",
+                "Buchungen",
+                "Menge (ml)",
+                "Menge (l)",
+                "Betrag (Cent)",
+                "Betrag (EUR)",
+            ]
+        )
+        for row in report["rows"]:
+            writer.writerow(
+                [
+                    row["user_id"],
+                    row["first_name"],
+                    row["last_name"] or "",
+                    row["user_display_name"],
+                    row["beverage_id"],
+                    row["beverage_name"],
+                    row["booking_count"],
+                    row["measured_volume_ml"],
+                    _format_csv_liters(row["measured_volume_ml"]),
+                    row["amount_cents"],
+                    _format_csv_euros(row["amount_cents"]),
+                ]
+            )
+        return Response(
+            content="\ufeff" + output.getvalue(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="zunder-zapfe-abrechnung-{event_id}.csv"'
+                )
+            },
+        )
+
+    @application.get(
+        "/api/web-admin/diagnostics/tap",
+        response_model=TapStatusResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_tap_diagnostics(request: Request) -> dict[str, Any]:
+        require_web_admin(request)
+        return tap_service.status_dict()
+
+    @application.post(
+        "/api/web-admin/diagnostics/safety-reset",
+        response_model=TapStatusResponse,
+        responses=web_admin_responses,
+    )
+    async def reset_web_admin_safety_lock(request: Request) -> dict[str, Any]:
+        identity = require_web_admin(request, write=True)
+        return tap_service.reset_safety_lock(admin_user_id=identity.user_id)
+
+    @application.get(
         "/api/web-admin/audit",
         response_model=list[AdminAuditEntryResponse],
         responses=web_admin_responses,
@@ -1067,6 +1168,16 @@ def create_app(
             return tap_service.poll()
 
     return application
+
+
+def _format_csv_liters(volume_ml: int) -> str:
+    liters, milliliters = divmod(volume_ml, 1000)
+    return f"{liters},{milliliters:03d}"
+
+
+def _format_csv_euros(amount_cents: int) -> str:
+    euros, cents = divmod(amount_cents, 100)
+    return f"{euros},{cents:02d}"
 
 
 def _is_loopback_request(request: Request) -> bool:

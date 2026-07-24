@@ -1,6 +1,6 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.9
-Stand: 2026-07-23
+Version: 0.11
+Stand: 2026-07-24
 Status: Milestone 7 in Umsetzung gemaess CR-002
 
 1. ZWECK UND FORMAT
@@ -103,12 +103,22 @@ damit das Armband anschliessend einem anderen Benutzer zugewiesen werden kann.
 Admins muessen Benutzer loeschen koennen. Dabei muessen historische Buchungen
 und Protokollreferenzen erhalten bleiben. Eine einmal vergebene interne
 Benutzer-ID darf auch nach dem Loeschen niemals erneut vergeben werden.
+Ein aktiver Admin darf bei der lokalen Erstbereitstellung dauerhaft gegen
+einfache Fehlbedienung und Zugangsverlust geschuetzt werden. Ein geschuetzter
+Admin darf nicht geloescht, deaktiviert oder zum normalen Benutzer herabgestuft
+werden und muss mindestens ein aktives NFC-Armband behalten. Ein Armbandwechsel
+bleibt moeglich, wenn zuerst ein weiteres aktives Armband zugeordnet wird.
+Dieser Schutz darf weder ueber die HTTP-API noch ueber die WebUI gesetzt oder
+aufgehoben werden.
 Abnahme: Ein Admin legt einen Benutzer an, startet die Zuordnung, legt ein
 bislang unbekanntes Armband kurz auf und kann den Benutzer danach damit
 anmelden. Nach bestaetigtem Entfernen der Zuordnung kann dasselbe Armband neu
 zugewiesen werden. Nach dem Loeschen ist der Benutzer nicht mehr verwalt- oder
 anmeldbar, seine bisherigen Buchungen bleiben jedoch unter derselben internen
 ID erhalten und der naechste Benutzer erhaelt eine hoehere ID.
+Ein lokal geschuetzter Admin bleibt in der WebUI sichtbar. Loeschen,
+Deaktivieren, Herabstufen sowie Sperren oder Entfernen seines letzten aktiven
+Armbands werden auch bei direkten HTTP-Versuchen abgewiesen.
 
 [ZZ-AUT-005] Adminvergabe
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -174,13 +184,19 @@ Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Ein angemeldeter Admin muss sein eigenes Passwort nach Eingabe des bisherigen
 Passworts aendern koennen. Ein Admin muss fuer einen anderen Admin ein neues
 Passwort setzen koennen, wenn dieser seinen Zugang nicht mehr verwenden kann.
+Ausgenommen ist ein lokal gegen Fehlbedienung geschuetzter Admin: Sein Passwort
+darf nicht durch einen anderen Webadmin zurueckgesetzt werden. Er kann es selbst
+mit dem bisherigen Passwort aendern; der lokale interaktive CLI-Reset bleibt
+als Wiederherstellungsweg erhalten.
 Passwoerter duerfen ausschliesslich als geeignete, individuell gesalzene Hashes
 gespeichert werden. Passwortaenderung, administrativer Reset und fehlgeschlagene
 Anmeldeversuche muessen nachvollziehbar protokolliert werden, ohne Passwoerter
 oder Hashes in Protokolle aufzunehmen.
 Abnahme: Passwortwechsel und Reset machen den neuen Zugang wirksam, widerrufen
 bestehende Sitzungen des betroffenen Admins und hinterlassen einen Audit- oder
-technischen Protokolleintrag ohne vertrauliche Werte.
+technischen Protokolleintrag ohne vertrauliche Werte. Beim geschuetzten Admin
+wird ein Webreset durch einen anderen Admin abgewiesen, waehrend eigener
+Passwortwechsel und lokaler Reset funktionieren.
 
 
 4. GETRAENKE, FAESSER UND BESTAND
@@ -455,8 +471,10 @@ davon unberuehrt.
 [ZZ-MNT-001] Wartungsmodus
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Admins muessen einen Wartungsmodus fuer Spuelungen und Testzapfungen aktivieren
-koennen.
-Abnahme: Nur ein Admin kann den Wartungsmodus starten und beenden.
+koennen. Die Ventilbedienung erfolgt ausschliesslich lokal an der Zapfanlage;
+die Smartphone-WebUI darf keine Wartungszapfung starten oder stoppen.
+Abnahme: Nur ein Admin kann den lokalen Wartungsmodus starten und beenden; die
+Smartphone-WebUI bietet keine Ventilbedienung an.
 
 [ZZ-MNT-002] Wartungsmengen
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -488,12 +506,12 @@ veraendert werden.
 Abnahme: Die Anwendung bietet keine Aenderung einer abgeschlossenen Buchung an.
 
 [ZZ-BIL-004] Einzelabrechnung
-Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: DEMONSTRATION
-Das System muss fuer jeden Benutzer eine Einzelabrechnung ueber Mengen und
-Betraege einer Veranstaltung erzeugen koennen. Format und Detailinhalt werden
-spaeter festgelegt.
-Abnahme: Fuer einen Benutzer kann eine nachvollziehbare Gesamtabrechnung erzeugt
-werden.
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss fuer jeden Benutzer einer Veranstaltung die kostenpflichtigen
+Mengen und Betraege insgesamt sowie getrennt nach Getraenk darstellen koennen.
+Wartungsentnahmen duerfen nicht in die Teilnehmerabrechnung einfliessen.
+Abnahme: Ein Admin waehlt eine Veranstaltung und einen Benutzer aus und erhaelt
+eine nachvollziehbare Gesamtsumme sowie die Aufteilung nach Getraenk.
 
 [ZZ-BIL-005] Happy Hour
 Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
@@ -581,9 +599,12 @@ Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Alle akzeptierten Adminfunktionen muessen ueber eine einfache, uebersichtliche
 und responsive WebUI im lokalen Admin-WLAN bedienbar sein. Dazu gehoeren
 mindestens Benutzer und Armbaender, Veranstaltungen, Getraenke, Faesser,
-Buchungen und Abrechnungssummen, Einstellungen, Diagnose, Wartung, Safety-Reset,
-Audit und technische Ereignisse. Die primaere Zielbedienung ist ein Smartphone;
-eine Internetverbindung darf nicht erforderlich sein.
+Buchungen, Abrechnung und Teilnehmerexport, Einstellungen, Diagnose,
+Safety-Reset, Audit und technische Ereignisse. Audit und technische Ereignisse
+werden im Diagnosebereich standardmaessig eingeklappt dargestellt. Die
+Smartphone-WebUI darf keine Zapf- oder Wartungszapfung ausloesen. Die primaere
+Zielbedienung ist ein Smartphone; eine Internetverbindung darf nicht
+erforderlich sein.
 Abnahme: Die akzeptierten Adminablaeufe sind auf einer ueblichen
 Smartphone-Breite ohne horizontales Scrollen bedienbar. Vertagte oder noch nicht
 ausreichend spezifizierte Funktionen werden nicht als bereits verfuegbar
@@ -705,6 +726,18 @@ Abnahme: Zwei Zapfungen ohne zwischenzeitlichen Logout erscheinen als eine
 summierte Buchung; nach Logout und erneuter Anmeldung entsteht eine weitere
 Buchung. Rohmengen, Betraege und Fasszuordnungen bleiben vollstaendig erhalten.
 
+[ZZ-DAT-010] Teilnehmerabrechnungsexport
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Fuer eine Veranstaltung muss ein vollstaendiger, lokal herunterladbarer
+Gesamtauszug aller Teilnehmerabrechnungen erzeugt werden koennen. Eine Zeile
+fasst einen Teilnehmer und ein Getraenk zusammen und enthaelt stabile
+Teilnehmer- und Getraenke-IDs, Namen, Anzahl der Anmeldesitzungen,
+kostenpflichtige Menge in Millilitern und Betrag in Cent. Als Alpha-Format wird
+eine semikolongetrennte UTF-8-CSV-Datei mit BOM verwendet. Wartungsentnahmen
+werden nicht exportiert; die unveraenderlichen Rohbuchungen bleiben die Quelle.
+Abnahme: Der Export einer Veranstaltung enthaelt die Kosten und Zapfmengen jedes
+Teilnehmers getrennt nach Getraenk und keine Daten einer anderen Veranstaltung.
+
 
 12. ZEITBASIS UND OPTIONALE ERWEITERUNGEN
 =========================================
@@ -768,7 +801,7 @@ festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
 spaeter zu bewerten.
 OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
 OD-004: Detailregeln der Happy Hour.
-OD-005: Format und Inhalt der Einzelabrechnung.
+OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
 OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.

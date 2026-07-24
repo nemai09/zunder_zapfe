@@ -102,6 +102,11 @@ class User(Base):
     note: Mapped[str | None] = mapped_column(Text)
     role: Mapped[UserRole] = mapped_column(enum_type(UserRole, "user_role"))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    administration_protected: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=text("0"),
+    )
     special_portion_ml: Mapped[int | None] = mapped_column(Integer)
     password_hash: Mapped[str | None] = mapped_column(String(255))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

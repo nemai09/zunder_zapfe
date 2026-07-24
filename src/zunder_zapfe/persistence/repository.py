@@ -227,6 +227,23 @@ class Repository:
         self.session.flush()
         return user
 
+    def protect_admin_account(self, user_id: int) -> User:
+        """Protect an active admin against basic application-level lockout."""
+        user = self.get_user(user_id)
+        if user.role is not UserRole.ADMIN or not user.active:
+            raise ValueError("Only an active admin account can be protected")
+        active_cards = self.session.scalar(
+            select(func.count(NfcCard.id)).where(
+                NfcCard.user_id == user.id,
+                NfcCard.active.is_(True),
+            )
+        )
+        if int(active_cards or 0) < 1:
+            raise ValueError("The protected admin account requires an active wristband")
+        user.administration_protected = True
+        self.session.flush()
+        return user
+
     def soft_delete_user(
         self,
         user_id: int,
@@ -235,6 +252,8 @@ class Repository:
     ) -> tuple[User, int]:
         """Retire a user while preserving its immutable historical references."""
         user = self.get_user(user_id)
+        if user.administration_protected:
+            raise ValueError("This admin account is locally protected")
         cards = list(self.session.scalars(select(NfcCard).where(NfcCard.user_id == user_id)))
         for card in cards:
             self.session.delete(card)

@@ -8,6 +8,8 @@ const model = {
   kegs: [],
   bookings: [],
   statistics: null,
+  participantReport: null,
+  diagnosticTap: null,
   auditEntries: [],
   technicalEvents: [],
   selectedUserId: null,
@@ -51,6 +53,7 @@ const elements = {
   userActive: document.querySelector("#user-active"),
   userMessage: document.querySelector("#user-message"),
   deleteUserSection: document.querySelector("#delete-user-section"),
+  deleteUserHint: document.querySelector("#delete-user-hint"),
   deleteUserButton: document.querySelector("#delete-user-button"),
   passwordSection: document.querySelector("#password-section"),
   passwordState: document.querySelector("#password-state"),
@@ -84,7 +87,11 @@ const elements = {
   reportVolume: document.querySelector("#report-volume"),
   reportAmount: document.querySelector("#report-amount"),
   reportMaintenance: document.querySelector("#report-maintenance"),
-  billingUserList: document.querySelector("#billing-user-list"),
+  topTenList: document.querySelector("#top-ten-list"),
+  participantReportUser: document.querySelector("#participant-report-user"),
+  participantReportTotal: document.querySelector("#participant-report-total"),
+  participantBeverageList: document.querySelector("#participant-beverage-list"),
+  downloadParticipantReport: document.querySelector("#download-participant-report"),
   bookingFilterForm: document.querySelector("#booking-filter-form"),
   bookingUserFilter: document.querySelector("#booking-user-filter"),
   bookingKegFilter: document.querySelector("#booking-keg-filter"),
@@ -96,6 +103,9 @@ const elements = {
   bookingList: document.querySelector("#booking-list"),
   auditList: document.querySelector("#audit-list"),
   technicalEventList: document.querySelector("#technical-event-list"),
+  diagnosticTapState: document.querySelector("#diagnostic-tap-state"),
+  diagnosticSafetyReason: document.querySelector("#diagnostic-safety-reason"),
+  safetyResetButton: document.querySelector("#safety-reset-button"),
   captureDialog: document.querySelector("#capture-dialog"),
   captureInstruction: document.querySelector("#capture-instruction"),
   ownPasswordForm: document.querySelector("#own-password-form"),
@@ -168,7 +178,8 @@ function showView(name) {
     button.classList.toggle("is-active", button.dataset.navView === name);
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
-  if (name === "data") loadReporting();
+  if (name === "bookings") loadReporting();
+  if (name === "diagnostics") loadDiagnostics();
 }
 
 async function loadLoginOptions() {
@@ -325,20 +336,30 @@ async function openUser(userId = null) {
   elements.lastName.value = user?.last_name || "";
   elements.userNote.value = user?.note || "";
   elements.userIsAdmin.checked = Boolean(user?.is_admin);
+  const administrationProtected = Boolean(user?.administration_protected);
+  elements.userIsAdmin.disabled = administrationProtected;
   elements.userActive.checked = user ? user.active : true;
-  elements.userActive.disabled = !user;
+  elements.userActive.disabled = !user || administrationProtected;
   elements.userMessage.textContent = "";
   elements.deleteUserSection.hidden = !user;
-  elements.deleteUserButton.disabled = user?.id === model.session?.user_id;
-  elements.deleteUserButton.title =
-    user?.id === model.session?.user_id
+  const isCurrentAdmin = user?.id === model.session?.user_id;
+  elements.deleteUserButton.disabled = isCurrentAdmin || administrationProtected;
+  const deleteHint = administrationProtected
+    ? "Dieser Admin wurde lokal gegen Löschen und versehentlichen Zugangsverlust geschützt."
+    : isCurrentAdmin
       ? "Der aktuell angemeldete Admin kann sich nicht selbst löschen."
       : "";
+  elements.deleteUserHint.textContent = deleteHint;
+  elements.deleteUserHint.hidden = !deleteHint;
+  elements.deleteUserButton.title = deleteHint;
   elements.passwordSection.hidden = !user?.is_admin;
+  elements.resetPasswordForm.hidden = administrationProtected;
   elements.cardsSection.hidden = !user;
-  elements.passwordState.textContent = user?.has_password
-    ? "Ein persönliches Passwort ist gesetzt."
-    : "Noch kein persönliches Passwort gesetzt.";
+  elements.passwordState.textContent = administrationProtected
+    ? "Das geschützte Konto ändert sein Passwort selbst; lokal bleibt ein CLI-Reset möglich."
+    : user?.has_password
+      ? "Ein persönliches Passwort ist gesetzt."
+      : "Noch kein persönliches Passwort gesetzt.";
   elements.resetPassword.value = "";
   elements.userSheet.hidden = false;
   if (user) await loadCards();
@@ -418,6 +439,8 @@ function renderCards() {
     elements.cardList.append(empty);
     return;
   }
+  const protectedAdmin = Boolean(selectedUser()?.administration_protected);
+  const activeCardCount = model.cards.filter((card) => card.active).length;
   for (const card of model.cards) {
     const row = document.createElement("div");
     row.className = "nfc-card";
@@ -431,11 +454,18 @@ function renderCards() {
     toggle.type = "button";
     toggle.className = `button button-small ${card.active ? "button-danger" : "button-secondary"}`;
     toggle.textContent = card.active ? "Sperren" : "Aktivieren";
+    const mustRetainCard = protectedAdmin && card.active && activeCardCount <= 1;
+    toggle.disabled = mustRetainCard;
+    toggle.title = mustRetainCard
+      ? "Dem geschützten Admin muss mindestens ein aktives Armband bleiben."
+      : "";
     toggle.addEventListener("click", () => setCardActive(card.id, !card.active));
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "button button-small button-quiet";
     remove.textContent = "Löschen";
+    remove.disabled = mustRetainCard;
+    remove.title = toggle.title;
     remove.addEventListener("click", () => removeCard(card.id));
     row.append(label, toggle, remove);
     elements.cardList.append(row);
@@ -635,9 +665,8 @@ async function loadReporting() {
   const eventId = Number(elements.reportEvent.value);
   if (!eventId) {
     model.statistics = null;
+    model.participantReport = null;
     model.bookings = [];
-    model.auditEntries = [];
-    model.technicalEvents = [];
     renderReporting();
     return;
   }
@@ -654,17 +683,31 @@ async function loadReporting() {
     if (value) params.set(key, value);
   }
   try {
-    const [statistics, bookings, auditEntries, technicalEvents] = await Promise.all([
+    const [statistics, bookings, participantReport] = await Promise.all([
       api(`/api/web-admin/statistics?event_id=${eventId}`),
       api(`/api/web-admin/booking-sessions?${params.toString()}`),
-      api("/api/web-admin/audit?limit=50"),
-      api("/api/web-admin/technical-events?limit=50"),
+      api(`/api/web-admin/reports/participants?event_id=${eventId}`),
     ]);
     model.statistics = statistics;
     model.bookings = bookings;
+    model.participantReport = participantReport;
+    renderReporting();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function loadDiagnostics() {
+  try {
+    const [diagnosticTap, auditEntries, technicalEvents] = await Promise.all([
+      api("/api/web-admin/diagnostics/tap"),
+      api("/api/web-admin/audit?limit=50"),
+      api("/api/web-admin/technical-events?limit=50"),
+    ]);
+    model.diagnosticTap = diagnosticTap;
     model.auditEntries = auditEntries;
     model.technicalEvents = technicalEvents;
-    renderReporting();
+    renderDiagnostics();
   } catch (error) {
     showToast(error.message, true);
   }
@@ -701,24 +744,32 @@ function renderReporting() {
   elements.reportMaintenance.textContent = statistics
     ? formatLiters(statistics.maintenance_volume_ml)
     : "–";
+  elements.downloadParticipantReport.disabled = !statistics;
 
-  elements.billingUserList.replaceChildren();
+  elements.topTenList.replaceChildren();
   if (!statistics?.users.length) {
-    elements.billingUserList.append(
+    elements.topTenList.append(
       recordRow("Noch keine kostenpflichtigen Buchungen", "Für diese Veranstaltung."),
     );
   } else {
-    for (const summary of statistics.users) {
-      elements.billingUserList.append(
+    const topUsers = [...statistics.users]
+      .sort((left, right) =>
+        right.measured_volume_ml - left.measured_volume_ml
+        || left.user_display_name.localeCompare(right.user_display_name, "de"),
+      )
+      .slice(0, 10);
+    for (const [index, summary] of topUsers.entries()) {
+      elements.topTenList.append(
         dataRow(
-          summary.user_display_name,
+          `${index + 1}. ${summary.user_display_name}`,
           `${summary.booking_count} Buchungen · `
-            + `${formatLiters(summary.measured_volume_ml)} L`,
-          [{ text: formatEuros(summary.amount_cents), className: "admin" }],
+            + formatEuros(summary.amount_cents),
+          [{ text: `${formatLiters(summary.measured_volume_ml)} L`, className: "admin" }],
         ),
       );
     }
   }
+  renderParticipantAnalysis();
 
   elements.bookingResultCount.textContent =
     `${model.bookings.length} Buchungen angezeigt`;
@@ -769,6 +820,63 @@ function renderReporting() {
       ),
     );
   }
+
+}
+
+function renderParticipantAnalysis() {
+  const rows = model.participantReport?.rows || [];
+  const selectedUserId = Number(elements.participantReportUser.value);
+  const participants = new Map();
+  for (const row of rows) participants.set(row.user_id, row.user_display_name);
+  elements.participantReportUser.replaceChildren(new Option("Teilnehmer wählen", ""));
+  for (const [userId, displayName] of [...participants.entries()].sort((left, right) =>
+    left[1].localeCompare(right[1], "de"),
+  )) {
+    elements.participantReportUser.add(new Option(displayName, String(userId)));
+  }
+  elements.participantReportUser.value = String(
+    participants.has(selectedUserId)
+      ? selectedUserId
+      : participants.keys().next().value || "",
+  );
+
+  const activeUserId = Number(elements.participantReportUser.value);
+  const participantRows = rows.filter((row) => row.user_id === activeUserId);
+  const totalVolume = participantRows.reduce((total, row) => total + row.measured_volume_ml, 0);
+  const totalAmount = participantRows.reduce((total, row) => total + row.amount_cents, 0);
+  elements.participantReportTotal.textContent = participantRows.length
+    ? `Gesamt: ${formatLiters(totalVolume)} L · ${formatEuros(totalAmount)}`
+    : "Keine kostenpflichtigen Buchungen vorhanden.";
+  elements.participantBeverageList.replaceChildren();
+  for (const row of participantRows) {
+    elements.participantBeverageList.append(
+      dataRow(
+        row.beverage_name,
+        `${row.booking_count} Buchungen · ${formatLiters(row.measured_volume_ml)} L`,
+        [{ text: formatEuros(row.amount_cents), className: "admin" }],
+      ),
+    );
+  }
+}
+
+function renderDiagnostics() {
+  const tap = model.diagnosticTap;
+  const stateLabels = {
+    idle: "Bereit",
+    authenticated: "Benutzer angemeldet",
+    manual_pouring: "Zapfung läuft",
+    portion_pouring: "Portion läuft",
+    top_up_available: "Nachfüllen verfügbar",
+    maintenance: "Wartung",
+    fault_locked: "Fehlersperre",
+    emergency_stop: "Not-Aus",
+  };
+  elements.diagnosticTapState.textContent = tap
+    ? stateLabels[tap.state] || tap.state
+    : "Nicht verfügbar";
+  elements.diagnosticSafetyReason.textContent = tap?.safety_reason || "";
+  elements.safetyResetButton.disabled =
+    !tap || !["fault_locked", "emergency_stop"].includes(tap.state);
 
   elements.auditList.replaceChildren();
   if (!model.auditEntries.length) {
@@ -1027,6 +1135,54 @@ async function detachKeg() {
   }
 }
 
+async function downloadParticipantReport() {
+  const eventId = Number(elements.reportEvent.value);
+  if (!eventId) return;
+  try {
+    const response = await fetch(
+      `/api/web-admin/reports/participants.csv?event_id=${eventId}`,
+      { cache: "no-store" },
+    );
+    if (!response.ok) {
+      if (response.status === 401) showLogin();
+      let detail = `HTTP ${response.status}`;
+      try {
+        detail = (await response.json()).detail || detail;
+      } catch (_error) {
+        // HTTP status remains useful when no JSON error body exists.
+      }
+      throw new Error(detail);
+    }
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const filenameMatch = disposition.match(/filename="([^"]+)"/);
+    const filename = filenameMatch?.[1] || `zunder-zapfe-abrechnung-${eventId}.csv`;
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function resetSafetyLock() {
+  if (elements.safetyResetButton.disabled) return;
+  if (!window.confirm("Fehlersperre wirklich zurücksetzen?")) return;
+  try {
+    model.diagnosticTap = await api("/api/web-admin/diagnostics/safety-reset", {
+      method: "POST",
+    });
+    await loadDiagnostics();
+    showToast("Fehlersperre wurde zurückgesetzt.");
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 async function changeOwnPassword(event) {
   event.preventDefault();
   elements.accountMessage.classList.remove("error");
@@ -1084,11 +1240,15 @@ elements.reportEvent.addEventListener("change", () => {
   renderReportingOptions();
   loadReporting();
 });
+elements.participantReportUser.addEventListener("change", renderParticipantAnalysis);
 elements.bookingFilterForm.addEventListener("submit", (event) => {
   event.preventDefault();
   loadReporting();
 });
 document.querySelector("#refresh-reporting-button").addEventListener("click", loadReporting);
+elements.downloadParticipantReport.addEventListener("click", downloadParticipantReport);
+document.querySelector("#refresh-diagnostics-button").addEventListener("click", loadDiagnostics);
+elements.safetyResetButton.addEventListener("click", resetSafetyLock);
 document.querySelector("#capture-card-button").addEventListener("click", beginCapture);
 document.querySelector("#cancel-capture-button").addEventListener("click", () => stopCapture());
 elements.ownPasswordForm.addEventListener("submit", changeOwnPassword);
