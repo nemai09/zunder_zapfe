@@ -880,6 +880,10 @@
             "title": "Active Nfc Card Count",
             "type": "integer"
           },
+          "administration_protected": {
+            "title": "Administration Protected",
+            "type": "boolean"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -935,6 +939,7 @@
           "note",
           "is_admin",
           "active",
+          "administration_protected",
           "has_password",
           "nfc_card_count",
           "active_nfc_card_count"

@@ -96,7 +96,7 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
 | `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
 | `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
-| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen und Registrierungsbegrüßung implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
+| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen, Registrierungsbegrüßung und lokaler Fehlbedienungsschutz für einen Admin implementiert; Diagnose, technische Einstellungen, Wartung und Safety-Reset folgen |
 | `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre

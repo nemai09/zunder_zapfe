@@ -574,6 +574,10 @@ class AdminService:
             repository = Repository(session)
             user = repository.get_user(user_id)
             next_role = UserRole.ADMIN if is_admin else UserRole.USER
+            if user.administration_protected and (not active or next_role is not UserRole.ADMIN):
+                raise AdminConflict(
+                    "This protected admin account must remain active and retain its role"
+                )
             if user.id == admin_id and (not active or next_role is not UserRole.ADMIN):
                 raise AdminConflict("The active admin cannot deactivate or demote itself")
             if (
@@ -624,6 +628,8 @@ class AdminService:
         with self._sessions.begin() as session:
             repository = Repository(session)
             user = repository.get_user(user_id)
+            if user.administration_protected:
+                raise AdminConflict("This admin account is locally protected")
             if user.id == admin_id:
                 raise AdminConflict("The active admin cannot delete itself")
             if user.role is UserRole.ADMIN and user.active:
@@ -768,14 +774,19 @@ class AdminService:
         with self._sessions.begin() as session:
             repository = Repository(session)
             card = repository.get_nfc_card(card_id)
-            if not active and card.user_id == admin_id:
+            user = repository.get_user(card.user_id)
+            if not active and card.active:
                 active_cards = session.scalar(
                     select(func.count(NfcCard.id)).where(
-                        NfcCard.user_id == admin_id,
+                        NfcCard.user_id == card.user_id,
                         NfcCard.active.is_(True),
                     )
                 )
-                if int(active_cards or 0) <= 1:
+                if user.administration_protected and int(active_cards or 0) <= 1:
+                    raise AdminConflict(
+                        "The protected admin account must retain an active wristband"
+                    )
+                if card.user_id == admin_id and int(active_cards or 0) <= 1:
                     raise AdminConflict("The active admin's last wristband cannot be disabled")
             old_active = card.active
             card = repository.set_nfc_card_active(card_id, active=active)
@@ -802,6 +813,10 @@ class AdminService:
                         NfcCard.active.is_(True),
                     )
                 )
+                if user.administration_protected and int(active_cards or 0) <= 1:
+                    raise AdminConflict(
+                        "The protected admin account must retain an active wristband"
+                    )
                 if int(active_cards or 0) <= 1:
                     raise AdminConflict(
                         "The last active wristband of an active admin cannot be removed"
@@ -854,6 +869,7 @@ class AdminService:
             "note": user.note,
             "role": user.role.value,
             "active": user.active,
+            "administration_protected": user.administration_protected,
         }
 
     @staticmethod
@@ -1011,6 +1027,7 @@ class AdminService:
             "note": user.note,
             "is_admin": user.role is UserRole.ADMIN,
             "active": user.active,
+            "administration_protected": user.administration_protected,
             "has_password": user.password_hash is not None,
             "nfc_card_count": len(cards),
             "active_nfc_card_count": sum(card.active for card in cards),

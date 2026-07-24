@@ -535,7 +535,9 @@ function renderAdminUsers() {
     const meta = document.createElement("span");
     const role = user.is_admin ? "Admin" : "Benutzer";
     const status = user.active ? "Aktiv" : "Gesperrt";
-    meta.textContent = `${role} · ${status} · ${user.active_nfc_card_count} Armband`;
+    const protection = user.administration_protected ? " · Geschützt" : "";
+    meta.textContent =
+      `${role} · ${status}${protection} · ${user.active_nfc_card_count} Armband`;
     button.append(name, meta);
     button.addEventListener("click", async () => {
       model.adminSelectedUserId = user.id;
@@ -555,7 +557,9 @@ function fillUserForm(user) {
   elements.lastName.value = user.last_name || "";
   elements.userNote.value = user.note || "";
   elements.userIsAdmin.checked = user.is_admin;
+  elements.userIsAdmin.disabled = user.administration_protected;
   elements.userActive.checked = user.active;
+  elements.userActive.disabled = user.administration_protected;
   elements.captureCardButton.disabled = false;
   elements.userMessage.textContent = "";
 }
@@ -567,7 +571,9 @@ function newUser() {
   elements.lastName.value = "";
   elements.userNote.value = "";
   elements.userIsAdmin.checked = false;
+  elements.userIsAdmin.disabled = false;
   elements.userActive.checked = true;
+  elements.userActive.disabled = false;
   elements.captureCardButton.disabled = true;
   elements.cardList.replaceChildren();
   elements.userMessage.textContent = "Neuen Benutzer speichern, danach Armband zuweisen.";
@@ -620,6 +626,8 @@ async function loadAdminCards() {
 
 function renderAdminCards() {
   elements.cardList.replaceChildren();
+  const protectedAdmin = Boolean(selectedAdminUser()?.administration_protected);
+  const activeCardCount = model.adminCards.filter((card) => card.active).length;
   for (const card of model.adminCards) {
     const row = document.createElement("div");
     row.className = "card-list-item";
@@ -629,6 +637,11 @@ function renderAdminCards() {
     toggle.type = "button";
     toggle.className = `card-status ${card.active ? "is-active" : ""}`;
     toggle.textContent = card.active ? "Aktiv" : "Gesperrt";
+    const mustRetainCard = protectedAdmin && card.active && activeCardCount <= 1;
+    toggle.disabled = mustRetainCard;
+    toggle.title = mustRetainCard
+      ? "Dem geschützten Admin muss mindestens ein aktives Armband bleiben."
+      : "";
     toggle.addEventListener("click", async () => {
       try {
         await api(`/api/admin/nfc-cards/${card.id}`, {
@@ -644,7 +657,8 @@ function renderAdminCards() {
     remove.type = "button";
     remove.className = "card-remove";
     remove.textContent = "Entfernen";
-    remove.title = "Zuordnung entfernen";
+    remove.disabled = mustRetainCard;
+    remove.title = mustRetainCard ? toggle.title : "Zuordnung entfernen";
     remove.addEventListener("click", async () => {
       const confirmed = window.confirm(
         `Zuordnung von Armband ${card.uid_hint} wirklich entfernen?`,

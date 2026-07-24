@@ -555,3 +555,70 @@ def test_zz_aut_004_user_delete_preserves_bookings_and_never_reuses_id(
     )
     assert created.status_code == 201
     assert created.json()["id"] > ids["user_id"]
+
+
+def test_zz_aut_004_locally_protected_admin_retains_account_and_active_wristband(
+    web_admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, ids = web_admin_api
+    csrf_token = login(client, ids["admin_id"])
+    headers = csrf_headers(csrf_token)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        target = repository.get_user(ids["user_id"])
+        target.role = UserRole.ADMIN
+        card = repository.add_nfc_card(target.id, "ABCD1234")
+        card_id = card.id
+        repository.protect_admin_account(target.id)
+
+    users = client.get("/api/web-admin/users").json()
+    protected = next(user for user in users if user["id"] == ids["user_id"])
+    assert protected["administration_protected"] is True
+
+    for active, is_admin in ((False, True), (True, False)):
+        response = client.patch(
+            f"/api/web-admin/users/{ids['user_id']}",
+            json={
+                "first_name": "Uli",
+                "last_name": "User",
+                "note": None,
+                "is_admin": is_admin,
+                "active": active,
+            },
+            headers=headers,
+        )
+        assert response.status_code == 409
+
+    response = client.delete(
+        f"/api/web-admin/users/{ids['user_id']}",
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert "locally protected" in response.json()["detail"]
+    response = client.patch(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        json={"active": False},
+        headers=headers,
+    )
+    assert response.status_code == 409
+    response = client.delete(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        headers=headers,
+    )
+    assert response.status_code == 409
+    with sessions.begin() as session:
+        replacement = Repository(session).add_nfc_card(ids["user_id"], "DCBA4321")
+        replacement_id = replacement.id
+    response = client.delete(
+        f"/api/web-admin/nfc-cards/{card_id}",
+        headers=headers,
+    )
+    assert response.status_code == 204
+    with sessions() as session:
+        repository = Repository(session)
+        stored_user = repository.get_user(ids["user_id"])
+        assert stored_user.deleted_at is None
+        assert stored_user.active is True
+        assert stored_user.role is UserRole.ADMIN
+        assert repository.get_nfc_card(replacement_id).active is True

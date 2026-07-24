@@ -51,6 +51,7 @@ const elements = {
   userActive: document.querySelector("#user-active"),
   userMessage: document.querySelector("#user-message"),
   deleteUserSection: document.querySelector("#delete-user-section"),
+  deleteUserHint: document.querySelector("#delete-user-hint"),
   deleteUserButton: document.querySelector("#delete-user-button"),
   passwordSection: document.querySelector("#password-section"),
   passwordState: document.querySelector("#password-state"),
@@ -325,15 +326,22 @@ async function openUser(userId = null) {
   elements.lastName.value = user?.last_name || "";
   elements.userNote.value = user?.note || "";
   elements.userIsAdmin.checked = Boolean(user?.is_admin);
+  const administrationProtected = Boolean(user?.administration_protected);
+  elements.userIsAdmin.disabled = administrationProtected;
   elements.userActive.checked = user ? user.active : true;
-  elements.userActive.disabled = !user;
+  elements.userActive.disabled = !user || administrationProtected;
   elements.userMessage.textContent = "";
   elements.deleteUserSection.hidden = !user;
-  elements.deleteUserButton.disabled = user?.id === model.session?.user_id;
-  elements.deleteUserButton.title =
-    user?.id === model.session?.user_id
+  const isCurrentAdmin = user?.id === model.session?.user_id;
+  elements.deleteUserButton.disabled = isCurrentAdmin || administrationProtected;
+  const deleteHint = administrationProtected
+    ? "Dieser Admin wurde lokal gegen Löschen und versehentlichen Zugangsverlust geschützt."
+    : isCurrentAdmin
       ? "Der aktuell angemeldete Admin kann sich nicht selbst löschen."
       : "";
+  elements.deleteUserHint.textContent = deleteHint;
+  elements.deleteUserHint.hidden = !deleteHint;
+  elements.deleteUserButton.title = deleteHint;
   elements.passwordSection.hidden = !user?.is_admin;
   elements.cardsSection.hidden = !user;
   elements.passwordState.textContent = user?.has_password
@@ -418,6 +426,8 @@ function renderCards() {
     elements.cardList.append(empty);
     return;
   }
+  const protectedAdmin = Boolean(selectedUser()?.administration_protected);
+  const activeCardCount = model.cards.filter((card) => card.active).length;
   for (const card of model.cards) {
     const row = document.createElement("div");
     row.className = "nfc-card";
@@ -431,11 +441,18 @@ function renderCards() {
     toggle.type = "button";
     toggle.className = `button button-small ${card.active ? "button-danger" : "button-secondary"}`;
     toggle.textContent = card.active ? "Sperren" : "Aktivieren";
+    const mustRetainCard = protectedAdmin && card.active && activeCardCount <= 1;
+    toggle.disabled = mustRetainCard;
+    toggle.title = mustRetainCard
+      ? "Dem geschützten Admin muss mindestens ein aktives Armband bleiben."
+      : "";
     toggle.addEventListener("click", () => setCardActive(card.id, !card.active));
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "button button-small button-quiet";
     remove.textContent = "Löschen";
+    remove.disabled = mustRetainCard;
+    remove.title = toggle.title;
     remove.addEventListener("click", () => removeCard(card.id));
     row.append(label, toggle, remove);
     elements.cardList.append(row);

@@ -183,7 +183,7 @@ lokalen Verwaltungs-API.
 | `GET /api/web-admin/users` | Benutzer und maskierten Armbandstatus auflisten |
 | `POST /api/web-admin/users` | Benutzer anlegen |
 | `PATCH /api/web-admin/users/{id}` | Profil, Rolle und Aktivstatus ändern |
-| `DELETE /api/web-admin/users/{id}` | Benutzer fachlich löschen; Buchungen und interne ID erhalten |
+| `DELETE /api/web-admin/users/{id}` | Benutzer fachlich löschen; Buchungen und interne ID erhalten; lokal geschützte Admins werden mit `409` abgewiesen |
 | `PUT /api/web-admin/users/{id}/password` | persönliches Passwort eines anderen aktiven Admins setzen oder zurücksetzen |
 | `GET /api/web-admin/users/{id}/nfc-cards` | maskierte Armbandzuordnungen lesen |
 | `POST /api/web-admin/users/{id}/nfc-cards/capture` | ventilgesperrte Live-Zuordnung starten oder deren Status lesen |
@@ -208,7 +208,13 @@ Beim Löschen eines Benutzers entfernt die Fachlogik dessen Armbänder,
 Passwort und aktive Websitzungen. Die Benutzerzeile wird mit einem
 Löschzeitpunkt erhalten und aus der Verwaltung ausgeblendet, damit
 unveränderliche Buchungen weiterhin eindeutig referenzierbar bleiben. Der
-angemeldete Admin darf sich nicht selbst löschen.
+angemeldete Admin darf sich nicht selbst löschen. Benutzerantworten weisen mit
+`administration_protected` darauf hin, dass ein Admin bei der lokalen
+Bereitstellung dauerhaft gegen einfache Fehlbedienung geschützt wurde. Das Feld
+ist über HTTP ausschließlich lesbar. Ein geschützter Admin kann weder gelöscht,
+deaktiviert noch herabgestuft werden. Sein letztes aktives Armband kann weder
+gesperrt noch entfernt werden; nach Zuordnung eines Ersatzarmbands bleibt ein
+Kartenwechsel möglich.
 
 ## Smartphone-Betriebsverwaltung
 

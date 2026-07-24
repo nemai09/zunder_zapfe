@@ -17,7 +17,7 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
 | Bereich | Operation | Wesentliche Bedingung |
 | --- | --- | --- |
 | Veranstaltung | `create_event`, `get_event`, `list_events`, `update_event`, `activate_event` | Name/Jahr eindeutig, höchstens eine aktive Veranstaltung |
-| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `list_web_admins`, `update_user`, `soft_delete_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar |
+| Benutzer/NFC | `create_user`, `get_user`, `list_users`, `list_web_admins`, `update_user`, `protect_admin_account`, `soft_delete_user`, `add_nfc_card`, `list_nfc_cards`, `set_nfc_card_active`, `delete_nfc_card`, `find_active_user_by_card` | Vorname erforderlich; UID kanonisch, eindeutig und nur bei aktiver Karte/Benutzer anmeldbar; lokaler Administrationsschutz nur für aktive Admins |
 | Websitzung | `find_web_admin_session`, `revoke_web_admin_sessions` | nur Token-Hash persistent; Widerruf bei Passwort- oder Rollenänderung |
 | Getränk/Fass | `create_beverage`, `get_beverage`, `list_beverages`, `update_beverage`, `activate_new_keg`, `close_active_keg`, `get_keg`, `list_kegs`, `active_event`, `active_tap_context` | positive Mengen/Preise, höchstens ein aktives Fass und passender Kontext |
 | Buchung | `add_tap_booking`, `list_user_bookings`, `list_tap_bookings` | Event und Getränk passen zum Fass; lesende Filter nach Event, Benutzer, Fass, Zeitraum, Art und Abschluss |
@@ -40,6 +40,11 @@ keine versteckten Commits aus. Fachlich zusammengehörige Änderungen werden mit
   damit alle Buchungs-, Audit- und Protokollreferenzen bleiben erhalten;
   Armbandzuordnungen werden entfernt, Websitzungen widerrufen und der Benutzer
   aus normalen Verwaltungsabfragen ausgeschlossen.
+- `users.administration_protected` hält ein lokal provisioniertes Konto als
+  aktiven Admin mit mindestens einem aktiven Armband verfügbar und sperrt
+  dessen fachliche Löschung. Der Default ist `false`; ausschließlich der lokale
+  Provisionierungsbefehl kann den Wert für einen aktiven Admin auf `true`
+  setzen. HTTP-API und WebUI besitzen keinen Schreibpfad für dieses Feld.
 - `users.password_hash` bleibt für normale Benutzer `NULL`. Adminpasswörter
   werden ausschließlich als individuell gesalzene Argon2id-Hashes gespeichert.
 - `web_admin_sessions` speichert SHA-256-Hashes zufälliger Sitzungs- und

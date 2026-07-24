@@ -148,6 +148,7 @@ class AdminUserResponse(BaseModel):
     note: str | None
     is_admin: bool
     active: bool
+    administration_protected: bool
     has_password: bool
     nfc_card_count: int
     active_nfc_card_count: int

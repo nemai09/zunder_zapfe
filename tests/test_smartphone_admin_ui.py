@@ -75,3 +75,6 @@ def test_smartphone_user_list_supports_event_sized_collections() -> None:
     assert "Sperren" in script
     assert "Löschen" in script
     assert "window.confirm" in script
+    assert "user?.administration_protected" in script
+    assert "mustRetainCard" in script
+    assert 'id="delete-user-hint"' in html

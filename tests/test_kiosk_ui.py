@@ -96,6 +96,8 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert "Karte nicht erkannt" in script
     assert "Karte gesperrt" in script
     assert "Zuordnung entfernen" in script
+    assert "user.administration_protected" in script
+    assert "mustRetainCard" in script
     assert 'window.location.assign("/system")' in script
     assert 'api("/api/admin/session/enter"' in script
     assert "ZUNDER_ZAPFE" in system_html

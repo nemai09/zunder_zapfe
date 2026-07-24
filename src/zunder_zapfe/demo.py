@@ -83,6 +83,7 @@ def run() -> None:
         engine.dispose()
 
     print("Demo data created.")
+    print(f"Admin user ID: {result['admin_id']}")
     print(f"User NFC UID:  {result['user_card_uid']}")
     print(f"Admin NFC UID: {result['admin_card_uid']}")
 

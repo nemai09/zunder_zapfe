@@ -38,6 +38,8 @@ Phase: Alpha-Entwicklung
   einer normalen Zapfanmeldung ausgeschlossen
 - fachliches Löschen von Benutzern bei erhaltenen Buchungen und dauerhaft
   einmaligen internen Benutzer-IDs
+- einmalig lokal provisionierbarer Fehlbedienungsschutz, der einen Admin aktiv
+  hält und mindestens ein aktives Armband bewahrt, ohne HTTP-Schreibpfad
 - Smartphone-Verwaltung für Veranstaltungen und Getränke mit validierten,
   auditierten Stammdatenänderungen
 - geführter Fasswechsel mit atomarem Abschluss des bisherigen Fasses,
