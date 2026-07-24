@@ -60,6 +60,7 @@ zu korrigieren.
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
+- [ESP8266-Durchflussemulator](../esp8266_flow_emulator/README.md)
 - [Admin-WLAN](operations/admin-wifi.md)
 - [Admin gegen Fehlbedienung schützen](operations/protected-admin.md)
 
