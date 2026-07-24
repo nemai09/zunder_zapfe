@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-24
+Stand: 2026-07-25
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -83,22 +83,24 @@ Der lokale Stand nach `M7.6` umfasst 127 bestandene automatisierte Tests;
 einschließlich des lokalen WLAN-Systemmenüs, der überarbeiteten Fassabläufe,
 der Loginbuchungen, der Laufzeitoptimierung, des Adminschutzes sowie
 Teilnehmerabrechnung und Diagnose in `M7.7` bestehen 142 Tests.
-Access Point, Smartphone-Layout und die Live-Zuordnung müssen noch gemeinsam
-auf dem Raspberry Pi demonstriert werden.
+Die Smartphone-Administration einschließlich Login, Benutzer- und
+Armbandverwaltung, Fassablauf, Buchungen, Auswertung und Diagnose wurde auf
+dem Raspberry Pi bedient und für den Alpha-Stand abgenommen. Milestone 7 ist
+damit abgeschlossen.
 
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | technische Einstellungen und weitere priorisierte Fachbereiche |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
 ## Nicht implementiert
 
-- technische Smartphone-Einstellungen; Zielsystemabnahme von Access Point,
-  Login, NFC-Zuordnung, Abrechnung und Diagnose
+- hardwareabhängige Smartphone-Einstellungen für Kalibrierung,
+  Plausibilitäts- und Safety-Grenzen
 - lokale Kiosk-Bedienung für Wartungszapfungen
 - reale Ventil-, Durchfluss- und Not-Aus-Adapter
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
@@ -109,11 +111,11 @@ auf dem Raspberry Pi demonstriert werden.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Milestone 7 mit technischen Einstellungen und vollständiger Smartphone-,
-   Neustart- und Zielsystemabnahme abschließen.
-2. Lokale Wartungszapfung in die Kiosk-UI integrieren.
-3. Mit der Hardwareentwicklung elektrische Verträge und reale Adapter
-   festlegen.
+1. ESP8266-Durchflussemulator als Hardware-in-the-Loop-Testmittel härten und
+   elektrisch freigeben.
+2. Reale Ventil-, Durchfluss- und Not-Aus-Adapter festlegen und implementieren.
+3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
+   integrieren.
 4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
    prüfen.
 

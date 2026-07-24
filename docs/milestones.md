@@ -13,8 +13,8 @@ bestanden sind.
 | 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
 | 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
-| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | in Umsetzung |
-| 8 / PR 8 | Reale Ventil-, Durchfluss- und Not-Aus-Adapter | geplant |
+| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
+| 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Vorbereitung |
 | 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
 
 `PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
@@ -93,11 +93,11 @@ von der NFC-Kiosksitzung getrennt und funktioniert ohne Internet.
 | `M7.1 PLAN` | CR-002, Zielarchitektur, Anforderungsversion 0.6 und WLAN-Plan |
 | `M7.2 FEAT` | persönliche Adminpasswörter, Websitzungen, Initial-Admin, Passwortwechsel und gemeinsame Autorisierung |
 | `M7.3 OPS` | NetworkManager-Access-Point `ZUNDER_ZAPFE`, lokaler Webzugang und Pi-Verifikation |
-| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung; implementiert, Pi-Abnahme offen |
-| `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel; implementiert, Pi-Abnahme offen |
-| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik; implementiert, Pi-Abnahme offen |
-| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen, Registrierungsbegrüßung, lokaler Adminschutz sowie Smartphone-Abrechnung mit Top 10, Einzelanalyse, CSV-Gesamtauszug und Diagnose/Safety-Reset implementiert; technische Einstellungen und lokale Kiosk-Wartungszapfung folgen |
-| `M7.8 TEST` | vollständige Schnittstellen-, Smartphone-, Neustart- und Zielsystemabnahme |
+| `M7.4 UI` | responsive Adminhülle, Login, Kioskhinweis sowie Benutzer- und NFC-Verwaltung |
+| `M7.5 FEAT` | Veranstaltungen, Getränke, Fassverwaltung und geführter Fasswechsel |
+| `M7.6 FEAT` | Buchungsansicht, Abrechnungssummen, Audit, technische Ereignisse und Statistik |
+| `M7.7 OPS/FEAT` | lokales WLAN-Systemmenü, operativer Fassbereich, zusammengefasste Loginbuchungen, Registrierungsbegrüßung, lokaler Adminschutz sowie Smartphone-Abrechnung mit Top 10, Einzelanalyse, CSV-Gesamtauszug und Diagnose/Safety-Reset |
+| `M7.8 TEST` | 142 automatisierte Tests sowie Bedien- und Zielsystemprüfung auf dem Raspberry Pi; abgeschlossen |
 
 Die Arbeitspakete dürfen in mehrere Pull Requests aufgeteilt werden; ihre
 Kennung ist unabhängig von der fortlaufenden GitHub-PR-Nummer. Netzwerkzugriff
@@ -109,6 +109,13 @@ allgemeines Backup und Wiederherstellung, Happy-Hour-Regeln und lokaler
 Notzugang bleiben entsprechend ihrem Anforderungsstatus außerhalb des
 verbindlichen Milestone-7-Umfangs.
 
+Milestone 7 wurde am 25. Juli 2026 nach erfolgreicher automatisierter Prüfung
+und Bedienprüfung der Smartphone-Oberfläche auf dem Raspberry Pi abgeschlossen.
+Hardwareabhängige Kalibrier- und Safety-Einstellungen werden erst mit den
+realen Adaptern in Milestone 8 beziehungsweise der Kalibrierung in Milestone 9
+festgelegt. Die lokale Kiosk-Wartungszapfung bleibt ein späteres, eigenständiges
+Bedienpaket und blockiert den Smartphone-Meilenstein nicht.
+
 Technische Details stehen unter
 [`Smartphone-Admin-WebUI`](architecture/smartphone-admin-webui.md) und
 [`Admin-WLAN`](operations/admin-wifi.md).
@@ -118,4 +125,4 @@ Traceability: `ZZ-SYS-001`, `ZZ-SYS-004` bis `ZZ-SYS-006`,
 `ZZ-KEG-004`, `ZZ-KEG-006`, `ZZ-SAF-003`, `ZZ-SAF-007`, `ZZ-MNT-001`,
 `ZZ-MNT-002`, `ZZ-BIL-001` bis `ZZ-BIL-004`, `ZZ-UI-007` bis `ZZ-UI-009`,
 `ZZ-NET-001`, `ZZ-NET-002`, `ZZ-NET-003`, `ZZ-DAT-001` bis `ZZ-DAT-007`
-und `ZZ-DAT-009`.
+und `ZZ-DAT-009` bis `ZZ-DAT-010`.

@@ -1,6 +1,6 @@
 # Smartphone-Admin-WebUI
 
-Status: `M7.2` bis `M7.7` in Umsetzung; technische Einstellungen geplant
+Status: Milestone 7 abgeschlossen und auf dem Raspberry Pi bedient
 
 ## Ziel und Abgrenzung
 
@@ -176,13 +176,17 @@ Millilitern und Betrag in Cent. Die Alpha-WebUI liefert ihn zusätzlich als
 semikolongetrennte UTF-8-CSV-Datei mit BOM. Storno, Korrektur sowie allgemeines
 Backup und Wiederherstellung bleiben außerhalb dieses Umfangs.
 
-### Einstellungen
+### Spätere hardwareabhängige Einstellungen (`M8` und `M9`)
 
 - Sitzungs- und Zapfzeitlimits;
 - Aktivierungsentprellung;
 - Mengen- und Durchflusskalibrierung;
 - Safety- und Plausibilitätsgrenzen;
 - ausschließlich validierte, auditierte Änderungen.
+
+Diese Werte benötigen reale Adapter, elektrische Grenzwerte und
+Kalibrierergebnisse. Sie waren deshalb kein Abnahmekriterium der in Milestone 7
+fertiggestellten Smartphone-Verwaltung.
 
 ### Diagnose und Safety (`M7.7`)
 
@@ -215,7 +219,8 @@ Milestone 7 verwendet:
 - Verwaltungs-APIs für Veranstaltungen, Getränke, Fässer, Buchungen,
   Teilnehmerabrechnung und -export, Audit, Statistik und Diagnose;
 - keine Ventil- oder Wartungssteuerung in der Smartphone-WebUI;
-- technische Einstellungen folgen in einem späteren Arbeitspaket;
+- hardwareabhängige Einstellungen folgen mit Adapterintegration und
+  Kalibrierung in Milestone 8 beziehungsweise 9;
 - aktualisierte OpenAPI- und menschenlesbare Verträge.
 
 Bestehende Fachinvarianten bleiben bestehen: höchstens eine aktive
