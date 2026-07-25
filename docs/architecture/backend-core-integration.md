@@ -104,7 +104,7 @@ angemeldeten Benutzer und akzeptiert keine fremde Benutzer-ID.
 - fertige Kiosk- und Adminoberflaeche,
 - Passwortauthentifizierung fuer Admin-Webfunktionen,
 - konfigurierbare Standardportionen und automatischer Logout,
-- real kalibrierter Durchflussmesser und reale Ventil-GPIOs,
+- elektrisch abgenommene Ventiltreiber- und Durchflusshardware,
 - Happy Hour, Storno, Export und formale Einzelabrechnung,
 - produktiver Bootstrap des initialen Admins.
 

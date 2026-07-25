@@ -189,7 +189,10 @@ def test_hardware_layer_closes_valve_on_start_and_stop() -> None:
 
 
 def test_default_hardware_can_explicitly_simulate_nfc_for_alpha_debugging() -> None:
-    hardware = create_default_hardware(simulate_nfc=True)
+    hardware = create_default_hardware(
+        simulate_nfc=True,
+        simulate_tap_hardware=True,
+    )
 
     assert isinstance(hardware.nfc, SimulatedNfcReader)
     assert hardware.nfc.snapshot().simulated is True

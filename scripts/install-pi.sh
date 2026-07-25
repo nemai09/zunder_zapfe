@@ -25,10 +25,14 @@ apt-get install --yes \
   python3-venv python3-dev build-essential \
   chromium curl \
   pcscd libccid libpcsclite-dev pcsc-tools swig \
+  liblgpio-dev \
   network-manager iw nginx-light
 
 install -d -o "${kiosk_user}" -g "${kiosk_user}" /var/lib/zunder-zapfe /var/log/zunder-zapfe
 install -d -m 0755 /etc/zunder-zapfe
+if getent group gpio >/dev/null 2>&1; then
+  usermod -a -G gpio "${kiosk_user}"
+fi
 
 if [[ ! -f /etc/zunder-zapfe/web.env ]]; then
   install -m 0644 "${app_dir}/config/web.env.example" /etc/zunder-zapfe/web.env

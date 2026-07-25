@@ -11,7 +11,7 @@ def test_kiosk_defaults_use_approved_alpha_portions() -> None:
     assert settings.admin_session_timeout_seconds == 30
     assert settings.manual_press_debounce_ms == 120
     assert settings.manual_maximum_pour_seconds == 30
-    assert settings.debug_disable_flow_watchdog is True
+    assert settings.debug_disable_flow_watchdog is False
 
 
 def test_kiosk_settings_can_be_overridden_without_source_change() -> None:

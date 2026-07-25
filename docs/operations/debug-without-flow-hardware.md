@@ -9,6 +9,7 @@ Ventil fehlen erwartungsgemäß die Sensorimpulse und die Anlage verriegelt.
 Für diesen begrenzten Entwicklungszeitraum gilt daher:
 
 ```text
+ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE=1
 ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1
 ```
 
@@ -33,14 +34,14 @@ eines realen Ventils.
 
 ## Rückbaukriterium
 
-Bevor reale Ventilhardware angeschlossen oder ein sicherheitsrelevanter Test
-durchgeführt wird, muss in `/etc/zunder-zapfe/web.env` gelten:
+Für den Zielsystem- und HIL-Betrieb muss in `/etc/zunder-zapfe/web.env` gelten:
 
 ```text
+ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE=0
 ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=0
 ```
 
-Danach ist der Dienst neu zu starten. Spätestens mit dem realen
-Durchflussadapter in Milestone 8 werden der temporäre Default und die
-Kiosk-Debuganzeige entfernt. Der Produktivstand muss `ZZ-SAF-004` wieder ohne
-Abweichung erfüllen.
+Danach ist der Dienst neu zu starten. Der sichere Default aktiviert bereits
+GPIO-Adapter und Durchfluss-Watchdog. Die Abweichung muss daher für lokale
+Entwicklung ausdrücklich gewählt werden. Der Produktivstand muss `ZZ-SAF-004`
+ohne Abweichung erfüllen.

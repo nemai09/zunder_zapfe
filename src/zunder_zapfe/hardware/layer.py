@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from zunder_zapfe.hardware.adapters import Acr122uNfcReader
+from zunder_zapfe.hardware.adapters import Acr122uNfcReader, GpioFlowMeter, GpioValve
 from zunder_zapfe.hardware.interfaces import EmergencyStop, FlowMeter, NfcReader, Valve
 from zunder_zapfe.hardware.models import status_dict
 from zunder_zapfe.hardware.simulators import (
@@ -48,11 +50,38 @@ class HardwareLayer:
         }
 
 
-def create_default_hardware(*, simulate_nfc: bool = False) -> HardwareLayer:
-    """Build the current hybrid setup: real NFC plus simulated tap hardware."""
+def create_default_hardware(
+    *,
+    simulate_nfc: bool = False,
+    simulate_tap_hardware: bool = False,
+    environment: Mapping[str, str] | None = None,
+) -> HardwareLayer:
+    """Build target hardware; simulators require an explicit development flag."""
+    values = environment if environment is not None else os.environ
+    if simulate_tap_hardware:
+        valve: Valve = SimulatedValve()
+        flow_meter: FlowMeter = SimulatedFlowMeter()
+    else:
+        valve_pin = _gpio_number(values, "ZUNDER_ZAPFE_VALVE_GPIO", 17)
+        flow_pin = _gpio_number(values, "ZUNDER_ZAPFE_FLOW_GPIO", 27)
+        if valve_pin == flow_pin:
+            raise ValueError("Valve and flow GPIO must be different")
+        valve = GpioValve(valve_pin)
+        flow_meter = GpioFlowMeter(flow_pin)
+
     return HardwareLayer(
         nfc=SimulatedNfcReader() if simulate_nfc else Acr122uNfcReader(),
-        valve=SimulatedValve(),
-        flow_meter=SimulatedFlowMeter(),
+        valve=valve,
+        flow_meter=flow_meter,
         emergency_stop=SimulatedEmergencyStop(),
     )
+
+
+def _gpio_number(values: Mapping[str, str], name: str, default: int) -> int:
+    try:
+        pin = int(values.get(name, str(default)))
+    except ValueError as error:
+        raise ValueError(f"{name} must be an integer BCM GPIO number") from error
+    if not 0 <= pin <= 27:
+        raise ValueError(f"{name} must be between BCM GPIO 0 and 27")
+    return pin

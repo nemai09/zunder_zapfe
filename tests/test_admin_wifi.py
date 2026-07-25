@@ -91,6 +91,9 @@ def test_deployment_detects_branch_switches_and_missing_runtime_dependencies() -
     deployment = read("scripts/deploy-update.sh")
 
     assert 'deployed_revision_path="/var/lib/zunder-zapfe/deployed-revision"' in deployment
-    assert "import alembic, fastapi, pwdlib, smartcard, sqlalchemy, uvicorn" in deployment
+    assert (
+        "import alembic, fastapi, gpiozero, lgpio, pwdlib, smartcard, sqlalchemy, uvicorn"
+        in deployment
+    )
     assert '"${deployed_revision}" "${new_revision}"' in deployment
     assert 'printf \'%s\\n\' "${new_revision}" >"${deployed_revision_path}"' in deployment

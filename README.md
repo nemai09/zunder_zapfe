@@ -8,17 +8,19 @@ Basis eines Raspberry Pi. Das Projekt verbindet einen NFC-Leser, einen
 sicherheitsorientierten Zapfzustandsautomaten, lokale SQLite-Datenhaltung und
 eine Weboberfläche für den Kioskbetrieb.
 
-> **Alpha-Hinweis:** Die reale Ventil-, Durchfluss- und Not-Aus-Hardware ist
-> noch nicht integriert oder sicherheitstechnisch abgenommen. Der aktuelle
-> Stand darf kein echtes Ventil ohne eine fachgerechte elektrische
-> Sicherheitskette steuern.
+> **Alpha-Hinweis:** GPIO-Adapter für Ventil und Durchfluss sind integriert,
+> aber reale Treiber-, Sensor- und Not-Aus-Hardware ist noch nicht elektrisch
+> oder sicherheitstechnisch abgenommen. Ein echtes Ventil darf nicht ohne
+> fachgerechte Treiberstufe und unabhängige Sicherheitskette angeschlossen
+> werden.
 
 ## Aktueller Stand
 
 | Bereich | Status |
 | --- | --- |
 | ACR122U-NFC-Leser | Ereignisgesteuert, Hotplug-fähig und auf dem Raspberry Pi getestet |
-| Ventil, Durchfluss, Not-Aus | Stabile Verträge und Simulatoren vorhanden |
+| Ventil und Durchfluss | Zieladapter auf BCM17/BCM27 implementiert; erster ESP8266-HIL-Normalfluss erfolgreich, Fehlerfallabnahme offen |
+| Not-Aus | Vertrag und Simulator vorhanden; realer Adapter noch offen |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
@@ -26,7 +28,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
 | Admin-WebUI | Milestone 7 abgeschlossen: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose auf dem Pi geprüft |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil auf dem Pi geprüft |
-| Reale Zapfhardware | Noch nicht implementiert |
+| Reale Zapfhardware | Softwareadapter implementiert; Treiber-, Sensor- und Safety-Abnahme noch offen |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
 [Projektstatus](docs/project-status.md).
@@ -41,13 +43,15 @@ flowchart LR
     SERVICE --> DB[("SQLite")]
     CONTROL --> HW["Hardware-Verträge"]
     HW --> NFC["Realer ACR122U"]
-    HW --> SIM["Simulatoren für Ventil, Fluss und Not-Aus"]
+    HW --> GPIO["GPIO-Adapter für Ventil und Fluss"]
+    GPIO -. "Prüfstand" .-> HIL["ESP8266-HIL"]
 ```
 
 Die WebUI greift niemals direkt auf Hardware oder SQLite zu. `TapController`
 ist die einzige Komponente, die das Ventil anfordert. Hardwareadapter bleiben
-hinter typisierten Verträgen austauschbar; konkrete GPIOs sind noch nicht
-festgelegt.
+hinter typisierten Verträgen austauschbar. Der aktuelle Zielstand verwendet
+BCM17 für die aktive-HIGH-Ventilfreigabe und BCM27 für fallende
+Durchflussflanken.
 
 ## Schnellstart für Entwicklung
 
@@ -60,6 +64,8 @@ $env:ZUNDER_ZAPFE_DATABASE_URL = "sqlite:///data/zunder-zapfe.db"
 .\.venv\Scripts\alembic.exe -c alembic.ini upgrade head
 .\.venv\Scripts\zunder-zapfe-seed-demo.exe
 $env:ZUNDER_ZAPFE_SIMULATE_NFC = "1"
+$env:ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE = "1"
+$env:ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG = "1"
 $env:ZUNDER_ZAPFE_ENABLE_SIMULATOR_API = "1"
 .\.venv\Scripts\zunder-zapfe.exe
 ```
@@ -87,6 +93,7 @@ dokumentiert:
 - [Alpha-Integrationstest](docs/operations/alpha-integration-test.md)
 - [SQLite-Diagnose](docs/operations/database-browser.md)
 - [Admin-WLAN und Smartphone-Zugang](docs/operations/admin-wifi.md)
+- [GPIO- und ESP8266-HIL-Test](docs/operations/gpio-hil-test.md)
 
 Die Anwendung lauscht standardmäßig nur auf `127.0.0.1` und benötigt zur
 Laufzeit keine Internetverbindung.

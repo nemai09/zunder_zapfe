@@ -115,16 +115,40 @@ Softwarevertrags.
 
 ## Aktuelle Adaptermatrix
 
-| Komponente | Standardbetrieb | Testbetrieb |
+| Komponente | Zielsystem | Explizite lokale Simulation |
 | --- | --- | --- |
 | NFC | ereignisgesteuerter `Acr122uNfcReader` über PC/SC | `SimulatedNfcReader` |
-| Ventil | `SimulatedValve` | `SimulatedValve` |
-| Durchfluss | `SimulatedFlowMeter` | `SimulatedFlowMeter` |
+| Ventil | `GpioValve`, standardmäßig aktives HIGH auf `BCM17` | `SimulatedValve` |
+| Durchfluss | `GpioFlowMeter`, standardmäßig fallende Flanken auf `BCM27` | `SimulatedFlowMeter` |
 | Not-Aus | `SimulatedEmergencyStop` | `SimulatedEmergencyStop` |
 
 Simulatoren dürfen zusätzliche Testmethoden wie `present_card()`,
 `add_pulses()` oder `trigger()` anbieten. Produktionscode darf diese Methoden
-nicht über den gemeinsamen Vertrag voraussetzen.
+nicht über den gemeinsamen Vertrag voraussetzen. Ventil und Durchfluss werden
+im Zielsystem nur bei ausdrücklich gesetztem
+`ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE=1` durch Simulatoren ersetzt. Die
+HIL-Abnahme verwendet die regulären GPIO-Adapter und niemals diesen Schalter.
+
+## Hardware-in-the-Loop-Vertrag für Milestone 8
+
+Der ESP8266-Durchflussemulator unter
+[`esp8266_flow_emulator`](../../esp8266_flow_emulator/README.md) ist ein
+externes Testmittel für die spätere Pi-Ein-/Ausgangsstufe. Er ist kein
+Produktionsadapter und keine Safety-Komponente.
+
+| Signal | HIL-Verhalten | Sicherer Ruhezustand |
+| --- | --- | --- |
+| `VALVE_COMMAND` | aktives HIGH vom regulären Pi-Ventilausgang zu `D0`/GPIO16 | interner GPIO16-Pull-down, offen beziehungsweise abgesteckt ist inaktiv |
+| `FLOW_PULSE` | ESP zieht die Leitung für einen Impuls nach LOW und gibt sie danach frei; Auswertung auf fallender Flanke | hochohmig freigegeben, Pull-up liegt auf der Pi-Seite |
+
+Der Prüfaufbau verbindet standardmäßig `BCM17` mit `D0` und `BCM27` mit `D6`.
+Die Anwendung kennt dabei keinen HIL-Modus: Der ESP ersetzt elektrisch
+Ventiltreiber und Durchflusssensor. Die Impulserzeugung darf nicht von WLAN,
+Weboberfläche oder mDNS abhängen.
+WLAN dient ausschließlich zur Diagnose und zum Ein-/Ausschalten des
+simulierten Impulsfeedbacks. Die Treiberstufe, Pegelwandlung, galvanische
+Trennung und Verdrahtung der späteren Ventil- und Sensorhardware benötigen
+weiterhin eine eigene elektrische Freigabe.
 
 ## Verfahren für Vertragserweiterungen
 

@@ -36,13 +36,16 @@ Zwischenlayer bildet nur die Hardware ab.
 zusammen:
 
 - realer ACR122U ueber PC/SC,
-- simuliertes Ventil,
-- simulierter Durchflussmesser,
+- `GpioValve` als aktiver-HIGH-Ausgang auf konfigurierbarem `BCM17`,
+- `GpioFlowMeter` als flankengesteuerter Eingang auf konfigurierbarem `BCM27`,
 - simulierter Not-Aus.
 
 Die Simulatoren besitzen dieselben Anwendungsvertraege wie spaetere reale
 Adapter. Zusaetzliche Steuerfunktionen wie `present_card()`, `add_pulses()` oder
 `trigger()` existieren nur an den Simulatoren und dienen Tests und Entwicklung.
+Ventil- und Durchflusssimulatoren werden nur durch
+`ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE=1` ausdruecklich aktiviert. Der
+ESP8266-HIL-Test verwendet dagegen die regulaeren GPIO-Adapter.
 
 ## Sicherheitsgrenzen
 
@@ -53,14 +56,12 @@ Adapter. Zusaetzliche Steuerfunktionen wie `present_card()`, `add_pulses()` oder
 - Es gibt vorerst absichtlich keinen HTTP-Endpunkt zum Oeffnen des Ventils.
 - Der Status-Endpunkt `/api/hardware/status` ist reine Diagnose.
 
-## Spaetere reale Adapter
+## Reale Ein- und Ausgaenge
 
-Sobald die konkrete Hardware feststeht, werden neue Adapter unter
-`src/zunder_zapfe/hardware/adapters/` implementiert und in der
-Zusammenstellung ausgetauscht. Backend und WebUI bleiben unveraendert, solange
-die Vertraege aus `interfaces.py` ausreichen.
+Die GPIO-Adapter liegen unter `src/zunder_zapfe/hardware/adapters/`. Backend
+und WebUI bleiben unveraendert, wenn der ESP spaeter durch Ventiltreiber und
+Durchflusssensor ersetzt wird. Der reale Not-Aus-Adapter fehlt weiterhin.
 
 Eine notwendige Vertragserweiterung wird zuerst simulatorisch implementiert und
-getestet. GPIO-Pins, aktive Pegel und konkrete Bibliotheken gehoeren in die
-jeweiligen Adapter beziehungsweise deren Konfiguration, nicht in die
-fachliche Anwendung.
+getestet. GPIO-Pins, aktive Pegel und konkrete Bibliotheken bleiben
+Adapterkonfiguration und gehoeren nicht in die fachliche Anwendung.

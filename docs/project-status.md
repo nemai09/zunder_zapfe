@@ -70,8 +70,13 @@ Phase: Alpha-Entwicklung
   Armbands ohne automatische Anmeldung
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
-und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
-Freigabe für reale Ventilhardware.
+und simuliertem Durchfluss geprüft. Zusätzlich wurde der reguläre GPIO-Pfad
+mit dem ESP8266-HIL erstmals erfolgreich als vollständiger manueller
+Zapfvorgang geprüft: BCM17 aktivierte das HIL-Ventilsignal, BCM27 zählte die
+erzeugten Impulse, Loslassen schloss den Ausgang und die gemessene Menge wurde
+verbucht. Die übrigen HIL-Fehlerfälle sowie die elektrische Abnahme realer
+Ventilhardware bleiben offen. Eine bestandene Alpha-Prüfung ist keine Freigabe
+für reale Ventilhardware.
 Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
 und anschließend im vollständigen Bedienablauf auf dem Zielsystem geprüft.
 Milestone 5 umfasst 84 bestandene automatisierte Tests sowie die erfolgreiche
@@ -93,7 +98,7 @@ damit abgeschlossen.
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
-| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik | reale Adapter und elektrische Abnahme |
+| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -102,7 +107,8 @@ damit abgeschlossen.
 - hardwareabhängige Smartphone-Einstellungen für Kalibrierung,
   Plausibilitäts- und Safety-Grenzen
 - lokale Kiosk-Bedienung für Wartungszapfungen
-- reale Ventil-, Durchfluss- und Not-Aus-Adapter
+- realer Not-Aus-Adapter
+- elektrisch abgenommene Ventiltreiber- und Durchflusshardware
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
 - Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
@@ -111,9 +117,10 @@ damit abgeschlossen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. ESP8266-Durchflussemulator als Hardware-in-the-Loop-Testmittel härten und
-   elektrisch freigeben.
-2. Reale Ventil-, Durchfluss- und Not-Aus-Adapter festlegen und implementieren.
+1. ESP8266-HIL für ausbleibenden Durchfluss, Neustart, Verbindungsabbruch und
+   Safety-Verriegelung vollständig abnehmen.
+2. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie den
+   Not-Aus-Adapter implementieren.
 3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
    integrieren.
 4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
@@ -133,11 +140,10 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   keine Produktionskalibrierung.
 - `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
   konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
-- Der Durchfluss-Watchdog ist für Tests ohne Sensor vorübergehend per
-  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktiviert. Dies ist eine
-  dokumentierte Alpha-Abweichung von `ZZ-SAF-004`; Steuerungs-Watchdog,
-  Not-Aus und Zeitlimit bleiben aktiv. Vor realer Ventilhardware ist der Wert
-  zwingend auf `0` zu setzen.
+- Der Durchfluss-Watchdog ist standardmäßig aktiv. Ausschließlich lokale
+  Entwicklung ohne GPIO-Hardware darf ihn zusammen mit explizit aktivierten
+  Ventil-/Durchflusssimulatoren per
+  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktivieren.
 - Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
   nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.

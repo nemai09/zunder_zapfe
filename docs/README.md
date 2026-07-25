@@ -55,11 +55,14 @@ zu korrigieren.
 
 ## Betrieb und Diagnose
 
+- [Erstinstallation eines Raspberry Pi aus Git](operations/fresh-raspberry-pi-deployment.md)
 - [Raspberry-Pi-Kiosk](operations/raspberry-pi-kiosk.md)
 - [ACR122U-NFC-Leser](operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
+- [ESP8266-Durchflussemulator](../esp8266_flow_emulator/README.md)
+- [GPIO- und ESP8266-Hardware-in-the-Loop-Test](operations/gpio-hil-test.md)
 - [Admin-WLAN](operations/admin-wifi.md)
 - [Admin gegen Fehlbedienung schützen](operations/protected-admin.md)
 

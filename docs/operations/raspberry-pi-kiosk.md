@@ -305,5 +305,6 @@ werden.
   nginx-Zugang im Admin-AP wird weitergeleitet.
 - NFC-Anmeldung, Zapf-Zustandsautomat und Datenbank sind integriert; die
   aktuelle Kioskseite bietet dafuer aber noch keine vollstaendige Bedienung.
-- Die reale Ventil-, Durchfluss- und Not-Aus-Ansteuerung fehlt noch.
+- GPIO-Adapter für Ventil und Durchfluss sind integriert. Elektrische
+  Treiber-/Sensorabnahme und der reale Not-Aus-Adapter fehlen noch.
 - Ein vollstaendig offline durchfuehrbares Dependency-Deployment folgt spaeter.

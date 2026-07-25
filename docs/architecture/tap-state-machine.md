@@ -159,8 +159,9 @@ wird dazu beim Zapfstart festgehalten. Der vollstaendige Fluss ist unter
 
 Die in `development_limits()` enthaltenen Werte und die Demonstrator-Kalibrierung
 sind weiterhin keine Produktionswerte. Verbindliche Werte bleiben offene
-Produktentscheidungen `OD-002`, `OD-003` und `OD-012`; reale Ventil- und
-Durchfluss-Hardware sind noch nicht integriert.
+Produktentscheidungen `OD-002`, `OD-003` und `OD-012`; die GPIO-Adapter sind
+integriert, ihre reale Ventil- und Durchflusshardware aber noch nicht
+elektrisch abgenommen.
 
 Für die normale Kiosksitzung gelten `15` Sekunden Inaktivität als
 konfigurierbarer Alpha-Default. Im Zustand `ADMIN` gilt separat ein auditiert
