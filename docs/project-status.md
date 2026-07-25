@@ -70,8 +70,13 @@ Phase: Alpha-Entwicklung
   Armbands ohne automatische Anmeldung
 
 Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
-und simuliertem Durchfluss geprüft. Eine bestandene Alpha-Prüfung ist keine
-Freigabe für reale Ventilhardware.
+und simuliertem Durchfluss geprüft. Zusätzlich wurde der reguläre GPIO-Pfad
+mit dem ESP8266-HIL erstmals erfolgreich als vollständiger manueller
+Zapfvorgang geprüft: BCM17 aktivierte das HIL-Ventilsignal, BCM27 zählte die
+erzeugten Impulse, Loslassen schloss den Ausgang und die gemessene Menge wurde
+verbucht. Die übrigen HIL-Fehlerfälle sowie die elektrische Abnahme realer
+Ventilhardware bleiben offen. Eine bestandene Alpha-Prüfung ist keine Freigabe
+für reale Ventilhardware.
 Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
 und anschließend im vollständigen Bedienablauf auf dem Zielsystem geprüft.
 Milestone 5 umfasst 84 bestandene automatisierte Tests sowie die erfolgreiche
@@ -93,7 +98,7 @@ damit abgeschlossen.
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
-| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17 und Flankenzähler auf BCM27 | HIL-Prüfstandsabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
+| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -112,8 +117,8 @@ damit abgeschlossen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Reguläre GPIO-Adapter mit dem ESP8266-HIL für Normalfluss und ausbleibenden
-   Durchfluss am Prüfstand abnehmen.
+1. ESP8266-HIL für ausbleibenden Durchfluss, Neustart, Verbindungsabbruch und
+   Safety-Verriegelung vollständig abnehmen.
 2. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie den
    Not-Aus-Adapter implementieren.
 3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI

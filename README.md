@@ -19,7 +19,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Bereich | Status |
 | --- | --- |
 | ACR122U-NFC-Leser | Ereignisgesteuert, Hotplug-fähig und auf dem Raspberry Pi getestet |
-| Ventil und Durchfluss | Zieladapter auf BCM17/BCM27 implementiert; ESP8266-HIL-Abnahme offen |
+| Ventil und Durchfluss | Zieladapter auf BCM17/BCM27 implementiert; erster ESP8266-HIL-Normalfluss erfolgreich, Fehlerfallabnahme offen |
 | Not-Aus | Vertrag und Simulator vorhanden; realer Adapter noch offen |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |

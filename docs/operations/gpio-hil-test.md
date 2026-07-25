@@ -8,6 +8,19 @@ beobachtet das Ventil-Sollsignal und liefert anstelle des späteren
 Durchflusssensors Impulse zurück. In der Anwendung existiert kein besonderer
 HIL-Betriebsmodus.
 
+## Prüfstatus
+
+Der erste vollständige HIL-Normalfluss wurde am 25. Juli 2026 mit der
+Zielsoftware auf Commit `33cc77b` erfolgreich durchgeführt. Dabei wurde
+`BCM17` beim Gedrückthalten aktiv, der ESP erkannte das Ventilsignal und
+lieferte über `D6` Impulse an `BCM27`. Die Software zählte eine Istmenge,
+schloss den Ausgang beim Loslassen und verbuchte den Zapfvorgang.
+
+Diese erfolgreiche Normalflussprüfung schließt `M8.1` ab, aber nicht die
+vollständige HIL-Abnahme aus `M8.5`. Ausbleibender Durchfluss, Neustart,
+Verbindungsabbruch und Safety-Verriegelung bleiben anhand der folgenden
+Prüfschritte nachzuweisen.
+
 ## Benötigte Teile
 
 - Raspberry Pi 4B mit dem aktuellen Branch `codex/m8-esp-hil`;

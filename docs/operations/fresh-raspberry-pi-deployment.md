@@ -214,6 +214,23 @@ sudo grep -E \
 `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG` müssen beide `0` sein. Die
 Demonstratorkalibrierung ist noch keine Freigabe für eine reale Abrechnung.
 
+### PC/SC-Zugriff des Dienstbenutzers
+
+Der Installer installiert die PC/SC-Pakete, legt aktuell aber noch keine
+PC/SC-Polkit-Regel für den systemd-Dienst an. Meldet
+`/api/nfc/status` den Fehler `Access denied (0x8010006A)`, muss einmalig die
+eng begrenzte Regel aus
+[`acr122u-nfc.md`](acr122u-nfc.md#pcsc-zugriff-fuer-den-webdienst-freigeben)
+für den tatsächlichen Dienstbenutzer eingerichtet werden. Die vom Installer
+erzeugte NetworkManager-Regel ersetzt diese Kartenleserfreigabe nicht.
+
+Anschließend müssen diese Prüfungen ohne Zugriffsfehler funktionieren:
+
+```bash
+pcsc_scan
+curl --fail http://127.0.0.1:8000/api/nfc/status
+```
+
 ## 6. Leere Alpha-Datenbank initialisieren
 
 ### Aktuelle Einschränkung

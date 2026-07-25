@@ -145,7 +145,7 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 
 | Paket | Ergebnis |
 | --- | --- |
-| `M8.1 HW` | regulärer Pi-GPIO-Pfad und ESP8266-HIL mit aktivem-HIGH-Ventilsignal, definiertem LOW-Ruhezustand und von WLAN unabhängiger Impulserzeugung |
+| `M8.1 HW` | abgeschlossen: regulärer Pi-GPIO-Pfad und ESP8266-HIL mit aktivem-HIGH-Ventilsignal, definiertem LOW-Ruhezustand, von WLAN unabhängiger Impulserzeugung und erfolgreichem erstem Normalfluss |
 | `M8.2 PLAN` | geprüfter elektrischer Connectorvertrag einschließlich Pegeln, Trennung, Ruhezuständen und Fehlerfällen |
 | `M8.3 HW` | elektrisch abgenommene Ventiltreiber- und Durchflusssensorstufe hinter den implementierten GPIO-Adaptern |
 | `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
