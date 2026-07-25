@@ -135,18 +135,19 @@ Hardware-in-the-Loop-Durchflussemulator. Er reagiert auf das angeforderte
 Ventilsignal und erzeugt sensorähnliche Impulse, ohne selbst ein Ventil oder
 eine Safety-Funktion zu steuern.
 
-Konkrete Raspberry-Pi-GPIOs, Pegelstufen und Treiber werden erst nach
-elektrischer Freigabe festgelegt. Alle neuen Adapter bleiben hinter den
-bestehenden Hardware-Protocols austauschbar; Simulatoren bleiben für
-automatisierte Tests erhalten.
+Die Softwareseite verwendet BCM17 für die aktive-HIGH-Ventilfreigabe und
+BCM27 für fallende Durchflussflanken. Pegelstufen und Treiber der realen
+Hardware werden erst nach elektrischer Freigabe angeschlossen. Alle Adapter
+bleiben hinter den bestehenden Hardware-Protocols austauschbar; Simulatoren
+bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 
 ### Arbeitspakete
 
 | Paket | Ergebnis |
 | --- | --- |
-| `M8.1 HW` | ESP8266-HIL mit definiert inaktivem Ventileingang, offenem Impulsausgang und von WLAN unabhängiger Impulserzeugung |
+| `M8.1 HW` | regulärer Pi-GPIO-Pfad und ESP8266-HIL mit aktivem-HIGH-Ventilsignal, definiertem LOW-Ruhezustand und von WLAN unabhängiger Impulserzeugung |
 | `M8.2 PLAN` | geprüfter elektrischer Connectorvertrag einschließlich Pegeln, Trennung, Ruhezuständen und Fehlerfällen |
-| `M8.3 HW` | reale Ventil- und Durchflussadapter hinter den vorhandenen Protocols mit konfigurierbarer Pinbelegung |
+| `M8.3 HW` | elektrisch abgenommene Ventiltreiber- und Durchflusssensorstufe hinter den implementierten GPIO-Adaptern |
 | `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
 | `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
 | `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |

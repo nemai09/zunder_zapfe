@@ -45,7 +45,7 @@ echo "Installiere Commit $(git_as_owner rev-parse --short HEAD)"
 needs_full_install=false
 if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
   || ! "${repo_dir}/.venv/bin/python" -c \
-    "import alembic, fastapi, pwdlib, smartcard, sqlalchemy, uvicorn" \
+    "import alembic, fastapi, gpiozero, lgpio, pwdlib, smartcard, sqlalchemy, uvicorn" \
     >/dev/null 2>&1 \
   || ! command -v pcsc_scan >/dev/null 2>&1; then
   needs_full_install=true

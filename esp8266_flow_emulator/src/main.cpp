@@ -13,9 +13,9 @@ namespace {
 
 // Testbelegung für einen NodeMCU. Die endgültige Verkabelung wird vor dem
 // Anschluss anhand der Pegel des Pi-Adapters freigegeben.
-constexpr uint8_t kValveCommandPin = D5;
+constexpr uint8_t kValveCommandPin = D0;
 constexpr uint8_t kFlowPulsePin = D6;
-constexpr uint8_t kValveCommandActiveLevel = LOW;
+constexpr uint8_t kValveCommandActiveLevel = HIGH;
 
 // Der Pi verwendet aktuell standardmäßig 500 Impulse/Liter. 10 Hz entsprechen
 // damit 1,2 L/min und reichen für den Durchfluss-Watchdog und Buchungstests.
@@ -141,10 +141,9 @@ void updatePulseGenerator() {
 
 void setup() {
   Serial.begin(115200);
-  // Aktives LOW mit internem Pull-up stellt ohne angeschlossene Quelle einen
-  // definierten inaktiven Zustand her. Die externe Testquelle darf den Eingang
-  // ausschließlich über Open-Drain/Open-Collector oder Optokoppler auf LOW ziehen.
-  pinMode(kValveCommandPin, INPUT_PULLUP);
+  // GPIO16/D0 ist der einzige ESP8266-Pin mit internem Pull-down. Damit bleibt
+  // das aktive-HIGH-Ventilsignal auch bei abgezogener Pi-Leitung sicher AUS.
+  pinMode(kValveCommandPin, INPUT_PULLDOWN_16);
   releaseFlowPulseLine();
 
   server.on("/", HTTP_GET, sendOverview);

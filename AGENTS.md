@@ -24,8 +24,10 @@ Werkzeugpräferenzen gehören nicht hierher.
   `src/zunder_zapfe/hardware/interfaces.py`.
 - Konkrete GPIOs, elektrische Pegel und Bibliotheken bleiben
   Adapterkonfiguration, bis die Hardwareentscheidungen freigegeben sind.
-- Die Standardlaufzeit verwendet einen realen ACR122U sowie Simulatoren für
-  Ventil, Durchflussmesser und Not-Aus.
+- Die Standardlaufzeit verwendet einen realen ACR122U, `GpioValve` und
+  `GpioFlowMeter`. Nur der Not-Aus ist noch simuliert. Ventil- und
+  Durchflusssimulatoren benötigen eine ausdrückliche Entwicklungsoption und
+  sind weder HIL- noch Zielsystembetrieb.
 
 ## Safety- und Dateninvarianten
 

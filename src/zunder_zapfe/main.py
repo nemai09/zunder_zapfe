@@ -102,7 +102,8 @@ def create_app(
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
-        simulate_nfc=os.environ.get("ZUNDER_ZAPFE_SIMULATE_NFC") == "1"
+        simulate_nfc=os.environ.get("ZUNDER_ZAPFE_SIMULATE_NFC") == "1",
+        simulate_tap_hardware=(os.environ.get("ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE") == "1"),
     )
     owned_engine = None
     if sessions is None:

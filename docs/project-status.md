@@ -93,7 +93,7 @@ damit abgeschlossen.
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
-| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik und ESP8266-HIL-Firmware | Firmware- und Prüfstandsabnahme, reale Adapter und elektrische Abnahme |
+| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17 und Flankenzähler auf BCM27 | HIL-Prüfstandsabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -102,7 +102,8 @@ damit abgeschlossen.
 - hardwareabhängige Smartphone-Einstellungen für Kalibrierung,
   Plausibilitäts- und Safety-Grenzen
 - lokale Kiosk-Bedienung für Wartungszapfungen
-- reale Ventil-, Durchfluss- und Not-Aus-Adapter
+- realer Not-Aus-Adapter
+- elektrisch abgenommene Ventiltreiber- und Durchflusshardware
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
 - Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
@@ -111,9 +112,10 @@ damit abgeschlossen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Gehärtete ESP8266-HIL-Firmware bauen und am Prüfstand abnehmen; anschließend
-   den Connector elektrisch freigeben.
-2. Reale Ventil-, Durchfluss- und Not-Aus-Adapter festlegen und implementieren.
+1. Reguläre GPIO-Adapter mit dem ESP8266-HIL für Normalfluss und ausbleibenden
+   Durchfluss am Prüfstand abnehmen.
+2. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie den
+   Not-Aus-Adapter implementieren.
 3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
    integrieren.
 4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
@@ -133,11 +135,10 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   keine Produktionskalibrierung.
 - `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
   konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
-- Der Durchfluss-Watchdog ist für Tests ohne Sensor vorübergehend per
-  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktiviert. Dies ist eine
-  dokumentierte Alpha-Abweichung von `ZZ-SAF-004`; Steuerungs-Watchdog,
-  Not-Aus und Zeitlimit bleiben aktiv. Vor realer Ventilhardware ist der Wert
-  zwingend auf `0` zu setzen.
+- Der Durchfluss-Watchdog ist standardmäßig aktiv. Ausschließlich lokale
+  Entwicklung ohne GPIO-Hardware darf ihn zusammen mit explizit aktivierten
+  Ventil-/Durchflusssimulatoren per
+  `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktivieren.
 - Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
   nicht den elektrisch gemessenen Zustand eines Ventils.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.

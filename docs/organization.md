@@ -65,8 +65,10 @@ verantwortlich, unabhängig vom verwendeten Werkzeug.
 
 Der aktuelle Softwarevertrag ist unter
 [`docs/interfaces/hardware.md`](interfaces/hardware.md) beschrieben. Elektrisch
-noch zu entscheiden sind insbesondere GPIO-Pinbelegung, aktive Pegel,
-Impulsform, maximale Frequenz, Entprellung, Bootverhalten und Hardwaretests.
+festgelegt sind BCM17 als aktive-HIGH-Ventilfreigabe und BCM27 für fallende
+Durchflussflanken. Noch gemeinsam zu entscheiden beziehungsweise abzunehmen
+sind insbesondere Treiber- und Eingangsstufe, galvanische Trennung, maximale
+Frequenz, Entprellung, Bootverhalten und Hardwaretests.
 
 ### Software zu WebUI
 

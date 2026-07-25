@@ -30,6 +30,8 @@ Backend mit vollstaendig simulierter Hardware starten:
 
 ```powershell
 $env:ZUNDER_ZAPFE_SIMULATE_NFC = "1"
+$env:ZUNDER_ZAPFE_SIMULATE_TAP_HARDWARE = "1"
+$env:ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG = "1"
 $env:ZUNDER_ZAPFE_ENABLE_SIMULATOR_API = "1"
 $env:ZUNDER_ZAPFE_PULSES_PER_LITER = "500"
 .\.venv\Scripts\zunder-zapfe.exe

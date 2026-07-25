@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
 Version: 0.12
 Stand: 2026-07-25
-Status: Milestone 7 abgeschlossen; Hardwareintegration in Vorbereitung
+Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
 1. ZWECK UND FORMAT
 ===================

@@ -104,6 +104,17 @@ def test_pi_installer_runs_repository_pip_as_service_user() -> None:
     assert '\n"${app_dir}/.venv/bin/python" -m pip install' not in installer
 
 
+def test_web_service_uses_writable_runtime_directory_for_gpio_notifications() -> None:
+    service = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-web.service.in").read_text(
+        encoding="utf-8"
+    )
+
+    assert "RuntimeDirectory=zunder-zapfe" in service
+    assert "RuntimeDirectoryMode=0750" in service
+    assert "WorkingDirectory=/run/zunder-zapfe" in service
+    assert "WorkingDirectory=@@APP_DIR@@" not in service
+
+
 def test_pi_verification_isolates_tests_from_production_database() -> None:
     verification = (PROJECT_ROOT / "scripts" / "pi-verify.sh").read_text(encoding="utf-8")
 
