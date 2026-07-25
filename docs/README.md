@@ -55,6 +55,7 @@ zu korrigieren.
 
 ## Betrieb und Diagnose
 
+- [Erstinstallation eines Raspberry Pi aus Git](operations/fresh-raspberry-pi-deployment.md)
 - [Raspberry-Pi-Kiosk](operations/raspberry-pi-kiosk.md)
 - [ACR122U-NFC-Leser](operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](operations/alpha-integration-test.md)
