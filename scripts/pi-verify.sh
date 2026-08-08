@@ -29,7 +29,8 @@ echo "3/8 DS3231-Echtzeituhr"
 systemctl is-active --quiet zunder-zapfe-rtc.service
 test -e /dev/rtc0
 rtc_name="$(cat /sys/class/rtc/rtc0/name)"
-grep --ignore-case --quiet 'ds3231' <<<"${rtc_name}"
+grep --extended-regexp --ignore-case --quiet \
+  '(^ds3231$|^rtc-ds1307 .*0068$)' <<<"${rtc_name}"
 echo "zunder-zapfe-rtc.service: active (${rtc_name})"
 
 echo "4/8 systemd-Dienst"

@@ -64,9 +64,15 @@ sudo i2cdetect -y 1
 sudo zunder-zapfe-rtc status
 ```
 
-Der Kernelname soll `ds3231` enthalten. In `i2cdetect` erscheint die Adresse
-`0x68` nach der Treiberbindung typischerweise als `UU`; das bedeutet, dass der
-Kernel das Gerät bereits verwendet.
+Der generische Kernel-Treiber meldet eine DS3231 auf dem Raspberry Pi 4B
+typischerweise als `rtc-ds1307 1-0068`; das ist erwartetes Verhalten. In
+`i2cdetect` erscheint die Adresse `0x68` nach der Treiberbindung typischerweise
+als `UU`; das bedeutet, dass der Kernel das Gerät bereits verwendet.
+
+`hwclock --show --utc` interpretiert den RTC-Inhalt als UTC, stellt die gelesene
+Zeit in seiner Ausgabe aber mit der lokalen Zeitzonenabweichung dar. Deshalb
+kann die Statusausgabe beispielsweise `+02:00` zeigen, obwohl die RTC intern in
+UTC geführt wird.
 
 ## RTC einmalig aus der Systemzeit stellen
 

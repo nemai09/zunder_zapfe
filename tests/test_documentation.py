@@ -138,7 +138,7 @@ def test_rtc_service_runs_before_web_and_is_verified_on_target() -> None:
     assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-rtc load" in rtc_service
     assert "Before=zunder-zapfe-web.service" in rtc_service
     assert "ConditionPathExists=/var/lib/zunder-zapfe/rtc-initialized" in rtc_service
-    assert "CapabilityBoundingSet=CAP_SYS_TIME" in rtc_service
+    assert "CapabilityBoundingSet=CAP_SYS_TIME CAP_DAC_READ_SEARCH" in rtc_service
     assert "DeviceAllow=/dev/rtc0 rw" in rtc_service
     assert "Wants=zunder-zapfe-rtc.service" in web_service
     assert "After=local-fs.target zunder-zapfe-rtc.service" in web_service
@@ -147,7 +147,8 @@ def test_rtc_service_runs_before_web_and_is_verified_on_target() -> None:
     assert "systemctl enable zunder-zapfe-rtc.service" in installer
     assert "/usr/local/sbin/zunder-zapfe-rtc" in installer
     assert "systemctl is-active --quiet zunder-zapfe-rtc.service" in verification
-    assert "ds3231" in verification
+    assert "rtc-ds1307" in verification
+    assert "0068" in verification
 
 
 def test_kiosk_does_not_open_the_desktop_keyring_during_autologin() -> None:

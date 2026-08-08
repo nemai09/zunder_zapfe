@@ -111,20 +111,20 @@ def run() -> None:
             load_from_rtc(device=arguments.device)
             system_time, rtc_time = read_status(device=arguments.device)
             print(f"Systemzeit aus {arguments.device} geladen: {system_time}")
-            print(f"RTC (UTC): {rtc_time}")
+            print(f"RTC-Zeit: {rtc_time} (intern UTC)")
             return
 
         if arguments.command == "status":
             system_time, rtc_time = read_status(device=arguments.device)
             print(f"Systemzeit: {system_time}")
-            print(f"RTC (UTC):  {rtc_time}")
+            print(f"RTC-Zeit:  {rtc_time} (intern UTC)")
             return
 
         if arguments.command == "set-from-system":
             set_from_system_time(device=arguments.device)
             system_time, rtc_time = read_status(device=arguments.device)
             print(f"Systemzeit in {arguments.device} übernommen: {system_time}")
-            print(f"RTC (UTC): {rtc_time}")
+            print(f"RTC-Zeit: {rtc_time} (intern UTC)")
             print("NTP-Konfiguration wurde nicht verändert.")
             return
 
@@ -137,7 +137,7 @@ def run() -> None:
         set_from_system_time(device=arguments.device)
         system_time, rtc_time = read_status(device=arguments.device)
         print(f"Systemzeit unverändert: {system_time}")
-        print(f"RTC (UTC):        {rtc_time}")
+        print(f"RTC-Zeit:              {rtc_time} (intern UTC)")
         print("NTP-Konfiguration wurde nicht verändert.")
     except (FileNotFoundError, PermissionError) as error:
         raise SystemExit(str(error)) from error
