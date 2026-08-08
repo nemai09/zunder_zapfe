@@ -13,5 +13,5 @@ ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-backup
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=read-only
 ReadWritePaths=/var/lib/zunder-zapfe

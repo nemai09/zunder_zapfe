@@ -175,6 +175,8 @@ def test_backup_timer_is_installed_and_verified_without_blocking_the_web_service
     assert "Persistent=true" in timer
     assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-backup" in service
     assert "ReadWritePaths=/var/lib/zunder-zapfe" in service
+    assert "ProtectHome=read-only" in service
+    assert "ProtectHome=true" not in service
     assert "systemctl enable --now zunder-zapfe-backup.timer" in installer
     assert "if ! systemctl start zunder-zapfe-backup.service" in installer
     assert "systemctl is-active --quiet zunder-zapfe-backup.timer" in verification

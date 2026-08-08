@@ -11,6 +11,10 @@ Dienstbenutzer lesbar. Pro Dateityp bleiben die 400 neuesten Stände erhalten;
 das deckt bei 30 Minuten Abstand mehr als acht Tage Dauerbetrieb ab. Erst nach
 einer neuen erfolgreichen Sicherung werden ältere Sicherungsstände entfernt.
 
+Der systemd-Dienst bindet das Home-Verzeichnis ausschließlich lesbar ein,
+damit er das im Checkout installierte Sicherungsprogramm ausführen kann.
+Schreibzugriff erhält er nur auf `/var/lib/zunder-zapfe`.
+
 ## Gesicherte Dateien
 
 Jeder erfolgreiche Lauf erzeugt:
