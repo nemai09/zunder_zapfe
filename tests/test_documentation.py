@@ -137,11 +137,13 @@ def test_rtc_service_runs_before_web_and_is_verified_on_target() -> None:
 
     assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-rtc load" in rtc_service
     assert "Before=zunder-zapfe-web.service" in rtc_service
+    assert "ConditionPathExists=/var/lib/zunder-zapfe/rtc-initialized" in rtc_service
     assert "CapabilityBoundingSet=CAP_SYS_TIME" in rtc_service
     assert "DeviceAllow=/dev/rtc0 rw" in rtc_service
     assert "Wants=zunder-zapfe-rtc.service" in web_service
     assert "After=local-fs.target zunder-zapfe-rtc.service" in web_service
     assert "dtoverlay=i2c-rtc,ds3231" in installer
+    assert "util-linux-extra" in installer
     assert "systemctl enable zunder-zapfe-rtc.service" in installer
     assert "/usr/local/sbin/zunder-zapfe-rtc" in installer
     assert "systemctl is-active --quiet zunder-zapfe-rtc.service" in verification

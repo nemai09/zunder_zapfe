@@ -5,7 +5,9 @@
 Die DS3231 stellt dem Raspberry Pi ohne Internet eine batteriegepufferte
 Zeitbasis bereit. Linux bindet sie über den vorhandenen RTC-Treiber ein. Der
 Dienst `zunder-zapfe-rtc.service` kopiert ihre in UTC gespeicherte Zeit beim
-Systemstart in die Systemuhr, bevor `zunder-zapfe-web.service` startet.
+Systemstart in die Systemuhr, bevor `zunder-zapfe-web.service` startet. Eine
+anschließend verfügbare NTP-Synchronisierung darf diese Startzeit verbessern;
+bei fehlendem Internet bleibt die RTC-Zeit bestehen.
 
 Die Zapfanwendung greift nicht direkt auf I2C oder `/dev/rtc0` zu. Buchungen,
 Adminaudit und technische Ereignisse verwenden weiterhin die normale
@@ -40,7 +42,7 @@ cd ~/sw/zunder_zapfe
 sudo ./scripts/install-pi.sh "$(whoami)"
 ```
 
-- installiert `i2c-tools` und `hwclock` aus `util-linux`;
+- installiert `i2c-tools` und `hwclock` aus `util-linux-extra`;
 - aktiviert I2C;
 - ergänzt `dtoverlay=i2c-rtc,ds3231` in der Bootkonfiguration;
 - installiert und aktiviert `zunder-zapfe-rtc.service`;
@@ -66,42 +68,42 @@ Der Kernelname soll `ds3231` enthalten. In `i2cdetect` erscheint die Adresse
 `0x68` nach der Treiberbindung typischerweise als `UU`; das bedeutet, dass der
 Kernel das Gerät bereits verwendet.
 
-## Uhr einmalig manuell stellen
+## RTC einmalig aus der Systemzeit stellen
 
-Zuerst die lokale Zeitzone prüfen, beispielsweise:
+Zuerst sicherstellen, dass die Systemzeit korrekt ist. Bei vorhandenem Internet
+kann die normale NTP-Synchronisierung verwendet werden:
 
 ```bash
 timedatectl
-sudo timedatectl set-timezone Europe/Berlin
 ```
 
-Dann die lokale Uhrzeit interaktiv stellen:
+Dann die aktuelle Systemzeit interaktiv in die DS3231 übernehmen:
 
 ```bash
 sudo zunder-zapfe-rtc set
 ```
 
 Dies erfolgt nur während der Inbetriebnahme, ohne laufende Zapfung und bevor
-produktive Buchungen entstehen.
+produktive Buchungen entstehen. Das CLI zeigt die aktuelle Systemzeit zur
+Bestätigung und schreibt sie anschließend als UTC in die DS3231. Es verändert
+weder die Systemzeit noch die NTP-Konfiguration. Nach erfolgreichem Schreiben
+legt es lokal `/var/lib/zunder-zapfe/rtc-initialized` an. Vorher wird die RTC
+beim Booten bewusst nicht als Zeitquelle verwendet.
 
-Das CLI erwartet `JJJJ-MM-TT HH:MM:SS`, zeigt den Wert vor der Änderung noch
-einmal an, deaktiviert die NTP-Synchronisierung und schreibt die resultierende
-UTC-Zeit in die DS3231. Der interaktiv eingegebene Stellwert landet weder in
-der Shell-History noch im Repository.
-
-Ist die Systemzeit bereits korrekt, beispielsweise nach einer vorübergehenden
-NTP-Synchronisierung, genügt:
+Für einen nicht-interaktiven Aufruf mit derselben Wirkung steht der Alias zur
+Verfügung:
 
 ```bash
 sudo zunder-zapfe-rtc set-from-system
 ```
 
-Dieser zweite Befehl verändert die NTP-Einstellung nicht.
+Auch dieser Befehl verändert die NTP-Einstellung nicht.
 
 ## Startreihenfolge und Fehlerverhalten
 
 `zunder-zapfe-web.service` deklariert ein `Wants` und `After` auf den
 RTC-Dienst. Bei vorhandener DS3231 wird die Systemzeit deshalb zuerst geladen.
+Eine funktionsfähige NTP-Synchronisierung darf sie danach korrigieren.
 Ein fehlendes RTC-Gerät verhindert den Webdienst nicht: Kiosk und Diagnose
 bleiben erreichbar. Der RTC-Dienst ist dann jedoch nicht aktiv und
 `pi-verify.sh` bewertet den Zielsystemzustand als fehlerhaft. Damit bleibt eine

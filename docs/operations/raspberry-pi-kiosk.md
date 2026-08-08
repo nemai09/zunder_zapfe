@@ -298,8 +298,8 @@ Branch gewechselt wurde. Fehlende Laufzeitabhängigkeiten erzwingen ebenfalls
 eine vollständige Installation. Bei reinen Python-, HTML- oder CSS-Aenderungen
 wird nur der Dienst neu gestartet. Normale Updates benötigen keinen Neustart.
 Bei der erstmaligen DS3231-Einrichtung kann das Skript ausdrücklich einen
-Neustart und einen anschließenden zweiten Aufruf von `deploy-update.sh`
-verlangen.
+Neustart oder `sudo zunder-zapfe-rtc set` und anschließend einen zweiten Aufruf
+von `deploy-update.sh` verlangen. Das Stellen der RTC verändert NTP nicht.
 
 Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und
 laedt die Seite automatisch neu. Deshalb sind fuer normale Updates weder ein

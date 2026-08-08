@@ -4,6 +4,7 @@ Documentation=https://github.com/nemai09/zunder_zapfe
 After=local-fs.target
 Before=zunder-zapfe-web.service
 ConditionPathExists=/dev/rtc0
+ConditionPathExists=/var/lib/zunder-zapfe/rtc-initialized
 
 [Service]
 Type=oneshot

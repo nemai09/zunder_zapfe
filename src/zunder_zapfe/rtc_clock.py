@@ -6,11 +6,10 @@ import argparse
 import os
 import subprocess
 from collections.abc import Callable, Sequence
-from datetime import datetime
 from pathlib import Path
 
 DEFAULT_RTC_DEVICE = Path("/dev/rtc0")
-LOCAL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DEFAULT_INITIALIZED_MARKER = Path("/var/lib/zunder-zapfe/rtc-initialized")
 
 CommandRunner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
 
@@ -42,39 +41,19 @@ def load_from_rtc(
     runner(["hwclock", "--hctosys", "--utc", "--rtc", str(device)])
 
 
-def parse_local_time(value: str) -> str:
-    try:
-        parsed = datetime.strptime(value.strip(), LOCAL_TIME_FORMAT)
-    except ValueError as error:
-        raise ValueError("Zeit muss das Format JJJJ-MM-TT HH:MM:SS haben.") from error
-    return parsed.strftime(LOCAL_TIME_FORMAT)
-
-
-def set_manual_time(
-    local_time: str,
-    *,
-    device: Path = DEFAULT_RTC_DEVICE,
-    runner: CommandRunner = run_command,
-) -> str:
-    """Set local system time, disable NTP and copy the result to the RTC as UTC."""
-
-    require_rtc_device(device)
-    normalized = parse_local_time(local_time)
-    runner(["timedatectl", "set-ntp", "false"])
-    runner(["date", "--set", normalized])
-    runner(["hwclock", "--systohc", "--utc", "--rtc", str(device)])
-    return normalized
-
-
 def set_from_system_time(
     *,
     device: Path = DEFAULT_RTC_DEVICE,
+    initialized_marker: Path = DEFAULT_INITIALIZED_MARKER,
     runner: CommandRunner = run_command,
 ) -> None:
-    """Copy the current system clock to the RTC without changing NTP settings."""
+    """Copy the current system clock to the RTC without changing system time or NTP."""
 
     require_rtc_device(device)
     runner(["hwclock", "--systohc", "--utc", "--rtc", str(device)])
+    initialized_marker.parent.mkdir(parents=True, exist_ok=True)
+    initialized_marker.write_text("DS3231 initialized from system clock\n", encoding="utf-8")
+    initialized_marker.chmod(0o644)
 
 
 def read_status(
@@ -110,12 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     set_parser = subparsers.add_parser(
         "set",
-        help="Lokale Systemzeit interaktiv stellen und in die RTC schreiben",
-    )
-    set_parser.add_argument(
-        "local_time",
-        nargs="?",
-        help='Lokale Zeit im Format "JJJJ-MM-TT HH:MM:SS"',
+        help="Aktuelle Systemzeit in die RTC schreiben; NTP bleibt unverändert",
     )
     set_parser.add_argument(
         "--yes",
@@ -124,7 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers.add_parser(
         "set-from-system",
-        help="Bereits korrekte Systemzeit in die RTC übernehmen",
+        help="Alias für nicht-interaktive Übernahme der Systemzeit in die RTC",
     )
     return parser
 
@@ -151,23 +125,21 @@ def run() -> None:
             system_time, rtc_time = read_status(device=arguments.device)
             print(f"Systemzeit in {arguments.device} übernommen: {system_time}")
             print(f"RTC (UTC): {rtc_time}")
+            print("NTP-Konfiguration wurde nicht verändert.")
             return
 
-        requested_time = arguments.local_time
-        if requested_time is None:
-            requested_time = input("Lokale Zeit (JJJJ-MM-TT HH:MM:SS): ").strip()
-        normalized_time = parse_local_time(requested_time)
+        system_time = run_command(["date", "--iso-8601=seconds"]).stdout.strip()
+        print(f"Aktuelle Systemzeit: {system_time}")
         if not arguments.yes:
-            confirmation = input(
-                f"Systemzeit auf {normalized_time} stellen und NTP deaktivieren? [j/N]: "
-            )
+            confirmation = input("Aktuelle Systemzeit in die DS3231 schreiben? [j/N]: ")
             if confirmation.strip().lower() not in {"j", "ja"}:
                 raise SystemExit("Abgebrochen; Zeit wurde nicht verändert.")
-        set_manual_time(normalized_time, device=arguments.device)
+        set_from_system_time(device=arguments.device)
         system_time, rtc_time = read_status(device=arguments.device)
-        print(f"Systemzeit gesetzt: {system_time}")
+        print(f"Systemzeit unverändert: {system_time}")
         print(f"RTC (UTC):        {rtc_time}")
-    except (FileNotFoundError, PermissionError, ValueError) as error:
+        print("NTP-Konfiguration wurde nicht verändert.")
+    except (FileNotFoundError, PermissionError) as error:
         raise SystemExit(str(error)) from error
     except subprocess.CalledProcessError as error:
         detail = (error.stderr or error.stdout or str(error)).strip()

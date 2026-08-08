@@ -751,11 +751,15 @@ Das System muss ohne Internet eine fuer Buchungen und Protokolle ausreichend
 verlaessliche Uhrzeit bereitstellen. Dazu wird eine batteriegepufferte DS3231-
 Echtzeituhr ueber I2C verwendet. Der Raspberry Pi muss seine Systemzeit vor dem
 Start der Zapfanwendung aus der in UTC gefuehrten RTC laden. Datum und Uhrzeit
-werden einmalig ueber ein lokales CLI gestellt; eine Bedienung ueber Kiosk- oder
-Smartphone-WebUI ist nicht erforderlich.
-Abnahme: Nach korrektem einmaligem Stellen, stromlosem Ausschalten und erneutem
+werden einmalig ueber ein lokales CLI aus der bereits korrekten Systemzeit in
+die RTC uebernommen; die Systemzeit und eine vorhandene NTP-Synchronisierung
+werden dabei nicht veraendert. Nach dem Start darf NTP die aus der RTC geladene
+Systemzeit korrigieren, wenn ein Zeitserver erreichbar ist. Eine Bedienung ueber
+Kiosk- oder Smartphone-WebUI ist nicht erforderlich.
+Abnahme: Nach korrekter einmaliger Uebernahme, stromlosem Ausschalten und erneutem
 Start wird die Systemzeit vor der Zapfanwendung aus der DS3231 geladen. Das CLI
-zeigt System- und RTC-Zeit an und kann die RTC ohne Internet neu stellen.
+zeigt System- und RTC-Zeit an und kann die RTC aus der Systemzeit stellen, ohne
+NTP zu deaktivieren.
 
 
 13. NICHTFUNKTIONALE ANFORDERUNGEN
@@ -812,7 +816,8 @@ OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
 OD-008: Durch ZZ-TIM-001 entschieden: DS3231 ueber I2C, Speicherung in UTC,
-einmalige lokale CLI-Einrichtung und keine Bedienung ueber die WebUI.
+einmalige lokale CLI-Einrichtung ohne Aenderung der NTP-Konfiguration und keine
+Bedienung ueber die WebUI.
 OD-009: Durch CR-002 entschieden: Raspberry Pi als eigenstaendiger Access Point
 mit SSID `ZUNDER_ZAPFE`, WPA-Schutz und persoenlichen Adminpasswoertern;
 HTTPS ist fuer die isolierte Alpha-Ausbaustufe nicht erforderlich.

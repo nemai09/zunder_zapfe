@@ -23,7 +23,7 @@ echo "Zielsystem: ${model:-unbekannt}"
 apt-get update
 apt-get install --yes \
   python3-venv python3-dev build-essential \
-  chromium curl i2c-tools util-linux \
+  chromium curl i2c-tools util-linux-extra \
   pcscd libccid libpcsclite-dev pcsc-tools swig \
   liblgpio-dev \
   network-manager iw nginx-light
@@ -125,11 +125,14 @@ chown "${kiosk_user}:${kiosk_user}" "${autostart_file}"
 
 systemctl daemon-reload
 systemctl enable zunder-zapfe-rtc.service
-if [[ -e /dev/rtc0 ]]; then
-  rm -f /run/zunder-zapfe-rtc-reboot-required
+if [[ -e /dev/rtc0 ]] && [[ -f /var/lib/zunder-zapfe/rtc-initialized ]]; then
+  rm -f /run/zunder-zapfe-rtc-action-required
   systemctl restart zunder-zapfe-rtc.service
+elif [[ -e /dev/rtc0 ]]; then
+  touch /run/zunder-zapfe-rtc-action-required
+  echo "DS3231 ist noch nicht initialisiert. Jetzt sudo zunder-zapfe-rtc set ausfuehren."
 else
-  touch /run/zunder-zapfe-rtc-reboot-required
+  touch /run/zunder-zapfe-rtc-action-required
   echo "DS3231 wird nach dem erforderlichen Neustart als /dev/rtc0 erwartet."
 fi
 systemctl enable --now zunder-zapfe-web.service

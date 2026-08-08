@@ -96,6 +96,6 @@ def test_deployment_detects_branch_switches_and_missing_runtime_dependencies() -
         in deployment
     )
     assert "command -v zunder-zapfe-rtc" in deployment
-    assert "zunder-zapfe-rtc-reboot-required" in deployment
+    assert "zunder-zapfe-rtc-action-required" in deployment
     assert '"${deployed_revision}" "${new_revision}"' in deployment
     assert 'printf \'%s\\n\' "${new_revision}" >"${deployed_revision_path}"' in deployment

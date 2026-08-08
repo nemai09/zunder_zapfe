@@ -211,6 +211,12 @@ Falls `/dev/rtc0` unmittelbar nach der ersten Installation noch fehlt, muss der
 Pi einmal neu gestartet werden. Die RTC wird anschließend gemäß
 [`ds3231-rtc.md`](ds3231-rtc.md) einmalig lokal gestellt.
 
+Ist `/dev/rtc0` vorhanden, aber noch nicht initialisiert, fordert der Installer
+stattdessen `sudo zunder-zapfe-rtc set` an. Dieser Befehl übernimmt die bereits
+korrekte Systemzeit, ohne NTP zu deaktivieren. Danach muss
+`deploy-update.sh` erneut ausgeführt werden, damit Startdienst und vollständige
+Zielsystemprüfung erfolgreich abschließen.
+
 Vor realer Ventilhardware kontrollieren:
 
 ```bash
@@ -404,9 +410,11 @@ Das Skript:
   `/var/lib/zunder-zapfe/deployed-revision`.
 
 Bei der erstmaligen DS3231-Einrichtung kann die neue Bootkonfiguration einen
-Neustart erfordern. Das Skript meldet diesen Sonderfall, überspringt die noch
-nicht mögliche Zielsystemprüfung und muss nach dem Neustart erneut ausgeführt
-werden. Erst der erfolgreich geprüfte zweite Lauf speichert die Revision.
+Neustart oder die einmalige Übernahme der Systemzeit mit
+`sudo zunder-zapfe-rtc set` erfordern. Das Skript meldet die notwendige Aktion,
+überspringt die noch nicht mögliche Zielsystemprüfung und muss danach erneut
+ausgeführt werden. Erst der erfolgreich geprüfte Folgelauf speichert die
+Revision.
 
 Vor einem Branchwechsel:
 
