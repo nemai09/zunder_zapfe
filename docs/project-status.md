@@ -60,6 +60,13 @@ Phase: Alpha-Entwicklung
 - automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten mit 400
   lokalen Sicherungsständen und Smartphone-Download eines NFC- und
   passwortfreien CSV-Pakets
+- fachlicher Kiosk-Bereitschaftsstatus für Steuerung, NFC, GPIO-Adapter,
+  Datenbank und aktiven Fasskontext; der rechnerische Fassbestand bleibt
+  informativ und sperrt keine Zapfung
+- vorläufig entspannte, weiterhin aktive und per Umgebung konfigurierbare
+  Watchdogs mit 5 Sekunden Anlaufzeit, 3 Sekunden Impulspause und 5 Sekunden
+  Steuerungstimeout
+- automatischer Chromium-Neustart nach einem unerwarteten Browserende
 - Smartphone-Diagnose mit Steuerungszustand, Safety-Reset sowie standardmäßig
   eingeklapptem Adminaudit und technischen Ereignissen
 - lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
@@ -98,6 +105,12 @@ Armbandverwaltung, Fassablauf, Buchungen, Auswertung und Diagnose wurde auf
 dem Raspberry Pi bedient und für den Alpha-Stand abgenommen. Milestone 7 ist
 damit abgeschlossen.
 
+Der lokale Entwicklungsstand nach `M8.10` umfasst 175 bestandene automatisierte
+Tests einschließlich rein informativem Fassbestand, fachlicher
+Zapfbereitschaft, konfigurierbaren Feld-Watchdogs, RTC, Systemsteuerung und
+Datensicherung. Diese PC-Prüfung ersetzt nicht den für den nächsten Tag
+vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
+
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
@@ -122,14 +135,16 @@ damit abgeschlossen.
 
 ## Nächste Entwicklungsreihenfolge
 
-1. ESP8266-HIL für ausbleibenden Durchfluss, Neustart, Verbindungsabbruch und
-   Safety-Verriegelung vollständig abnehmen.
-2. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie den
+1. Gesamtsystem mit realem Ventil und Durchflusssensor kalibrieren sowie den
+   verbindlichen Inbetriebnahmetest für den Alpha-Feldeinsatz durchführen.
+2. Nach dem Einsatz die bewusst akzeptierten Abweichungen aus
+   [`Alpha-Feldeinsatz`](operations/alpha-field-operation.md) erneut bewerten.
+3. ESP8266-HIL für Neustart, Verbindungsabbruch und Safety-Verriegelung
+   vollständig abnehmen.
+4. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie später den
    Not-Aus-Adapter implementieren.
-3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
+5. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
    integrieren.
-4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
-   prüfen.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 [`milestones.md`](milestones.md).
@@ -145,6 +160,11 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   keine Produktionskalibrierung.
 - `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
   konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
+- Für den ersten Feldeinsatz gelten vorläufig 5 Sekunden bis zum ersten
+  Durchflussimpuls, 3 Sekunden zwischen Impulsen und 5 Sekunden für den
+  Steuerungs-Watchdog. Die Überwachung bleibt aktiv.
+- Der rechnerische Fassbestand ist ausschließlich informativ. Auch null oder
+  negative Restmenge verhindert keine Zapfung.
 - Der Durchfluss-Watchdog ist standardmäßig aktiv. Ausschließlich lokale
   Entwicklung ohne GPIO-Hardware darf ihn zusammen mit explizit aktivierten
   Ventil-/Durchflusssimulatoren per
@@ -159,3 +179,6 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
   Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
   oder Rolle ist als `OD-014` offen.
+- Die für den bevorstehenden Einsatz akzeptierten Abweichungen und der
+  Inbetriebnahmeablauf stehen zentral unter
+  [`Alpha-Feldeinsatz`](operations/alpha-field-operation.md).

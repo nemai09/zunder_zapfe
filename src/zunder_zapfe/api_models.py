@@ -137,6 +137,22 @@ class TapStatusResponse(BaseModel):
     registration_welcome: str | None
 
 
+class TapReadinessResponse(BaseModel):
+    ready: bool
+    code: Literal[
+        "ready",
+        "safety_locked",
+        "controller_unavailable",
+        "nfc_capture",
+        "valve_unavailable",
+        "flow_meter_unavailable",
+        "nfc_unavailable",
+        "database_unavailable",
+        "no_active_keg",
+    ]
+    message: str
+
+
 class SessionStatusResponse(BaseModel):
     user_id: str | None
     user_display_name: str | None
@@ -150,6 +166,9 @@ class TapOptionsResponse(BaseModel):
     session_timeout_seconds: int
     manual_press_debounce_ms: int
     manual_maximum_pour_seconds: int
+    first_pulse_timeout_seconds: float
+    between_pulses_timeout_seconds: float
+    controller_watchdog_timeout_seconds: float
     debug_flow_watchdog_disabled: bool
     admin_session_timeout_seconds: int
 

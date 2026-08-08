@@ -14,11 +14,12 @@ def test_zz_ui_001_kiosk_assets_are_offline_and_packaged_locally() -> None:
     assert '<a class="brand"' not in html
 
 
-def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
+def test_zz_ui_004_011_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
 
     for route in (
         "/api/tap/options",
+        "/api/tap/readiness",
         "/api/tap/manual/start",
         "/api/tap/manual/stop",
         "/api/tap/heartbeat",
@@ -46,6 +47,7 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "session_timeout_seconds" in script
     assert "WIFI_REFRESH_MS = 30000" in script
     assert "NFC_REFRESH_MS = 2000" in script
+    assert "READINESS_REFRESH_MS = 2000" in script
     assert "CONTEXT_REFRESH_MS = 15000" in script
     assert "HEALTH_REFRESH_MS = 30000" in script
     assert "renderIfChanged()" in script
@@ -53,6 +55,9 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "window.setInterval(refresh" not in script
     assert 'id="valve-status"' in html
     assert 'id="wifi-status"' in html
+    assert 'id="idle-eyebrow"' in html
+    assert 'id="idle-title-primary"' in html
+    assert 'id="idle-lead"' in html
     assert "valve_open" in script
     assert "DEBUG · Ventil" in script
     assert 'id="portion-grid"' not in html

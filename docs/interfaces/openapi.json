@@ -1737,9 +1737,21 @@
             "title": "Admin Session Timeout Seconds",
             "type": "integer"
           },
+          "between_pulses_timeout_seconds": {
+            "title": "Between Pulses Timeout Seconds",
+            "type": "number"
+          },
+          "controller_watchdog_timeout_seconds": {
+            "title": "Controller Watchdog Timeout Seconds",
+            "type": "number"
+          },
           "debug_flow_watchdog_disabled": {
             "title": "Debug Flow Watchdog Disabled",
             "type": "boolean"
+          },
+          "first_pulse_timeout_seconds": {
+            "title": "First Pulse Timeout Seconds",
+            "type": "number"
           },
           "manual_maximum_pour_seconds": {
             "title": "Manual Maximum Pour Seconds",
@@ -1778,10 +1790,47 @@
           "session_timeout_seconds",
           "manual_press_debounce_ms",
           "manual_maximum_pour_seconds",
+          "first_pulse_timeout_seconds",
+          "between_pulses_timeout_seconds",
+          "controller_watchdog_timeout_seconds",
           "debug_flow_watchdog_disabled",
           "admin_session_timeout_seconds"
         ],
         "title": "TapOptionsResponse",
+        "type": "object"
+      },
+      "TapReadinessResponse": {
+        "properties": {
+          "code": {
+            "enum": [
+              "ready",
+              "safety_locked",
+              "controller_unavailable",
+              "nfc_capture",
+              "valve_unavailable",
+              "flow_meter_unavailable",
+              "nfc_unavailable",
+              "database_unavailable",
+              "no_active_keg"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ready",
+          "code",
+          "message"
+        ],
+        "title": "TapReadinessResponse",
         "type": "object"
       },
       "TapStatusResponse": {
@@ -3622,6 +3671,24 @@
           }
         },
         "summary": "Abort Portion"
+      }
+    },
+    "/api/tap/readiness": {
+      "get": {
+        "operationId": "tap_readiness_api_tap_readiness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Tap Readiness"
       }
     },
     "/api/tap/safety/reset": {

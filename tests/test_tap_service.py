@@ -32,6 +32,7 @@ from zunder_zapfe.persistence.models import (
     Beverage,
     BookingCompletion,
     BookingKind,
+    Keg,
     NfcCard,
     TapBooking,
     TechnicalEvent,
@@ -291,6 +292,67 @@ def test_zz_dat_001_002_and_keg_004_portion_is_persisted_and_survives_restart(
         stop_service(restarted, restarted_hardware)
 
 
+def test_zz_keg_004_calculated_stock_is_advisory_and_does_not_block_pouring(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    ids = seed_data(sessions)
+    with sessions.begin() as session:
+        keg = session.get(Keg, ids["keg_id"])
+        assert keg is not None
+        keg.initial_volume_ml = 1
+
+    service, hardware, _nfc, flow_meter = start_service(sessions)
+    try:
+        assert service.authenticate_card("04AABBCC") is True
+        service.start_manual_pour()
+        flow_meter.add_pulses(1)
+        service.stop_manual_pour()
+        assert service.current_keg()["remaining_volume_ml"] == -1
+
+        service.start_manual_pour()
+        flow_meter.add_pulses(1)
+        service.stop_manual_pour()
+
+        with sessions() as session:
+            assert len(list(session.scalars(select(TapBooking)))) == 2
+    finally:
+        stop_service(service, hardware)
+
+
+def test_zz_ui_011_tap_readiness_tracks_hardware_and_active_keg_context(
+    database: tuple[Engine, sessionmaker[Session]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine, sessions = database
+    service, hardware, _nfc, _flow_meter = start_service(sessions)
+    try:
+        assert service.readiness() == {
+            "ready": False,
+            "code": "no_active_keg",
+            "message": "Kein Fass aktiv",
+        }
+
+        seed_data(sessions)
+        assert service.readiness() == {
+            "ready": True,
+            "code": "ready",
+            "message": "Bereit zum Zapfen",
+        }
+
+        hardware_status = hardware.snapshot()
+        hardware_status["flow_meter"]["available"] = False
+        monkeypatch.setattr(hardware, "snapshot", lambda: hardware_status)
+        assert service.readiness()["code"] == "flow_meter_unavailable"
+        monkeypatch.undo()
+
+        with sessions.begin() as session:
+            Repository(session).close_active_keg()
+        assert service.readiness()["code"] == "no_active_keg"
+    finally:
+        stop_service(service, hardware)
+
+
 def test_zz_tap_008_price_and_target_are_snapshotted_at_pour_start(
     database: tuple[Engine, sessionmaker[Session]],
 ) -> None:
@@ -426,6 +488,13 @@ def test_zz_tap_013_manual_api_exercises_start_and_release(
             run_background=False,
         )
     ) as client:
+        readiness = client.get("/api/tap/readiness")
+        assert readiness.status_code == 200
+        assert readiness.json() == {
+            "ready": True,
+            "code": "ready",
+            "message": "Bereit zum Zapfen",
+        }
         assert client.post("/api/tap/manual/start").status_code == 409
         assert client.post("/api/session/activity").status_code == 409
         client.post("/api/simulator/nfc/present", json={"uid": "04AABBCC"})

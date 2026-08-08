@@ -420,6 +420,65 @@ class TapService:
             )
         return status
 
+    def readiness(self) -> dict[str, object]:
+        """Report whether the installed system can accept a normal tap login."""
+        status = self._controller.snapshot()
+        if status.state in {TapState.FAULT_LOCKED, TapState.EMERGENCY_STOP}:
+            return {
+                "ready": False,
+                "code": "safety_locked",
+                "message": status.safety_reason or "Zapfsteuerung ist verriegelt",
+            }
+        if status.state in {TapState.STARTING, TapState.STOPPED}:
+            return {
+                "ready": False,
+                "code": "controller_unavailable",
+                "message": "Zapfsteuerung ist nicht gestartet",
+            }
+        if status.state is TapState.NFC_CAPTURE:
+            return {
+                "ready": False,
+                "code": "nfc_capture",
+                "message": "Armbandzuordnung läuft",
+            }
+
+        hardware = self._hardware.snapshot()
+        if not bool(hardware["valve"]["available"]):
+            return {
+                "ready": False,
+                "code": "valve_unavailable",
+                "message": "Ventilsteuerung ist nicht bereit",
+            }
+        if not bool(hardware["flow_meter"]["available"]):
+            return {
+                "ready": False,
+                "code": "flow_meter_unavailable",
+                "message": "Durchflussmessung ist nicht bereit",
+            }
+        if hardware["nfc"]["state"] not in {"ready", "card"}:
+            return {
+                "ready": False,
+                "code": "nfc_unavailable",
+                "message": "NFC-Leser ist nicht bereit",
+            }
+
+        try:
+            with self._sessions() as session:
+                context = Repository(session).active_tap_context()
+        except Exception:
+            return {
+                "ready": False,
+                "code": "database_unavailable",
+                "message": "Datenbank ist nicht bereit",
+            }
+        if context is None:
+            return {
+                "ready": False,
+                "code": "no_active_keg",
+                "message": "Kein Fass aktiv",
+            }
+        return {"ready": True, "code": "ready", "message": "Bereit zum Zapfen"}
+
     def _set_nfc_feedback(self, feedback: str) -> None:
         with self._mutex:
             self._nfc_feedback = feedback
@@ -496,11 +555,6 @@ class TapService:
             with self._sessions() as session:
                 repository = Repository(session)
                 context = self._require_active_context(repository)
-                remaining_volume_ml = repository.remaining_keg_volume_ml(context.keg_id)
-                if remaining_volume_ml <= 0:
-                    raise TapUnavailable("The active keg has no calculated remaining volume")
-                if target_volume_ml is not None and target_volume_ml > remaining_volume_ml:
-                    raise TapUnavailable("Target volume exceeds calculated keg stock")
             pending = _PendingBooking(
                 event_id=context.event_id,
                 user_id=user.id,

@@ -37,6 +37,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `GET /api/hardware/status` | `200 HardwareStatusResponse` | Status aller Hardwarekomponenten |
 | `GET /api/wifi/status` | `200 WifiStatusResponse` | lokaler NetworkManager-Modus ohne Zugangsdaten |
 | `GET /api/tap/status` | `200 TapStatusResponse` | vollständiger Zapfzustand |
+| `GET /api/tap/readiness` | `200 TapReadinessResponse` | fachliche Zapfbereitschaft mit stabilem Ursachencode und Bedienhinweis |
 | `POST /api/tap/poll` | `200 TapStatusResponse` | Zustand sofort auswerten; primär Diagnose/Test |
 
 `TapStatusResponse` enthält:
@@ -64,6 +65,17 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
 
+`TapReadinessResponse` trennt die reine Prozesslebendigkeit von der
+Zapfbereitschaft. `ready` ist nur wahr, wenn Steuerung, NFC, Ventiladapter,
+Durchflussadapter, Datenbank sowie ein aktiver Veranstaltungs-/Fasskontext
+verfügbar sind. `code` ist ein stabiler maschinenlesbarer Grund; `message` ist
+der deutsche Bedienhinweis für den Kiosk. Der rechnerische Fassbestand ist
+ausdrücklich kein Bereitschaftskriterium.
+
+Definierte Codes sind `ready`, `safety_locked`, `controller_unavailable`,
+`nfc_capture`, `valve_unavailable`, `flow_meter_unavailable`,
+`nfc_unavailable`, `database_unavailable` und `no_active_keg`.
+
 ## Sitzung
 
 | Methode und Pfad | Vorbedingung | Ergebnis |
@@ -85,9 +97,9 @@ Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
 | `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit, manuelle Grenzen und temporärer Flow-Debugstatus |
-| `POST /api/tap/manual/start` | `authenticated`, aktiver Kontext und Fassbestand | wechselt zu `manual_pouring` |
+| `POST /api/tap/manual/start` | `authenticated` und aktiver Kontext | wechselt zu `manual_pouring` |
 | `POST /api/tap/manual/stop` | `manual_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
-| `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
+| `POST /api/tap/portion` | `authenticated` und aktiver Kontext | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
 | `POST /api/tap/portion/abort` | `portion_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/top-up/start` | `top_up_available` innerhalb Zeitfenster | wechselt zu `top_up_pouring` |
 | `POST /api/tap/top-up/stop` | `top_up_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |

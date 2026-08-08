@@ -1,5 +1,5 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.15
+Version: 0.16
 Stand: 2026-08-09
 Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
@@ -223,9 +223,12 @@ Abnahme: Der Fasswechsel kann ohne Restbestandsuebernahme abgeschlossen werden.
 [ZZ-KEG-004] Rechnerischer Fassbestand
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Das System muss den Fassbestand aus Startmenge und allen gemessenen Entnahmen
-fortschreiben.
+fortschreiben. Der rechnerische Bestand ist ein rein informativer Schaetzwert.
+Ein Wert von null oder darunter darf weder eine manuelle Zapfung noch eine
+kompatible Portionszapfung verhindern.
 Abnahme: Der angezeigte Bestand entspricht Startmenge minus protokollierter
-Entnahmen.
+Entnahmen; auch nach rechnerischem Verbrauch der Startmenge bleibt eine Zapfung
+bei ansonsten erfuellten Voraussetzungen moeglich.
 
 [ZZ-KEG-005] Erweiterung um Waage
 Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: INSPEKTION
@@ -638,6 +641,17 @@ werden beide Aktionen abgewiesen. Nach sichtbarer Bestaetigung fuehrt der Pi
 die gewaehlte Aktion aus, der Audit-Eintrag bleibt erhalten und ein beliebiger
 Systembefehl kann weder ueber API noch Hilfsprogramm aufgerufen werden.
 
+[ZZ-UI-011] Wahrheitsgemaesse Zapfbereitschaft
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Kiosk darf "Bereit zum Zapfen" nur anzeigen, wenn Backend, NFC-Leser,
+Ventiladapter, Durchflussadapter, Datenbank und ein aktiver Veranstaltungs-
+und Fasskontext verfuegbar sind. Bei fehlender Voraussetzung muss der
+Sperrbildschirm stattdessen einen verstaendlichen Grund anzeigen. Der
+rechnerische Fassbestand gemaess `ZZ-KEG-004` ist kein Bereitschaftskriterium.
+Abnahme: Ein vollstaendiger Kontext zeigt Zapfbereitschaft; mindestens ein
+fehlendes aktives Fass sowie ein nicht verfuegbarer Hardwareadapter werden als
+nicht zapfbereit gemeldet.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
@@ -834,7 +848,10 @@ OD-001: Konkrete Standard-Portionsgroessen.
 OD-002: Der Alpha-Default fuer automatischen Logout ist auf 15 Sekunden
 festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
 spaeter zu bewerten.
-OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
+OD-003: Endgueltige Mengen-, Zeit- und Plausibilitaetsgrenzen. Fuer den ersten
+Feldeinsatz gelten vorlaeufig 5 Sekunden bis zum ersten Impuls, 3 Sekunden
+zwischen Impulsen und 5 Sekunden fuer den Steuerungs-Watchdog. Die Ueberwachung
+bleibt aktiv; die Werte sind bis zur realen Kalibrierung Umgebungsparameter.
 OD-004: Detailregeln der Happy Hour.
 OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.

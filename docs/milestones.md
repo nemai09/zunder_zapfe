@@ -154,6 +154,7 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 | `M8.7 OPS` | DS3231 als verbindliche Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen |
 | `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren |
 | `M8.9 DB/OPS` | automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download aufs Smartphone |
+| `M8.10 FIX/OPS` | feldtaugliche Bereitschaftsanzeige, rein informativer Fassbestand, entspannte aktive Watchdogs, Chromium-Neustart und Einsatzübergabe |
 
 ### Abnahmekriterien
 
@@ -177,3 +178,5 @@ Die lokale Systemsteuerung aus `M8.8` referenziert zusätzlich `ZZ-UI-010`,
 `ZZ-DAT-003` und `ZZ-SAF-009`.
 Die Datensicherung aus `M8.9` referenziert `ZZ-DAT-001`, `ZZ-DAT-002`,
 `ZZ-DAT-006`, `ZZ-DAT-008` und `ZZ-DAT-010`.
+Die Feldvorbereitung aus `M8.10` referenziert `ZZ-KEG-004`, `ZZ-SAF-004`,
+`ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009`, `ZZ-UI-002` und `ZZ-UI-011`.

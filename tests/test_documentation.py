@@ -157,6 +157,8 @@ def test_kiosk_does_not_open_the_desktop_keyring_during_autologin() -> None:
     )
 
     assert "--password-store=basic" in launcher
+    assert "while true; do" in launcher
+    assert "sleep 2" in launcher
 
 
 def test_backup_timer_is_installed_and_verified_without_blocking_the_web_service() -> None:

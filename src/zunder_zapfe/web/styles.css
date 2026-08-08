@@ -126,6 +126,11 @@ button {
   background: var(--danger);
 }
 
+.connection.is-warning .connection-dot {
+  background: var(--amber);
+  box-shadow: 0 0 1rem rgb(245 166 35 / 45%);
+}
+
 .valve-status {
   display: flex;
   align-items: center;
@@ -272,6 +277,10 @@ h1 {
 
 h1 span {
   color: var(--amber);
+}
+
+h1 .idle-title-primary {
+  color: inherit;
 }
 
 .compact-title {

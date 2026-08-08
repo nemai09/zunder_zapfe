@@ -8,6 +8,7 @@ const ACTIVE_POUR_STATES = new Set([
 ]);
 const STATUS_REFRESH_MS = 300;
 const NFC_REFRESH_MS = 2000;
+const READINESS_REFRESH_MS = 2000;
 const CONTEXT_REFRESH_MS = 15000;
 const HEALTH_REFRESH_MS = 30000;
 const WIFI_REFRESH_MS = 30000;
@@ -24,6 +25,7 @@ const clockFormatter = new Intl.DateTimeFormat("de-DE", {
 const model = {
   connected: false,
   tap: null,
+  readiness: null,
   nfc: null,
   options: null,
   consumption: null,
@@ -41,6 +43,7 @@ const model = {
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
   lastNfcRefresh: 0,
+  lastReadinessRefresh: 0,
   lastWifiRefresh: 0,
   lastActivitySentAt: 0,
   lastRenderSignature: null,
@@ -66,6 +69,10 @@ const elements = {
   wifiLabel: document.querySelector("#wifi-label"),
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
+  idleEyebrow: document.querySelector("#idle-eyebrow"),
+  idleTitlePrimary: document.querySelector("#idle-title-primary"),
+  idleTitleAccent: document.querySelector("#idle-title-accent"),
+  idleLead: document.querySelector("#idle-lead"),
   buildVersion: document.querySelector("#build-version"),
   registrationName: document.querySelector("#registration-name"),
   clock: document.querySelector("#clock"),
@@ -199,6 +206,7 @@ function renderSignature() {
   return JSON.stringify({
     connected: model.connected,
     tap,
+    readiness: model.readiness,
     nfc: model.nfc,
     options: model.options,
     consumption: model.consumption,
@@ -217,8 +225,17 @@ function renderIfChanged() {
 
 function render() {
   setScreen(currentScreen());
-  elements.connection.className = `connection ${model.connected ? "is-online" : "is-offline"}`;
-  elements.connectionLabel.textContent = model.connected ? "Steuerung bereit" : "Keine Verbindung";
+  const operationalReady = model.connected && Boolean(model.readiness?.ready);
+  elements.connection.className = `connection ${
+    !model.connected ? "is-offline" : operationalReady ? "is-online" : "is-warning"
+  }`;
+  elements.connectionLabel.textContent = !model.connected
+    ? "Keine Verbindung"
+    : operationalReady
+      ? "Steuerung bereit"
+      : model.readiness
+        ? "Nicht zapfbereit"
+        : "Zapfbereitschaft wird geprüft";
   const valveOpen = Boolean(model.tap?.valve_open);
   elements.valveStatus.classList.toggle("is-open", valveOpen);
   elements.valveStatus.classList.toggle(
@@ -265,6 +282,18 @@ function render() {
     elements.readerStatus.classList.add("is-blocked");
     elements.readerLabel.textContent = "Karte gesperrt";
   }
+
+  const readinessKnown = Boolean(model.readiness);
+  elements.idleEyebrow.textContent = !readinessKnown
+    ? "Systemprüfung"
+    : operationalReady
+      ? "Bereit zum Zapfen"
+      : "Nicht zapfbereit";
+  elements.idleTitlePrimary.textContent = operationalReady ? "Karte auflegen." : "Noch nicht";
+  elements.idleTitleAccent.textContent = operationalReady ? "Bier genießen." : "zapfbereit.";
+  elements.idleLead.textContent = operationalReady
+    ? "Halte deine NFC-Karte kurz an den Leser."
+    : model.readiness?.message || "Die Zapfbereitschaft wird geprüft.";
 
   elements.userName.textContent = model.tap?.user_display_name || "Zapfer";
   elements.beverageName.textContent = model.keg?.beverage_name || "Kein aktives Getränk";
@@ -372,6 +401,12 @@ async function refresh() {
     ) {
       requests.push(api("/api/nfc/status"));
     }
+    if (
+      (!model.tap || model.tap.state === "idle")
+      && (!model.readiness || now - model.lastReadinessRefresh >= READINESS_REFRESH_MS)
+    ) {
+      requests.push(api("/api/tap/readiness"));
+    }
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
     for (const result of secondary) {
@@ -390,6 +425,10 @@ async function refresh() {
       if (result?.mode && "client_profile_available" in result) {
         model.wifi = result;
         model.lastWifiRefresh = now;
+      }
+      if (typeof result?.ready === "boolean" && result?.code) {
+        model.readiness = result;
+        model.lastReadinessRefresh = now;
       }
     }
     model.connected = true;

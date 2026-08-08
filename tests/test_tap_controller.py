@@ -9,6 +9,7 @@ from zunder_zapfe.backend.tap_controller import (
     TapController,
     TapLimits,
     TapState,
+    development_limits,
 )
 from zunder_zapfe.hardware.layer import HardwareLayer
 from zunder_zapfe.hardware.simulators import (
@@ -28,6 +29,15 @@ class ManualClock:
 
     def advance(self, seconds: float) -> None:
         self.value += seconds
+
+
+def test_field_watchdog_defaults_remain_active_but_tolerate_short_delays() -> None:
+    configured = development_limits()
+
+    assert configured.flow_watchdog_enabled is True
+    assert configured.first_pulse_timeout_seconds == 5
+    assert configured.between_pulses_timeout_seconds == 3
+    assert configured.watchdog_timeout_seconds == 5
 
 
 def tap_setup(

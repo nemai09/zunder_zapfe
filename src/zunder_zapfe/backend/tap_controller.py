@@ -579,14 +579,17 @@ def development_limits(
     session_timeout_seconds: float = 15.0,
     admin_session_timeout_seconds: float = 30.0,
     manual_maximum_seconds: float = 30.0,
+    first_pulse_timeout_seconds: float = 5.0,
+    between_pulses_timeout_seconds: float = 3.0,
+    watchdog_timeout_seconds: float = 5.0,
     flow_watchdog_enabled: bool = True,
 ) -> TapLimits:
-    """Non-production limits used while only simulated tap hardware is present."""
+    """Alpha limits used by the current target runtime."""
     return TapLimits(
-        first_pulse_timeout_seconds=2.0,
-        between_pulses_timeout_seconds=1.0,
+        first_pulse_timeout_seconds=first_pulse_timeout_seconds,
+        between_pulses_timeout_seconds=between_pulses_timeout_seconds,
         maximum_pour_seconds=30.0,
-        watchdog_timeout_seconds=2.0,
+        watchdog_timeout_seconds=watchdog_timeout_seconds,
         top_up_window_seconds=8.0,
         top_up_maximum_seconds=3.0,
         top_up_maximum_pulses=100,

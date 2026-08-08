@@ -57,6 +57,7 @@ from zunder_zapfe.api_models import (
     SystemPowerActionResponse,
     SystemStatusResponse,
     TapOptionsResponse,
+    TapReadinessResponse,
     TapStatusResponse,
     WebAdminLoginOptionResponse,
     WebAdminLoginRequest,
@@ -130,6 +131,9 @@ def create_app(
             session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds,
             admin_session_timeout_seconds=(resolved_kiosk_settings.admin_session_timeout_seconds),
             manual_maximum_seconds=resolved_kiosk_settings.manual_maximum_pour_seconds,
+            first_pulse_timeout_seconds=(resolved_kiosk_settings.first_pulse_timeout_seconds),
+            between_pulses_timeout_seconds=(resolved_kiosk_settings.between_pulses_timeout_seconds),
+            watchdog_timeout_seconds=(resolved_kiosk_settings.controller_watchdog_timeout_seconds),
             flow_watchdog_enabled=(not resolved_kiosk_settings.debug_disable_flow_watchdog),
         ),
         calibration=FlowCalibration(
@@ -386,6 +390,10 @@ def create_app(
     async def tap_status() -> dict[str, object]:
         return tap_service.status_dict()
 
+    @application.get("/api/tap/readiness", response_model=TapReadinessResponse)
+    async def tap_readiness() -> dict[str, object]:
+        return tap_service.readiness()
+
     @application.get("/api/session/status", response_model=SessionStatusResponse)
     async def session_status() -> dict[str, object]:
         status = tap_service.status_dict()
@@ -403,6 +411,13 @@ def create_app(
             "session_timeout_seconds": resolved_kiosk_settings.session_timeout_seconds,
             "manual_press_debounce_ms": resolved_kiosk_settings.manual_press_debounce_ms,
             "manual_maximum_pour_seconds": (resolved_kiosk_settings.manual_maximum_pour_seconds),
+            "first_pulse_timeout_seconds": (resolved_kiosk_settings.first_pulse_timeout_seconds),
+            "between_pulses_timeout_seconds": (
+                resolved_kiosk_settings.between_pulses_timeout_seconds
+            ),
+            "controller_watchdog_timeout_seconds": (
+                resolved_kiosk_settings.controller_watchdog_timeout_seconds
+            ),
             "debug_flow_watchdog_disabled": (resolved_kiosk_settings.debug_disable_flow_watchdog),
             "admin_session_timeout_seconds": (
                 resolved_kiosk_settings.admin_session_timeout_seconds

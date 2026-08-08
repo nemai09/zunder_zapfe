@@ -12,6 +12,10 @@ durch einen Dialog zum Entsperren des Linux-Schlüsselbunds blockiert wird. Im
 Kiosk dürfen deshalb keine Browserpasswörter gespeichert werden; persönliche
 Adminpasswörter werden weiterhin ausschließlich von der Anwendung geprüft.
 
+Nach einem unerwarteten Chromium-Ende wartet der Launcher zwei Sekunden und
+startet den Browser erneut. Das betrifft nur den Kioskprozess; der unabhängig
+durch systemd überwachte Webdienst läuft dabei weiter.
+
 Der aktuelle Alpha-Stand bindet den ACR122U-NFC-Leser ein und verbindet ihn mit
 Zapfzustandsautomat und SQLite-Persistenz. Ventil und Durchflussmesser verwenden
 im Zielbetrieb die GPIO-Adapter; nur der Not-Aus ist noch simuliert.
@@ -166,7 +170,8 @@ Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
 - Chromium erscheint ohne Browserrahmen,
 - die Seite zeigt "Zunder Zapfe",
-- der Backendstatus wechselt auf "Bereit",
+- der Bereitschaftsstatus meldet bei vollständigem Fass- und Hardwarekontext
+  "Bereit zum Zapfen",
 - keine externe Netzwerkverbindung ist fuer die Anzeige erforderlich.
 
 Der Testbericht soll die ausgegebene Commit-ID enthalten.

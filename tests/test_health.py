@@ -75,6 +75,9 @@ def test_kiosk_options_preserve_portions_and_expose_manual_alpha_limits(
         "session_timeout_seconds": 15,
         "manual_press_debounce_ms": 120,
         "manual_maximum_pour_seconds": 30,
+        "first_pulse_timeout_seconds": 5.0,
+        "between_pulses_timeout_seconds": 3.0,
+        "controller_watchdog_timeout_seconds": 5.0,
         "debug_flow_watchdog_disabled": False,
         "admin_session_timeout_seconds": 30,
     }
