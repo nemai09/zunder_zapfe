@@ -49,7 +49,8 @@ if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
     >/dev/null 2>&1 \
   || ! command -v pcsc_scan >/dev/null 2>&1 \
   || ! command -v hwclock >/dev/null 2>&1 \
-  || ! command -v zunder-zapfe-rtc >/dev/null 2>&1; then
+  || ! command -v zunder-zapfe-rtc >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-system-power >/dev/null 2>&1; then
   needs_full_install=true
 elif [[ -z "${deployed_revision}" ]] \
   || ! git_as_owner cat-file -e "${deployed_revision}^{commit}" 2>/dev/null; then
@@ -58,6 +59,7 @@ elif [[ -z "${deployed_revision}" ]] \
 elif [[ "${deployed_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
   "${deployed_revision}" "${new_revision}" -- \
   pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh scripts/wifi-mode.sh \
+  scripts/system-power.sh \
   deploy/systemd deploy/kiosk deploy/nginx deploy/polkit config/web.env.example; then
   needs_full_install=true
 fi

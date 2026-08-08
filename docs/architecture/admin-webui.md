@@ -13,7 +13,8 @@ er vorerst weder geöffnet noch um weitere Verwaltungsbereiche ergänzt.
 Der blaue Admin-Button bleibt für per NFC angemeldete Admins sichtbar. Er
 öffnet als eng begrenzte Ausnahme ausschließlich das lokale Low-Level-Menü
 für den Wechsel zwischen `ZUNDER_ZAPFE` und einem bereits bekannten
-WLAN-Clientprofil. Die nachfolgend beschriebene vollständige lokale
+WLAN-Clientprofil sowie für bestätigten Neustart oder geordnetes
+Herunterfahren. Die nachfolgend beschriebene vollständige lokale
 Verwaltungsoberfläche wird weiterhin nicht geöffnet. Die weitere
 Administration wird als
 responsive WebUI für Smartphones im lokalen Admin-WLAN umgesetzt. Ihre
@@ -82,6 +83,9 @@ und einen eigenen Scrollbereich.
   begrenzt.
 - Die WebUI verwendet ausschließlich `/api/admin/*` und besitzt keine direkte
   SQLite- oder Hardwareverbindung.
+- Neustart und Ausschalten werden ausschließlich über einen installierten
+  Helfer mit fester Aktionsliste angefordert. Freie Systembefehle sind weder
+  Bestandteil der API noch des Helfers.
 
 Selbstdeaktivierung, Selbstdemotion sowie das Sperren oder Entfernen des letzten
 aktiven Armbands eines aktiven Admins werden abgelehnt. Ebenso kann der letzte

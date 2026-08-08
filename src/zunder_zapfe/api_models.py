@@ -84,6 +84,21 @@ class WifiModeRequest(BaseModel):
     mode: Literal["ap", "client"]
 
 
+class SystemStatusResponse(BaseModel):
+    hostname: str
+    uptime_seconds: int
+    power_control_available: bool
+    detail: str | None
+    version: str
+    build: str
+    revision: str
+
+
+class SystemPowerActionResponse(BaseModel):
+    action: Literal["reboot", "poweroff"]
+    status: Literal["accepted"]
+
+
 class BookingSummaryResponse(BaseModel):
     id: int
     measured_volume_ml: int

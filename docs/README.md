@@ -65,6 +65,7 @@ zu korrigieren.
 - [GPIO- und ESP8266-Hardware-in-the-Loop-Test](operations/gpio-hil-test.md)
 - [DS3231-Offline-Zeitbasis](operations/ds3231-rtc.md)
 - [Admin-WLAN](operations/admin-wifi.md)
+- [Lokale Systemsteuerung](operations/local-system-control.md)
 - [Admin gegen Fehlbedienung schützen](operations/protected-admin.md)
 
 ## Dokumentationsregeln

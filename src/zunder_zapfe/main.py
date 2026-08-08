@@ -53,6 +53,8 @@ from zunder_zapfe.api_models import (
     SessionStatusResponse,
     SimulatedCardRequest,
     SimulatedPulsesRequest,
+    SystemPowerActionResponse,
+    SystemStatusResponse,
     TapOptionsResponse,
     TapStatusResponse,
     WebAdminLoginOptionResponse,
@@ -64,6 +66,7 @@ from zunder_zapfe.api_models import (
     WifiStatusResponse,
 )
 from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
+from zunder_zapfe.backend.system_power_service import SystemPowerError, SystemPowerService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.backend.web_auth_service import (
@@ -99,6 +102,7 @@ def create_app(
     run_background: bool = True,
     kiosk_settings: KioskSettings | None = None,
     wifi_mode_service: WifiModeService | None = None,
+    system_power_service: SystemPowerService | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -137,6 +141,7 @@ def create_app(
         tap_service,
         default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
         wifi_mode_service=resolved_wifi_mode_service,
+        system_power_service=system_power_service,
     )
     web_auth_service = WebAuthService(sessions)
 
@@ -170,15 +175,17 @@ def create_app(
 
     @application.middleware("http")
     async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
-        local_only = request.url.path == "/system" or request.url.path.startswith("/api/admin/")
+        local_only = request.url.path.startswith("/system") or request.url.path.startswith(
+            "/api/admin/"
+        )
         if local_only and not _is_loopback_request(request):
             return JSONResponse(
                 status_code=403,
                 content={"detail": "Local admin API is only available over loopback"},
             )
         response = await call_next(request)
-        if request.url.path in {"/", "/admin", "/system"} or request.url.path.startswith(
-            "/static/"
+        if request.url.path in {"/", "/admin"} or request.url.path.startswith(
+            ("/system", "/static/")
         ):
             response.headers["Cache-Control"] = "no-store"
         return response
@@ -219,7 +226,8 @@ def create_app(
         return JSONResponse(status_code=422, content={"detail": str(error)})
 
     @application.exception_handler(WifiModeError)
-    async def wifi_mode_failed(_request: Request, error: Exception) -> JSONResponse:
+    @application.exception_handler(SystemPowerError)
+    async def system_integration_failed(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": str(error)})
 
     @application.get("/", include_in_schema=False)
@@ -234,6 +242,11 @@ def create_app(
     async def local_system_admin() -> FileResponse:
         tap_service.require_admin_user_id()
         return FileResponse(WEB_ROOT / "system.html")
+
+    @application.get("/system/power", include_in_schema=False)
+    async def local_system_power() -> FileResponse:
+        tap_service.require_admin_user_id()
+        return FileResponse(WEB_ROOT / "power.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
 
@@ -443,6 +456,43 @@ def create_app(
         request: WifiModeRequest,
     ) -> dict[str, str | bool | None]:
         return admin_service.switch_wifi_mode(request.mode)
+
+    @application.get(
+        "/api/admin/system/status",
+        response_model=SystemStatusResponse,
+        responses=admin_responses,
+    )
+    def local_system_status() -> dict[str, str | int | bool | None]:
+        return {
+            **admin_service.system_status(),
+            "version": __version__,
+            "build": BUILD_INFO.display_version,
+            "revision": BUILD_INFO.revision,
+        }
+
+    @application.post(
+        "/api/admin/system/reboot",
+        response_model=SystemPowerActionResponse,
+        status_code=202,
+        responses={
+            **admin_responses,
+            503: {"model": ErrorResponse, "description": "System control unavailable"},
+        },
+    )
+    def reboot_local_system() -> dict[str, str]:
+        return admin_service.request_system_power("reboot")
+
+    @application.post(
+        "/api/admin/system/shutdown",
+        response_model=SystemPowerActionResponse,
+        status_code=202,
+        responses={
+            **admin_responses,
+            503: {"model": ErrorResponse, "description": "System control unavailable"},
+        },
+    )
+    def shutdown_local_system() -> dict[str, str]:
+        return admin_service.request_system_power("poweroff")
 
     @application.get(
         "/api/admin/users",

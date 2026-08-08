@@ -11,6 +11,7 @@ def test_zz_ui_001_kiosk_assets_are_offline_and_packaged_locally() -> None:
     assert 'src="/static/app.js?v=0.4.0-alpha.1"' in html
     assert "https://" not in html
     assert "http://" not in html
+    assert '<a class="brand"' not in html
 
 
 def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
@@ -85,6 +86,8 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
     system_html = (WEB_ROOT / "system.html").read_text(encoding="utf-8")
     system_script = (WEB_ROOT / "system.js").read_text(encoding="utf-8")
+    power_html = (WEB_ROOT / "power.html").read_text(encoding="utf-8")
+    power_script = (WEB_ROOT / "power.js").read_text(encoding="utf-8")
 
     assert 'id="admin-button"' in html
     assert 'class="session-actions"' in html
@@ -102,6 +105,12 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert 'api("/api/admin/session/enter"' in script
     assert "ZUNDER_ZAPFE" in system_html
     assert "/api/admin/wifi/mode" in system_script
+    assert 'href="/system/power"' in system_html
+    assert "Raspberry Pi neu starten" in power_html
+    assert "Raspberry Pi herunterfahren" in power_html
+    assert "/api/admin/system/status" in power_script
+    assert "/api/admin/system/reboot" in power_script
+    assert "/api/admin/system/shutdown" in power_script
     assert '"nfc_capture"' in script
     assert "Armband wird zugeordnet." in script
     assert 'data-screen="registration"' in html

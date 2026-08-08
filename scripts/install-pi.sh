@@ -102,6 +102,8 @@ install -m 0755 "${app_dir}/scripts/install-admin-wifi.sh" \
   /usr/local/sbin/zunder-zapfe-admin-wifi
 install -m 0755 "${app_dir}/scripts/wifi-mode.sh" \
   /usr/local/sbin/zunder-zapfe-wifi-mode
+install -m 0755 "${app_dir}/scripts/system-power.sh" \
+  /usr/local/sbin/zunder-zapfe-system-power
 install -d -m 0755 /usr/local/share/zunder-zapfe
 install -m 0644 "${app_dir}/deploy/nginx/zunder-zapfe-admin.conf" \
   /usr/local/share/zunder-zapfe/zunder-zapfe-admin.conf
@@ -110,6 +112,10 @@ sed -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \
   "${app_dir}/deploy/polkit/zunder-zapfe-networkmanager.rules.in" \
   >/etc/polkit-1/rules.d/60-zunder-zapfe-networkmanager.rules
 chmod 0644 /etc/polkit-1/rules.d/60-zunder-zapfe-networkmanager.rules
+sed -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \
+  "${app_dir}/deploy/polkit/zunder-zapfe-power.rules.in" \
+  >/etc/polkit-1/rules.d/61-zunder-zapfe-power.rules
+chmod 0644 /etc/polkit-1/rules.d/61-zunder-zapfe-power.rules
 
 kiosk_home="$(getent passwd "${kiosk_user}" | cut -d: -f6)"
 autostart_dir="${kiosk_home}/.config/labwc"
@@ -144,4 +150,5 @@ echo "RTC: sudo zunder-zapfe-rtc status"
 echo "Pruefung: ${app_dir}/scripts/pi-verify.sh"
 echo "Admin-WLAN einmalig und bewusst: sudo zunder-zapfe-admin-wifi"
 echo "Lokaler WLAN-Moduswechsel: blauer Admin-Button am Kiosk"
+echo "Lokale Systemsteuerung: Systemseite im Low-Level-Menue"
 echo "Kioskstart erfolgt bei der naechsten grafischen Anmeldung oder nach einem Neustart."

@@ -117,6 +117,9 @@ ausführende Benutzer-ID.
 | `POST /api/admin/session/enter` | `TapStatusResponse` | authentifizierter Admin wechselt bei geschlossenem Ventil zu `admin` |
 | `POST /api/admin/session/exit` | `TapStatusResponse` | zurück zu `authenticated` und normalem Timeout |
 | `POST /api/admin/wifi/mode` | `{"mode":"ap"}` oder `{"mode":"client"}` | vorhandenes AP- oder Clientprofil aktivieren und Aktion auditieren |
+| `GET /api/admin/system/status` | `SystemStatusResponse` | Gerätename, Laufzeit, Build und Verfügbarkeit der lokalen Systemsteuerung |
+| `POST /api/admin/system/reboot` | `202 SystemPowerActionResponse` | Neustart auditieren und nicht blockierend anfordern |
+| `POST /api/admin/system/shutdown` | `202 SystemPowerActionResponse` | Herunterfahren auditieren und nicht blockierend anfordern |
 | `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
 | `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
 | `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
@@ -135,6 +138,15 @@ Systemintegration einen nicht vertraulichen `detail`-Hinweis. Das schreibende
 Gegenstück akzeptiert ausschließlich `ap` oder `client`, erfordert eine aktive
 lokale NFC-Adminsitzung und wird nicht über den Smartphone-Proxy veröffentlicht.
 Es legt keine Profile an und verarbeitet keine WLAN-Schlüssel.
+
+Die Systemaktionen sind ebenfalls ausschließlich über Loopback und im aktiven
+lokalen NFC-Adminzustand erreichbar. Beide schreibenden Routen besitzen keinen
+Request-Body: Die Route legt die einzige erlaubte Aktion bereits fest. Das
+Backend schreibt zuerst `system.reboot_requested` beziehungsweise
+`system.poweroff_requested` in den Admin-Audit und ruft danach den installierten
+Helfer auf. Dieser akzeptiert nur `reboot` oder `poweroff`; ein allgemeiner
+Shell- oder Befehlsparameter existiert nicht. Fehler beim Systemaufruf werden
+als technisches Ereignis protokolliert und mit `503` gemeldet.
 
 Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
 muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste

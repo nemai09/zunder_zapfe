@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.system_power_service import SystemPowerError, SystemStatus
 from zunder_zapfe.backend.wifi_mode_service import WifiStatus
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
@@ -21,7 +22,7 @@ from zunder_zapfe.hardware.simulators import (
 )
 from zunder_zapfe.main import create_app
 from zunder_zapfe.persistence.database import create_database_engine, create_session_factory
-from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, UserRole
+from zunder_zapfe.persistence.models import AdminAuditEntry, NfcCard, TechnicalEvent, UserRole
 from zunder_zapfe.persistence.repository import Repository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -54,6 +55,24 @@ class FakeWifiModeService:
         return self.current
 
 
+class FakeSystemPowerService:
+    def __init__(self) -> None:
+        self.actions: list[str] = []
+        self.fail_action: str | None = None
+
+    def status(self) -> SystemStatus:
+        return SystemStatus(
+            hostname="zapfe-test",
+            uptime_seconds=3661,
+            power_control_available=True,
+        )
+
+    def request(self, action: str) -> None:
+        self.actions.append(action)
+        if action == self.fail_action:
+            raise SystemPowerError("Systemaktion im Test abgelehnt")
+
+
 @pytest.fixture
 def admin_api(
     tmp_path: Path,
@@ -80,6 +99,7 @@ def admin_api(
         flow_meter=SimulatedFlowMeter(),
         emergency_stop=SimulatedEmergencyStop(),
     )
+    system_power = FakeSystemPowerService()
     application = create_app(
         hardware,
         sessions,
@@ -87,7 +107,9 @@ def admin_api(
         run_background=False,
         kiosk_settings=KioskSettings(admin_session_timeout_seconds=30),
         wifi_mode_service=FakeWifiModeService(),
+        system_power_service=system_power,
     )
+    application.state.test_system_power = system_power
     try:
         with TestClient(application, client=("127.0.0.1", 50000)) as client:
             yield client, sessions, nfc, ids
@@ -286,3 +308,65 @@ def test_local_wifi_mode_switch_requires_admin_mode_and_is_audited(
     with sessions() as session:
         actions = list(session.scalars(select(AdminAuditEntry.action)))
     assert actions == ["wifi.mode_switch_requested", "wifi.mode_switched"]
+
+
+def test_zz_ui_010_local_system_power_requires_admin_mode_and_is_audited(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    system_power = client.app.state.test_system_power
+
+    assert client.get("/system/power").status_code == 403
+    assert client.get("/api/admin/system/status").status_code == 403
+    assert client.post("/api/admin/system/reboot").status_code == 403
+    assert client.post("/api/admin/system/shutdown").status_code == 403
+
+    enter_admin(client)
+    remote = TestClient(client.app, client=("10.42.0.2", 50001))
+    try:
+        assert remote.get("/system/power").status_code == 403
+        assert remote.get("/api/admin/system/status").status_code == 403
+        assert remote.post("/api/admin/system/reboot").status_code == 403
+    finally:
+        remote.close()
+
+    page = client.get("/system/power")
+    assert page.status_code == 200
+    assert "Energieoptionen" in page.text
+
+    status = client.get("/api/admin/system/status")
+    assert status.status_code == 200
+    assert status.json()["hostname"] == "zapfe-test"
+    assert status.json()["uptime_seconds"] == 3661
+    assert status.json()["power_control_available"] is True
+
+    reboot = client.post("/api/admin/system/reboot")
+    shutdown = client.post("/api/admin/system/shutdown")
+
+    assert reboot.status_code == 202
+    assert reboot.json() == {"action": "reboot", "status": "accepted"}
+    assert shutdown.status_code == 202
+    assert shutdown.json() == {"action": "poweroff", "status": "accepted"}
+    assert system_power.actions == ["reboot", "poweroff"]
+    with sessions() as session:
+        actions = list(session.scalars(select(AdminAuditEntry.action)))
+    assert actions == ["system.reboot_requested", "system.poweroff_requested"]
+
+
+def test_zz_ui_010_failed_system_power_request_is_logged(
+    admin_api: tuple[object, ...],
+) -> None:
+    client, sessions, _nfc, _ids = admin_api
+    system_power = client.app.state.test_system_power
+    system_power.fail_action = "poweroff"
+    enter_admin(client)
+
+    response = client.post("/api/admin/system/shutdown")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Systemaktion im Test abgelehnt"
+    with sessions() as session:
+        audit_actions = list(session.scalars(select(AdminAuditEntry.action)))
+        technical_types = list(session.scalars(select(TechnicalEvent.event_type)))
+    assert audit_actions == ["system.poweroff_requested"]
+    assert technical_types == ["system.poweroff_failed"]

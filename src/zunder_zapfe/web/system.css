@@ -57,12 +57,17 @@ button:disabled { cursor: default; opacity: .48; }
 .brand p { margin: 0 0 .1rem; color: var(--muted); font-size: .75rem; }
 .brand strong { font-size: 1.05rem; }
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 2.8rem;
   padding: .65rem 1rem;
   border: 0;
   border-radius: .8rem;
   font-weight: 800;
+  text-decoration: none;
 }
+.button-nav { color: #dcecff; background: var(--blue-soft); }
 .button-quiet { color: var(--ink); background: var(--surface-light); }
 .button-danger { color: #ffd8d5; background: #67302f; }
 
@@ -136,6 +141,32 @@ h2 { margin-bottom: .75rem; font-size: 1.35rem; }
 .mode-button strong { margin: .12rem 0; font-size: 1.05rem; }
 .mode-button.is-active { border-color: var(--blue); background: var(--blue-soft); }
 .mode-button-client.is-active { border-color: var(--green); background: #1a4939; }
+.power-button-reboot { border-color: rgb(245 166 35 / 45%); background: #49381d; }
+.power-button-off { border-color: rgb(229 108 101 / 45%); background: #492927; }
 .warning { margin: .65rem 0 0; color: var(--muted); font-size: .72rem; line-height: 1.35; }
 .message { min-height: 1rem; margin: .45rem 0 0; color: var(--green); font-size: .75rem; }
 .message.is-error { color: var(--red); }
+
+.power-transition {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: rgb(7 13 20 / 94%);
+}
+.power-transition[hidden] { display: none; }
+.power-transition-card { max-width: 34rem; text-align: center; }
+.power-transition-card h1 { margin-top: 1rem; }
+.power-transition-card p { color: var(--muted); }
+.power-spinner {
+  display: inline-block;
+  width: 3.25rem;
+  aspect-ratio: 1;
+  border: .35rem solid rgb(255 255 255 / 14%);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: power-spin 1s linear infinite;
+}
+@keyframes power-spin { to { transform: rotate(360deg); } }

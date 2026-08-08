@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from zunder_zapfe.backend.system_power_service import SystemPowerError, SystemPowerService
 from zunder_zapfe.backend.tap_service import TapService
 from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
 from zunder_zapfe.hardware import HardwareLayer
@@ -59,12 +60,14 @@ class AdminService:
         *,
         default_timeout_seconds: int = 30,
         wifi_mode_service: WifiModeService | None = None,
+        system_power_service: SystemPowerService | None = None,
     ) -> None:
         self._hardware = hardware
         self._sessions = sessions
         self._tap_service = tap_service
         self._default_timeout_seconds = self._validate_timeout(default_timeout_seconds)
         self._wifi_mode_service = wifi_mode_service or WifiModeService()
+        self._system_power_service = system_power_service or SystemPowerService()
         self._capture: _NfcCapture | None = None
         self._capture_sequence = 0
         self._capture_timer: threading.Timer | None = None
@@ -138,6 +141,42 @@ class AdminService:
                 new_values=new_status.as_dict(),
             )
         return new_status.as_dict()
+
+    def system_status(
+        self, *, admin_user_id: int | None = None
+    ) -> dict[str, str | int | bool | None]:
+        self._require_admin_id(admin_user_id)
+        return self._system_power_service.status().as_dict()
+
+    def request_system_power(
+        self,
+        action: str,
+        *,
+        admin_user_id: int | None = None,
+    ) -> dict[str, str]:
+        admin_id = self._require_admin_id(admin_user_id)
+        if action not in {"reboot", "poweroff"}:
+            raise ValueError("System action must be 'reboot' or 'poweroff'")
+        with self._sessions.begin() as session:
+            Repository(session).record_admin_action(
+                admin_user_id=admin_id,
+                action=f"system.{action}_requested",
+                entity_type="system",
+                entity_id="raspberry-pi",
+                new_values={"action": action},
+            )
+        try:
+            self._system_power_service.request(action)
+        except SystemPowerError:
+            with self._sessions.begin() as session:
+                Repository(session).record_technical_event(
+                    severity="error",
+                    event_type=f"system.{action}_failed",
+                    message="Lokale Systemaktion fehlgeschlagen",
+                    details={"admin_user_id": admin_id, "action": action},
+                )
+            raise
+        return {"action": action, "status": "accepted"}
 
     def list_users(self, *, admin_user_id: int | None = None) -> list[dict[str, Any]]:
         self._require_admin_id(admin_user_id)

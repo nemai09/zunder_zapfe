@@ -152,6 +152,7 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 | `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
 | `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |
 | `M8.7 OPS` | DS3231 als verbindliche Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen |
+| `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren |
 
 ### Abnahmekriterien
 
@@ -171,3 +172,5 @@ Traceability: `ZZ-HW-002`, `ZZ-HW-004`, `ZZ-HW-005`, `ZZ-SAF-001`,
 `ZZ-SAF-004`, `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009` und `ZZ-MNT-002`.
 Die Offline-Zeitbasis aus `M8.7` referenziert zusätzlich `ZZ-TIM-001` und
 `ZZ-DAT-002` bis `ZZ-DAT-004`.
+Die lokale Systemsteuerung aus `M8.8` referenziert zusätzlich `ZZ-UI-010`,
+`ZZ-DAT-003` und `ZZ-SAF-009`.

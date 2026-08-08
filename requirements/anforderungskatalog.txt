@@ -1,5 +1,5 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.13
+Version: 0.14
 Stand: 2026-08-08
 Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
@@ -622,6 +622,21 @@ Zapfsitzung starten.
 Abnahme: Ein erfolgreich zugeordnetes Armband fuehrt fuer kurze Zeit zu einer
 Begruessungsansicht und anschliessend zum Sperrbildschirm; der Benutzer ist
 nicht angemeldet und das Ventil bleibt geschlossen.
+
+[ZZ-UI-010] Begrenzte lokale Systemsteuerung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Ein per NFC angemeldeter Admin muss im lokalen Low-Level-Menue den Raspberry Pi
+nach ausdruecklicher Bestaetigung neu starten oder geordnet herunterfahren
+koennen. Die Aktionen muessen auf den lokalen Kioskzugang und den ventil-
+gesperrten Adminzustand begrenzt sein. Der Webdienst darf keine freien Befehle
+entgegennehmen; ausschliesslich Neustart und Ausschalten sind zulaessig. Der
+Auftrag muss vor seiner Ausfuehrung mit der ausfuehrenden Admin-ID auditiert
+werden. Beim Beenden des Systems muss die bestehende sichere Abschaltlogik das
+Ventil geschlossen hinterlassen.
+Abnahme: Ohne aktive NFC-Adminsitzung sowie ueber einen entfernten Webclient
+werden beide Aktionen abgewiesen. Nach sichtbarer Bestaetigung fuehrt der Pi
+die gewaehlte Aktion aus, der Audit-Eintrag bleibt erhalten und ein beliebiger
+Systembefehl kann weder ueber API noch Hilfsprogramm aufgerufen werden.
 
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION

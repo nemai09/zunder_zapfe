@@ -124,7 +124,9 @@ Das Installationsskript:
 8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs,
 9. installiert den begrenzten WLAN-Modushelfer und seine NetworkManager-
    Berechtigung für das lokale Low-Level-Menü,
-10. aktiviert die DS3231 und lädt deren UTC-Zeit vor dem Webdienst.
+10. installiert den auf Neustart und Ausschalten begrenzten Systemhelfer mit
+    seinen exakten Polkit-Berechtigungen,
+11. aktiviert die DS3231 und lädt deren UTC-Zeit vor dem Webdienst.
 
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
@@ -157,6 +159,8 @@ Das Skript prueft:
 - angeschlossenen und betriebsbereiten ACR122U.
 - nach bewusster Einrichtung den aktiven AP- oder Clientmodus und im AP-Modus
   den Admin-Webzugang.
+- installierten Systemhelfer, dessen Polkit-Regel und die ausgelieferte lokale
+  Systemseite, ohne dabei eine Energieaktion auszulösen.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
@@ -256,6 +260,20 @@ Lokaler WLAN-Moduswechsel:
    ein.
 4. Über **Zurück zum Zapfen** den Adminmodus verlassen. Der
    WLAN-Statusindikator im Kiosk zeigt den erkannten Modus.
+
+Lokale Systemsteuerung:
+
+1. Im selben Low-Level-Menü **System** öffnen.
+2. **Raspberry Pi neu starten** oder **Raspberry Pi herunterfahren** wählen.
+3. Die Sicherheitsabfrage bewusst bestätigen. Nach Annahme zeigt der Kiosk
+   den laufenden Systemwechsel vollflächig an.
+4. Beim Herunterfahren warten, bis der Pi vollständig beendet ist, bevor die
+   Versorgung getrennt wird. Zum erneuten Start muss die Stromversorgung
+   eingeschaltet beziehungsweise kurz getrennt und wieder verbunden werden.
+
+Die Seite akzeptiert keine freien Kommandos und ist weder über das Admin-WLAN
+noch ohne aktive NFC-Adminsitzung erreichbar. Details und gezielte Prüfung
+stehen unter [`local-system-control.md`](local-system-control.md).
 
 Während der Zuordnung zeigt der Kiosk den gesperrten Zustand
 `nfc_capture`; das Ventil bleibt geschlossen. Erfolg, Abbruch oder das

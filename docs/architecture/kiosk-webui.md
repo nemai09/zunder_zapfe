@@ -98,4 +98,4 @@ der temporären Ventil-Debuganzeige bleibt davon unberührt.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
 `ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und
-`ZZ-NFR-005`, `ZZ-UI-007`, `ZZ-UI-009` und `ZZ-NET-003`.
+`ZZ-NFR-005`, `ZZ-UI-007`, `ZZ-UI-009`, `ZZ-UI-010` und `ZZ-NET-003`.

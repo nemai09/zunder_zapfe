@@ -1,0 +1,11 @@
+polkit.addRule(function(action, subject) {
+    var permitted = [
+        "org.freedesktop.login1.power-off",
+        "org.freedesktop.login1.power-off-multiple-sessions",
+        "org.freedesktop.login1.reboot",
+        "org.freedesktop.login1.reboot-multiple-sessions"
+    ];
+    if (subject.user === "@@SERVICE_USER@@" && permitted.indexOf(action.id) !== -1) {
+        return polkit.Result.YES;
+    }
+});

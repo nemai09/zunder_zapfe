@@ -61,6 +61,8 @@ Phase: Alpha-Entwicklung
   eingeklapptem Adminaudit und technischen Ereignissen
 - lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
   `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
+- getrennte lokale Systemseite für auditierten Neustart und geordnetes
+  Herunterfahren mit ausdrücklicher Touchbestätigung
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
   Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
 - reduzierte Pi-Laufzeitlast durch gecachten WLAN-Systemstatus, getrennte
@@ -97,7 +99,7 @@ damit abgeschlossen.
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN- und Energiemenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
 | Offline-Zeit | DS3231-Konfiguration, Startdienst vor der Zapfanwendung und lokales CLI für Status sowie einmalige Übernahme der Systemzeit ohne NTP-Änderung | Zielsystemnachweis nach stromlosem Neustart und Bewertung der Abweichung über den Einsatzzeitraum |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
@@ -149,7 +151,8 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
 - Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
   wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Davon
-  ausgenommen ist das eng begrenzte lokale WLAN-Systemmenü.
+  ausgenommen ist das eng begrenzte lokale Systemmenü für WLAN-Modus und
+  Energieaktionen.
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
   Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
   oder Rolle ist als `OD-014` offen.
