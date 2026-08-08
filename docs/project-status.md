@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-08-08
+Stand: 2026-08-09
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -57,6 +57,9 @@ Phase: Alpha-Entwicklung
 - Einzelanalyse je Teilnehmer mit Kosten und Menge, getrennt nach Getränk
 - vollständiger CSV-Teilnehmerauszug je Veranstaltung mit ganzzahligen Mengen
   und Beträgen
+- automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten mit 400
+  lokalen Sicherungsständen und Smartphone-Download eines NFC- und
+  passwortfreien CSV-Pakets
 - Smartphone-Diagnose mit Steuerungszustand, Safety-Reset sowie standardmäßig
   eingeklapptem Adminaudit und technischen Ereignissen
 - lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
@@ -114,7 +117,7 @@ damit abgeschlossen.
 - elektrisch abgenommene Ventiltreiber- und Durchflusshardware
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
-- Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
+- Happy Hour, Storno und Korrektur
 - optionale Fasswaage und MQTT-Vertrag
 
 ## Nächste Entwicklungsreihenfolge

@@ -99,6 +99,16 @@ class SystemPowerActionResponse(BaseModel):
     status: Literal["accepted"]
 
 
+class BackupStatusResponse(BaseModel):
+    state: Literal["missing", "ok", "overdue", "error"]
+    last_attempt_at: datetime | None
+    last_success_at: datetime | None
+    booking_count: int | None
+    database_file: str | None
+    csv_archive_file: str | None
+    detail: str | None
+
+
 class BookingSummaryResponse(BaseModel):
     id: int
     measured_volume_ml: int

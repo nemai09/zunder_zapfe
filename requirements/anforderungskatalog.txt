@@ -1,6 +1,6 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.14
-Stand: 2026-08-08
+Version: 0.15
+Stand: 2026-08-09
 Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
 1. ZWECK UND FORMAT
@@ -725,11 +725,20 @@ filter- und abrechenbar sein.
 Abnahme: Auswertungen einer Veranstaltung enthalten keine Buchungen einer
 anderen Veranstaltung.
 
-[ZZ-DAT-008] Backup und Wiederherstellung
-Prioritaet: SOLL | Status: VERTAGT | Pruefung: DEMONSTRATION
-Das System soll Backup, Export und Wiederherstellung der relevanten Daten
-unterstuetzen. Verfahren, Frequenz und Zielmedium werden spaeter festgelegt.
-Abnahme: Wird nach spaeterer Spezifikation ergaenzt.
+[ZZ-DAT-008] Automatische Datensicherung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss die laufende SQLite-Datenbank im Betrieb mindestens alle 30
+Minuten konsistent lokal sichern und die Sicherung vor der Veroeffentlichung
+auf Integritaet pruefen. Zusaetzlich muss ein authentifizierter Admin ein
+CSV-Sicherungspaket aller Rohbuchungen und der nach Teilnehmer und Getraenk
+gruppierten Abrechnung auf ein Smartphone herunterladen koennen. NFC-UIDs und
+Passwortdaten duerfen nicht im CSV-Paket enthalten sein. Ein Sicherungsfehler
+darf den Zapfbetrieb nicht stoppen und keine letzte erfolgreiche Sicherung
+ueberschreiben.
+Abnahme: Eine laufende Zapfanwendung erzeugt ueber den 30-Minuten-Timer eine
+lesbare SQLite-Kopie und ein herunterladbares CSV-Paket; ein provozierter
+Fehler erhaelt die letzte erfolgreiche Sicherung und der Zapfdienst bleibt
+aktiv.
 
 [ZZ-DAT-009] Zusammenfassung einer NFC-Anmeldesitzung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -829,7 +838,9 @@ OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
 OD-004: Detailregeln der Happy Hour.
 OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
-OD-007: Backup-, Export- und Wiederherstellungsverfahren.
+OD-007: Durch ZZ-DAT-008 fuer die Alpha-Ausbaustufe entschieden: konsistente
+lokale SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download.
+Eine Wiederherstellungsfunktion ist nicht Teil dieses Umfangs.
 OD-008: Durch ZZ-TIM-001 entschieden: DS3231 ueber I2C, Speicherung in UTC,
 einmalige lokale CLI-Einrichtung ohne Aenderung der NTP-Konfiguration und keine
 Bedienung ueber die WebUI.

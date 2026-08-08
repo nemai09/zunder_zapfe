@@ -50,6 +50,7 @@ if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
   || ! command -v pcsc_scan >/dev/null 2>&1 \
   || ! command -v hwclock >/dev/null 2>&1 \
   || ! command -v zunder-zapfe-rtc >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-backup >/dev/null 2>&1 \
   || ! command -v zunder-zapfe-system-power >/dev/null 2>&1; then
   needs_full_install=true
 elif [[ -z "${deployed_revision}" ]] \

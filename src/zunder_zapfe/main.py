@@ -42,6 +42,7 @@ from zunder_zapfe.api_models import (
     AdminUserCreateRequest,
     AdminUserResponse,
     AdminUserUpdateRequest,
+    BackupStatusResponse,
     ConsumptionResponse,
     ErrorResponse,
     HardwareStatusResponse,
@@ -78,6 +79,7 @@ from zunder_zapfe.backend.web_auth_service import (
     WebLoginRateLimited,
 )
 from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
+from zunder_zapfe.backup import BackupError, BackupService
 from zunder_zapfe.build_info import current_build_info
 from zunder_zapfe.configuration import KioskSettings, load_kiosk_settings
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
@@ -103,6 +105,7 @@ def create_app(
     kiosk_settings: KioskSettings | None = None,
     wifi_mode_service: WifiModeService | None = None,
     system_power_service: SystemPowerService | None = None,
+    backup_service: BackupService | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -144,6 +147,7 @@ def create_app(
         system_power_service=system_power_service,
     )
     web_auth_service = WebAuthService(sessions)
+    resolved_backup_service = backup_service or BackupService()
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
@@ -227,6 +231,7 @@ def create_app(
 
     @application.exception_handler(WifiModeError)
     @application.exception_handler(SystemPowerError)
+    @application.exception_handler(BackupError)
     async def system_integration_failed(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": str(error)})
 
@@ -699,6 +704,35 @@ def create_app(
     async def list_web_admin_kegs(request: Request) -> list[dict[str, Any]]:
         identity = require_web_admin(request)
         return admin_service.list_kegs(admin_user_id=identity.user_id)
+
+    @application.get(
+        "/api/web-admin/backups/status",
+        response_model=BackupStatusResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_backup_status(request: Request) -> dict[str, Any]:
+        require_web_admin(request)
+        return resolved_backup_service.status().as_dict()
+
+    @application.get(
+        "/api/web-admin/backups/latest.csv.zip",
+        response_class=FileResponse,
+        responses={
+            **web_admin_responses,
+            200: {
+                "description": "Latest privacy-reduced CSV backup package",
+                "content": {"application/zip": {}},
+            },
+        },
+    )
+    async def download_latest_web_admin_backup(request: Request) -> FileResponse:
+        require_web_admin(request)
+        archive = resolved_backup_service.latest_csv_archive()
+        return FileResponse(
+            archive,
+            media_type="application/zip",
+            filename=archive.name,
+        )
 
     @application.post(
         "/api/web-admin/kegs/switch",

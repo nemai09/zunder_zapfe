@@ -11,6 +11,7 @@ Git. Änderungen werden erst nach einem Dienstneustart wirksam.
 | `ZUNDER_ZAPFE_HOST` | `127.0.0.1` | Bind-Adresse der HTTP-API | nicht ohne Sicherheitskonzept ins Netz öffnen |
 | `ZUNDER_ZAPFE_PORT` | `8000` | lokaler HTTP-Port | ganzzahliger freier Port |
 | `ZUNDER_ZAPFE_DATABASE_URL` | SQLite unter `/var/lib/zunder-zapfe` | SQLAlchemy-Datenbankziel | Datenbank nicht ins Repository legen |
+| `ZUNDER_ZAPFE_BACKUP_DIR` | `/var/lib/zunder-zapfe/backups` | lokales Ziel für SQLite- und CSV-Sicherungen | nur für den Dienstbenutzer lesbar; nicht ins Repository legen |
 | `ZUNDER_ZAPFE_ACCESS_LOG` | `0` | schreibt bei `1` jeden HTTP-Zugriff in das Dienstjournal | nur zeitweise zur Diagnose aktivieren; Kiosk-Polling erzeugt sonst unnötige Dauerlast und Logvolumen |
 | `ZUNDER_ZAPFE_PULSES_PER_LITER` | `500` | ganzzahlige Impulskalibrierung | Demonstratorwert, vor Realbetrieb kalibrieren |
 | `ZUNDER_ZAPFE_VALVE_GPIO` | `17` | BCM-GPIO des aktiven-HIGH-Ventilausgangs | nur Eingang einer geeigneten Treiberstufe; niemals Ventilspule direkt anschließen |

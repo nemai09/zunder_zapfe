@@ -12,6 +12,7 @@ from sqlalchemy import URL, Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from zunder_zapfe.backend.web_auth_service import WebAuthService
+from zunder_zapfe.backup import BackupService
 from zunder_zapfe.configuration import KioskSettings
 from zunder_zapfe.hardware.layer import HardwareLayer
 from zunder_zapfe.hardware.simulators import (
@@ -58,6 +59,11 @@ def management_api(
         user_id=admin_id,
         password=ADMIN_PASSWORD,
     )
+    backup_service = BackupService(
+        source_url=url,
+        backup_directory=tmp_path / "backups",
+    )
+    backup_service.create()
     application = create_app(
         HardwareLayer(
             nfc=SimulatedNfcReader(),
@@ -69,6 +75,7 @@ def management_api(
         enable_simulator_api=False,
         run_background=False,
         kiosk_settings=KioskSettings(admin_session_timeout_seconds=30),
+        backup_service=backup_service,
     )
     try:
         with TestClient(application, client=("10.42.0.2", 50000)) as client:
@@ -86,6 +93,25 @@ def login(client: TestClient, admin_id: int) -> dict[str, str]:
     token = client.cookies.get("zz_admin_csrf")
     assert token
     return {"X-CSRF-Token": token}
+
+
+def test_zz_dat_008_backup_status_and_csv_download_require_web_admin(
+    management_api: tuple[TestClient, sessionmaker[Session], int],
+) -> None:
+    client, _sessions, admin_id = management_api
+    assert client.get("/api/web-admin/backups/status").status_code == 401
+    assert client.get("/api/web-admin/backups/latest.csv.zip").status_code == 401
+
+    login(client, admin_id)
+    status = client.get("/api/web-admin/backups/status")
+    download = client.get("/api/web-admin/backups/latest.csv.zip")
+
+    assert status.status_code == 200
+    assert status.json()["state"] == "ok"
+    assert status.json()["booking_count"] == 0
+    assert download.status_code == 200
+    assert download.headers["content-type"] == "application/zip"
+    assert download.content.startswith(b"PK")
 
 
 def test_zz_keg_001_002_admin_manages_events_beverages_and_keg_switch(

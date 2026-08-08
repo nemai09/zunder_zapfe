@@ -431,8 +431,9 @@ Ein detached Checkout ist für `deploy-update.sh` nicht geeignet.
 
 - produktiver Initial-Admin-Bootstrap fehlt; aktuell existiert nur der
   Demo-Seed für eine leere Datenbank;
-- Backup und Wiederherstellung sind noch nicht als verbindlicher Workflow
-  implementiert;
+- eine automatische Wiederherstellung ist nicht implementiert; die
+  30-Minuten-Sicherung und der Smartphone-CSV-Download sind unter
+  [`database-backup.md`](database-backup.md) beschrieben;
 - das Installationsskript installiert auch Entwicklungs- und
   Diagnoseabhängigkeiten;
 - ein Internet-unabhängiges Paketdeployment existiert noch nicht;
@@ -446,4 +447,5 @@ Ein detached Checkout ist für `deploy-update.sh` nicht geeignet.
 
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-002`, `ZZ-AUT-002`, `ZZ-AUT-003`,
 `ZZ-AUT-006`, `ZZ-HW-002`, `ZZ-HW-003`, `ZZ-HW-004`, `ZZ-SAF-008`,
-`ZZ-SAF-009`, `ZZ-UI-002`, `ZZ-NET-001`, `ZZ-NET-002` und `ZZ-NFR-001`.
+`ZZ-SAF-009`, `ZZ-UI-002`, `ZZ-NET-001`, `ZZ-NET-002`, `ZZ-DAT-008` und
+`ZZ-NFR-001`.

@@ -8,7 +8,7 @@ echo "Modell: $(tr -d '\0' </proc/device-tree/model 2>/dev/null || echo unbekann
 echo "Python: $("${repo_dir}/.venv/bin/python" --version)"
 echo
 
-echo "1/9 Python-Tests"
+echo "1/10 Python-Tests"
 env -u ZUNDER_ZAPFE_DATABASE_URL "${repo_dir}/.venv/bin/python" -m pytest
 
 # Load the deployed configuration only after the isolated test suite. Otherwise
@@ -22,10 +22,10 @@ if [[ -f /etc/zunder-zapfe/web.env ]]; then
 fi
 export ZUNDER_ZAPFE_DATABASE_URL="${ZUNDER_ZAPFE_DATABASE_URL:-sqlite:////var/lib/zunder-zapfe/zunder-zapfe.db}"
 
-echo "2/9 Datenbankschema"
+echo "2/10 Datenbankschema"
 "${repo_dir}/.venv/bin/alembic" -c "${repo_dir}/alembic.ini" current --check-heads
 
-echo "3/9 DS3231-Echtzeituhr"
+echo "3/10 DS3231-Echtzeituhr"
 systemctl is-active --quiet zunder-zapfe-rtc.service
 test -e /dev/rtc0
 rtc_name="$(cat /sys/class/rtc/rtc0/name)"
@@ -33,15 +33,15 @@ grep --extended-regexp --ignore-case --quiet \
   '(^ds3231$|^rtc-ds1307 .*0068$)' <<<"${rtc_name}"
 echo "zunder-zapfe-rtc.service: active (${rtc_name})"
 
-echo "4/9 systemd-Dienst"
+echo "4/10 systemd-Dienst"
 systemctl is-active --quiet zunder-zapfe-web.service
 echo "zunder-zapfe-web.service: active"
 
-echo "5/9 Health-Endpunkt"
+echo "5/10 Health-Endpunkt"
 curl --fail --silent --show-error http://127.0.0.1:8000/api/health
 echo
 
-echo "6/9 ACR122U"
+echo "6/10 ACR122U"
 nfc_status=""
 for _attempt in $(seq 1 10); do
   nfc_status="$(curl --fail --silent --show-error http://127.0.0.1:8000/api/nfc/status)"
@@ -56,7 +56,7 @@ grep --extended-regexp --quiet '"state":"(ready|card)"' <<<"${nfc_status}" || {
   exit 1
 }
 
-echo "7/9 Admin-WLAN"
+echo "7/10 Admin-WLAN"
 if [[ -f /etc/zunder-zapfe/admin-wifi.configured ]]; then
   wifi_status="$(/usr/local/sbin/zunder-zapfe-wifi-mode status)"
   echo "${wifi_status}"
@@ -75,13 +75,24 @@ else
   echo "Noch nicht eingerichtet; einmalig sudo zunder-zapfe-admin-wifi ausfuehren."
 fi
 
-echo "8/9 Lokale Systemsteuerung"
+echo "8/10 Lokale Systemsteuerung"
 test -x /usr/local/sbin/zunder-zapfe-system-power
 test -r /etc/polkit-1/rules.d/61-zunder-zapfe-power.rules
 curl --fail --silent --show-error http://127.0.0.1:8000/static/power.js >/dev/null
 echo "Systemhelfer und lokale Oberfläche: installiert"
 
-echo "9/9 Admin-Webzugang"
+echo "9/10 Automatische Datensicherung"
+systemctl is-active --quiet zunder-zapfe-backup.timer
+test -f /var/lib/zunder-zapfe/backups/status.json
+backup_state="$("${repo_dir}/.venv/bin/python" -c \
+  'import json; print(json.load(open("/var/lib/zunder-zapfe/backups/status.json"))["state"])')"
+if [[ "${backup_state}" != "ok" ]]; then
+  echo "Letzte Datensicherung ist nicht erfolgreich: ${backup_state}" >&2
+  exit 1
+fi
+echo "zunder-zapfe-backup.timer: active; letzte Sicherung: ok"
+
+echo "10/10 Admin-Webzugang"
 if [[ -f /etc/zunder-zapfe/admin-wifi.configured ]]; then
   curl --fail --silent --show-error http://127.0.0.1:8000/static/system.js >/dev/null
   if grep --fixed-strings --line-regexp --quiet "mode=ap" <<<"${wifi_status}"; then

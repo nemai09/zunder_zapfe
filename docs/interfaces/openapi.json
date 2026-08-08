@@ -1115,6 +1115,99 @@
         "title": "AdminUserUpdateRequest",
         "type": "object"
       },
+      "BackupStatusResponse": {
+        "properties": {
+          "booking_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Count"
+          },
+          "csv_archive_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csv Archive File"
+          },
+          "database_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Database File"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "last_attempt_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attempt At"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "state": {
+            "enum": [
+              "missing",
+              "ok",
+              "overdue",
+              "error"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "last_attempt_at",
+          "last_success_at",
+          "booking_count",
+          "database_file",
+          "csv_archive_file",
+          "detail"
+        ],
+        "title": "BackupStatusResponse",
+        "type": "object"
+      },
       "BookingSummaryResponse": {
         "properties": {
           "amount_cents": {
@@ -3739,6 +3832,118 @@
           }
         },
         "summary": "List Web Admin Audit"
+      }
+    },
+    "/api/web-admin/backups/latest.csv.zip": {
+      "get": {
+        "operationId": "download_latest_web_admin_backup_api_web_admin_backups_latest_csv_zip_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {}
+            },
+            "description": "Latest privacy-reduced CSV backup package"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Download Latest Web Admin Backup"
+      }
+    },
+    "/api/web-admin/backups/status": {
+      "get": {
+        "operationId": "web_admin_backup_status_api_web_admin_backups_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Web Admin Backup Status"
       }
     },
     "/api/web-admin/beverages": {

@@ -278,6 +278,8 @@ CSRF-Header.
 | `GET /api/web-admin/statistics?event_id={id}` | Veranstaltungs-, Wartungs- und Abrechnungssummen je Benutzer liefern |
 | `GET /api/web-admin/reports/participants?event_id={id}&user_id={id}` | Teilnehmerabrechnung insgesamt oder optional für einen Benutzer nach Getränk aufteilen |
 | `GET /api/web-admin/reports/participants.csv?event_id={id}` | vollständigen Teilnehmerauszug der Veranstaltung als CSV herunterladen |
+| `GET /api/web-admin/backups/status` | Zeitpunkt, Ergebnis und Buchungszahl der letzten automatischen Sicherung anzeigen |
+| `GET /api/web-admin/backups/latest.csv.zip` | letztes CSV-Sicherungspaket ohne NFC- und Passwortdaten herunterladen |
 | `GET /api/web-admin/diagnostics/tap` | Zustand der Zapfsteuerung und verriegelte Fehlerursache anzeigen |
 | `POST /api/web-admin/diagnostics/safety-reset` | verriegelten Fehler nach Zustandsprüfung als angemeldeter Webadmin zurücksetzen |
 | `GET /api/web-admin/audit` | Adminaktionen mit Admin, Objekt sowie alten und neuen Werten auflisten |

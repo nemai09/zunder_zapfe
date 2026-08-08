@@ -40,6 +40,7 @@ dev = [
 [project.scripts]
 zunder-zapfe = "zunder_zapfe.main:run"
 zunder-zapfe-admin-password = "zunder_zapfe.admin_password:run"
+zunder-zapfe-backup = "zunder_zapfe.backup:run"
 zunder-zapfe-protect-admin = "zunder_zapfe.protect_admin:run"
 zunder-zapfe-rtc = "zunder_zapfe.rtc_clock:run"
 zunder-zapfe-seed-demo = "zunder_zapfe.demo:run"

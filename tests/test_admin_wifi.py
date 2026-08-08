@@ -77,7 +77,7 @@ def test_nginx_exposes_only_the_smartphone_admin_surface() -> None:
 def test_pi_verification_checks_configured_admin_wifi() -> None:
     verification = read("scripts/pi-verify.sh")
 
-    assert "7/9 Admin-WLAN" in verification
+    assert "7/10 Admin-WLAN" in verification
     assert "zunder-zapfe-wifi-mode status" in verification
     assert "mode=ap" in verification
     assert "mode=client" in verification

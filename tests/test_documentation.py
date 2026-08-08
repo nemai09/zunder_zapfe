@@ -157,3 +157,22 @@ def test_kiosk_does_not_open_the_desktop_keyring_during_autologin() -> None:
     )
 
     assert "--password-store=basic" in launcher
+
+
+def test_backup_timer_is_installed_and_verified_without_blocking_the_web_service() -> None:
+    timer = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-backup.timer").read_text(
+        encoding="utf-8"
+    )
+    service = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-backup.service.in").read_text(
+        encoding="utf-8"
+    )
+    installer = (PROJECT_ROOT / "scripts" / "install-pi.sh").read_text(encoding="utf-8")
+    verification = (PROJECT_ROOT / "scripts" / "pi-verify.sh").read_text(encoding="utf-8")
+
+    assert "OnUnitActiveSec=30min" in timer
+    assert "Persistent=true" in timer
+    assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-backup" in service
+    assert "ReadWritePaths=/var/lib/zunder-zapfe" in service
+    assert "systemctl enable --now zunder-zapfe-backup.timer" in installer
+    assert "if ! systemctl start zunder-zapfe-backup.service" in installer
+    assert "systemctl is-active --quiet zunder-zapfe-backup.timer" in verification

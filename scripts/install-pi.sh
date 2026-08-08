@@ -29,6 +29,7 @@ apt-get install --yes \
   network-manager iw nginx-light
 
 install -d -o "${kiosk_user}" -g "${kiosk_user}" /var/lib/zunder-zapfe /var/log/zunder-zapfe
+install -d -m 0700 -o "${kiosk_user}" -g "${kiosk_user}" /var/lib/zunder-zapfe/backups
 install -d -m 0755 /etc/zunder-zapfe
 if getent group gpio >/dev/null 2>&1; then
   usermod -a -G gpio "${kiosk_user}"
@@ -93,6 +94,13 @@ sed -e "s|@@APP_DIR@@|${app_dir}|g" \
   "${app_dir}/deploy/systemd/zunder-zapfe-rtc.service.in" \
   >/etc/systemd/system/zunder-zapfe-rtc.service
 
+sed -e "s|@@APP_DIR@@|${app_dir}|g" \
+  -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \
+  "${app_dir}/deploy/systemd/zunder-zapfe-backup.service.in" \
+  >/etc/systemd/system/zunder-zapfe-backup.service
+install -m 0644 "${app_dir}/deploy/systemd/zunder-zapfe-backup.timer" \
+  /etc/systemd/system/zunder-zapfe-backup.timer
+
 ln -sfn "${app_dir}/.venv/bin/zunder-zapfe-rtc" \
   /usr/local/sbin/zunder-zapfe-rtc
 
@@ -142,6 +150,10 @@ else
   echo "DS3231 wird nach dem erforderlichen Neustart als /dev/rtc0 erwartet."
 fi
 systemctl enable --now zunder-zapfe-web.service
+systemctl enable --now zunder-zapfe-backup.timer
+if ! systemctl start zunder-zapfe-backup.service; then
+  echo "WARNUNG: Erste Datensicherung fehlgeschlagen; der Zapfdienst bleibt aktiv." >&2
+fi
 
 echo
 echo "Installation abgeschlossen."
@@ -151,4 +163,5 @@ echo "Pruefung: ${app_dir}/scripts/pi-verify.sh"
 echo "Admin-WLAN einmalig und bewusst: sudo zunder-zapfe-admin-wifi"
 echo "Lokaler WLAN-Moduswechsel: blauer Admin-Button am Kiosk"
 echo "Lokale Systemsteuerung: Systemseite im Low-Level-Menue"
+echo "Datensicherung: alle 30 Minuten nach /var/lib/zunder-zapfe/backups"
 echo "Kioskstart erfolgt bei der naechsten grafischen Anmeldung oder nach einem Neustart."
