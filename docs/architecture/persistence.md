@@ -92,5 +92,7 @@ bewusste Fehlerbehandlung.
 Die Impulsumrechnung und der vollstaendige Komponentenfluss sind unter
 [`backend-core-integration.md`](backend-core-integration.md) beschrieben.
 
-Backup, Export, Wiederherstellung und die verbindliche Offline-Zeitbasis bleiben
-gemaess `OD-007` beziehungsweise `OD-008` offene Folgeschritte.
+Backup, Export und Wiederherstellung bleiben gemäß `OD-007` offene
+Folgeschritte. Die verbindliche Offline-Zeitbasis ist durch `ZZ-TIM-001` als
+DS3231 festgelegt; ihr Start- und Betriebsvertrag steht unter
+[`../operations/ds3231-rtc.md`](../operations/ds3231-rtc.md).

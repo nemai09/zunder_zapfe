@@ -28,6 +28,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü und Pi-optimierte Statusabfragen |
 | Admin-WebUI | Milestone 7 abgeschlossen: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose auf dem Pi geprüft |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil auf dem Pi geprüft |
+| Offline-Zeit | DS3231-Startdienst und lokales CLI implementiert; stromlose Zielsystemabnahme offen |
 | Reale Zapfhardware | Softwareadapter implementiert; Treiber-, Sensor- und Safety-Abnahme noch offen |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
@@ -94,6 +95,7 @@ dokumentiert:
 - [SQLite-Diagnose](docs/operations/database-browser.md)
 - [Admin-WLAN und Smartphone-Zugang](docs/operations/admin-wifi.md)
 - [GPIO- und ESP8266-HIL-Test](docs/operations/gpio-hil-test.md)
+- [DS3231-Offline-Zeitbasis](docs/operations/ds3231-rtc.md)
 
 Die Anwendung lauscht standardmäßig nur auf `127.0.0.1` und benötigt zur
 Laufzeit keine Internetverbindung.

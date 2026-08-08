@@ -63,6 +63,7 @@ zu korrigieren.
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 - [ESP8266-Durchflussemulator](../esp8266_flow_emulator/README.md)
 - [GPIO- und ESP8266-Hardware-in-the-Loop-Test](operations/gpio-hil-test.md)
+- [DS3231-Offline-Zeitbasis](operations/ds3231-rtc.md)
 - [Admin-WLAN](operations/admin-wifi.md)
 - [Admin gegen Fehlbedienung schützen](operations/protected-admin.md)
 

@@ -18,6 +18,7 @@ exec chromium \
   --noerrdialogs \
   --disable-infobars \
   --no-first-run \
+  --password-store=basic \
   --disable-session-crashed-bubble \
   --start-maximized \
   --enable-features=OverlayScrollbar \

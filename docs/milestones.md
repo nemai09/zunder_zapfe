@@ -151,6 +151,7 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 | `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
 | `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
 | `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |
+| `M8.7 OPS` | DS3231 als verbindliche Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen |
 
 ### Abnahmekriterien
 
@@ -168,3 +169,5 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 
 Traceability: `ZZ-HW-002`, `ZZ-HW-004`, `ZZ-HW-005`, `ZZ-SAF-001`,
 `ZZ-SAF-004`, `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009` und `ZZ-MNT-002`.
+Die Offline-Zeitbasis aus `M8.7` referenziert zusätzlich `ZZ-TIM-001` und
+`ZZ-DAT-002` bis `ZZ-DAT-004`.

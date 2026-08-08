@@ -1,6 +1,6 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.12
-Stand: 2026-07-25
+Version: 0.13
+Stand: 2026-08-08
 Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
 1. ZWECK UND FORMAT
@@ -746,12 +746,16 @@ Teilnehmers getrennt nach Getraenk und keine Daten einer anderen Veranstaltung.
 =========================================
 
 [ZZ-TIM-001] Verlaessliche Offline-Zeit
-Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
-Das System soll ohne Internet eine fuer Buchungen, Protokolle und Happy Hour
-ausreichend verlaessliche Uhrzeit bereitstellen. Eine I2C-Echtzeituhr wird als
-moegliche Loesung geprueft.
-Abnahme: Nach einem stromlosen Test sind Datum und Uhrzeit innerhalb der spaeter
-festgelegten Toleranz korrekt.
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss ohne Internet eine fuer Buchungen und Protokolle ausreichend
+verlaessliche Uhrzeit bereitstellen. Dazu wird eine batteriegepufferte DS3231-
+Echtzeituhr ueber I2C verwendet. Der Raspberry Pi muss seine Systemzeit vor dem
+Start der Zapfanwendung aus der in UTC gefuehrten RTC laden. Datum und Uhrzeit
+werden einmalig ueber ein lokales CLI gestellt; eine Bedienung ueber Kiosk- oder
+Smartphone-WebUI ist nicht erforderlich.
+Abnahme: Nach korrektem einmaligem Stellen, stromlosem Ausschalten und erneutem
+Start wird die Systemzeit vor der Zapfanwendung aus der DS3231 geladen. Das CLI
+zeigt System- und RTC-Zeit an und kann die RTC ohne Internet neu stellen.
 
 
 13. NICHTFUNKTIONALE ANFORDERUNGEN
@@ -807,7 +811,8 @@ OD-004: Detailregeln der Happy Hour.
 OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
 OD-007: Backup-, Export- und Wiederherstellungsverfahren.
-OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
+OD-008: Durch ZZ-TIM-001 entschieden: DS3231 ueber I2C, Speicherung in UTC,
+einmalige lokale CLI-Einrichtung und keine Bedienung ueber die WebUI.
 OD-009: Durch CR-002 entschieden: Raspberry Pi als eigenstaendiger Access Point
 mit SSID `ZUNDER_ZAPFE`, WPA-Schutz und persoenlichen Adminpasswoertern;
 HTTPS ist fuer die isolierte Alpha-Ausbaustufe nicht erforderlich.

@@ -47,7 +47,8 @@ if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
   || ! "${repo_dir}/.venv/bin/python" -c \
     "import alembic, fastapi, gpiozero, lgpio, pwdlib, smartcard, sqlalchemy, uvicorn" \
     >/dev/null 2>&1 \
-  || ! command -v pcsc_scan >/dev/null 2>&1; then
+  || ! command -v pcsc_scan >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-rtc >/dev/null 2>&1; then
   needs_full_install=true
 elif [[ -z "${deployed_revision}" ]] \
   || ! git_as_owner cat-file -e "${deployed_revision}^{commit}" 2>/dev/null; then
@@ -69,6 +70,10 @@ fi
 
 echo "Starte Webdienst mit dem neuen Stand neu"
 systemctl restart zunder-zapfe-web.service
+if [[ -f /run/zunder-zapfe-rtc-reboot-required ]]; then
+  echo "Deployment installiert. Jetzt neu starten und deploy-update.sh erneut ausfuehren."
+  exit 0
+fi
 "${repo_dir}/scripts/pi-verify.sh"
 printf '%s\n' "${new_revision}" >"${deployed_revision_path}"
 chmod 0644 "${deployed_revision_path}"

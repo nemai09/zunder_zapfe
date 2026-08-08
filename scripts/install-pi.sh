@@ -23,7 +23,7 @@ echo "Zielsystem: ${model:-unbekannt}"
 apt-get update
 apt-get install --yes \
   python3-venv python3-dev build-essential \
-  chromium curl \
+  chromium curl i2c-tools util-linux \
   pcscd libccid libpcsclite-dev pcsc-tools swig \
   liblgpio-dev \
   network-manager iw nginx-light
@@ -54,10 +54,47 @@ runuser -u "${kiosk_user}" -- \
 runuser -u "${kiosk_user}" -- \
   "${app_dir}/.venv/bin/python" -m pip install --editable "${app_dir}[dev,debug]"
 
+if command -v raspi-config >/dev/null 2>&1; then
+  raspi-config nonint do_i2c 0
+fi
+
+boot_config=""
+if [[ -f /boot/firmware/config.txt ]]; then
+  boot_config="/boot/firmware/config.txt"
+elif [[ -f /boot/config.txt ]]; then
+  boot_config="/boot/config.txt"
+else
+  echo "Raspberry-Pi-Bootkonfiguration nicht gefunden." >&2
+  exit 1
+fi
+
+if ! grep --extended-regexp --quiet \
+  '^[[:space:]]*dtparam=i2c_arm=on([[:space:]]|$)' "${boot_config}"; then
+  printf '\n[all]\n# Zunder Zapfe I2C\ndtparam=i2c_arm=on\n' >>"${boot_config}"
+fi
+if ! grep --extended-regexp --quiet \
+  '^[[:space:]]*dtoverlay=i2c-rtc,ds3231([[:space:]]|$)' "${boot_config}"; then
+  printf '\n[all]\n# Zunder Zapfe DS3231 RTC\ndtoverlay=i2c-rtc,ds3231\n' >>"${boot_config}"
+fi
+
+# Apply the overlay immediately when supported. The config.txt entry remains
+# authoritative and ensures that the RTC is available after every reboot.
+if [[ ! -e /dev/rtc0 ]] && command -v dtoverlay >/dev/null 2>&1; then
+  dtoverlay i2c-rtc ds3231 || true
+  udevadm settle || true
+fi
+
 sed -e "s|@@APP_DIR@@|${app_dir}|g" \
   -e "s|@@SERVICE_USER@@|${kiosk_user}|g" \
   "${app_dir}/deploy/systemd/zunder-zapfe-web.service.in" \
   >/etc/systemd/system/zunder-zapfe-web.service
+
+sed -e "s|@@APP_DIR@@|${app_dir}|g" \
+  "${app_dir}/deploy/systemd/zunder-zapfe-rtc.service.in" \
+  >/etc/systemd/system/zunder-zapfe-rtc.service
+
+ln -sfn "${app_dir}/.venv/bin/zunder-zapfe-rtc" \
+  /usr/local/sbin/zunder-zapfe-rtc
 
 install -m 0755 "${app_dir}/deploy/kiosk/zunder-zapfe-kiosk" \
   /usr/local/bin/zunder-zapfe-kiosk
@@ -87,11 +124,20 @@ fi
 chown "${kiosk_user}:${kiosk_user}" "${autostart_file}"
 
 systemctl daemon-reload
+systemctl enable zunder-zapfe-rtc.service
+if [[ -e /dev/rtc0 ]]; then
+  rm -f /run/zunder-zapfe-rtc-reboot-required
+  systemctl restart zunder-zapfe-rtc.service
+else
+  touch /run/zunder-zapfe-rtc-reboot-required
+  echo "DS3231 wird nach dem erforderlichen Neustart als /dev/rtc0 erwartet."
+fi
 systemctl enable --now zunder-zapfe-web.service
 
 echo
 echo "Installation abgeschlossen."
 echo "Backend: http://127.0.0.1:8000"
+echo "RTC: sudo zunder-zapfe-rtc status"
 echo "Pruefung: ${app_dir}/scripts/pi-verify.sh"
 echo "Admin-WLAN einmalig und bewusst: sudo zunder-zapfe-admin-wifi"
 echo "Lokaler WLAN-Moduswechsel: blauer Admin-Button am Kiosk"

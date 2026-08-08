@@ -1,6 +1,6 @@
 # Projektstatus
 
-Stand: 2026-07-25
+Stand: 2026-08-08
 Phase: Alpha-Entwicklung
 
 ## Implementiert und geprüft
@@ -99,6 +99,7 @@ damit abgeschlossen.
 | --- | --- | --- |
 | Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
+| Offline-Zeit | DS3231-Konfiguration, Startdienst vor der Zapfanwendung und lokales CLI für Status sowie einmaliges Stellen | Zielsystemnachweis nach stromlosem Neustart und Bewertung der Abweichung über den Einsatzzeitraum |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -113,7 +114,6 @@ damit abgeschlossen.
 - automatische Start-Selbsttests für reale Hardware
 - Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
 - optionale Fasswaage und MQTT-Vertrag
-- verbindliche Offline-Zeitquelle
 
 ## Nächste Entwicklungsreihenfolge
 

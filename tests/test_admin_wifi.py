@@ -77,7 +77,7 @@ def test_nginx_exposes_only_the_smartphone_admin_surface() -> None:
 def test_pi_verification_checks_configured_admin_wifi() -> None:
     verification = read("scripts/pi-verify.sh")
 
-    assert "6/7 Admin-WLAN" in verification
+    assert "7/8 Admin-WLAN" in verification
     assert "zunder-zapfe-wifi-mode status" in verification
     assert "mode=ap" in verification
     assert "mode=client" in verification
@@ -95,5 +95,7 @@ def test_deployment_detects_branch_switches_and_missing_runtime_dependencies() -
         "import alembic, fastapi, gpiozero, lgpio, pwdlib, smartcard, sqlalchemy, uvicorn"
         in deployment
     )
+    assert "command -v zunder-zapfe-rtc" in deployment
+    assert "zunder-zapfe-rtc-reboot-required" in deployment
     assert '"${deployed_revision}" "${new_revision}"' in deployment
     assert 'printf \'%s\\n\' "${new_revision}" >"${deployed_revision_path}"' in deployment
