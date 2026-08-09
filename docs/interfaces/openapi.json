@@ -1901,6 +1901,10 @@
             ],
             "title": "Safety Reason"
           },
+          "session_measured_volume_ml": {
+            "title": "Session Measured Volume Ml",
+            "type": "integer"
+          },
           "session_remaining_ms": {
             "anyOf": [
               {
@@ -1995,6 +1999,7 @@
           "measured_pulses",
           "target_pulses",
           "measured_volume_ml",
+          "session_measured_volume_ml",
           "target_volume_ml",
           "top_up_remaining_ms",
           "session_remaining_ms",

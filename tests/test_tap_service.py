@@ -447,12 +447,17 @@ def test_zz_dat_002_multiple_pours_share_one_nfc_login_session(
     service, hardware, _nfc, flow_meter = start_service(sessions)
     try:
         assert service.authenticate_card("04AABBCC") is True
+        assert service.status_dict()["session_measured_volume_ml"] == 0
         service.start_manual_pour()
         flow_meter.add_pulses(8)
+        assert service.status_dict()["session_measured_volume_ml"] == 16
         service.stop_manual_pour()
+        assert service.status_dict()["session_measured_volume_ml"] == 16
         service.start_manual_pour()
         flow_meter.add_pulses(4)
+        assert service.status_dict()["session_measured_volume_ml"] == 24
         service.stop_manual_pour()
+        assert service.status_dict()["session_measured_volume_ml"] == 24
 
         with sessions() as session:
             first_cycle = list(session.scalars(select(TapBooking).order_by(TapBooking.id)))
@@ -461,7 +466,9 @@ def test_zz_dat_002_multiple_pours_share_one_nfc_login_session(
             first_session_id = first_cycle[0].login_session_id
 
         service.logout()
+        assert service.status_dict()["session_measured_volume_ml"] == 0
         assert service.authenticate_card("04AABBCC") is True
+        assert service.status_dict()["session_measured_volume_ml"] == 0
         service.start_manual_pour()
         flow_meter.add_pulses(2)
         service.stop_manual_pour()
@@ -469,6 +476,29 @@ def test_zz_dat_002_multiple_pours_share_one_nfc_login_session(
         with sessions() as session:
             all_bookings = list(session.scalars(select(TapBooking).order_by(TapBooking.id)))
             assert all_bookings[-1].login_session_id != first_session_id
+    finally:
+        stop_service(service, hardware)
+
+
+def test_zz_ui_012_automatic_logout_clears_session_volume(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    seed_data(sessions)
+    clock = ManualClock()
+    service, hardware, _nfc, flow_meter = start_service(sessions, clock)
+    try:
+        assert service.authenticate_card("04AABBCC") is True
+        service.start_manual_pour()
+        flow_meter.add_pulses(8)
+        service.stop_manual_pour()
+        assert service.status_dict()["session_measured_volume_ml"] == 16
+
+        clock.advance(15)
+        status = service.poll()
+
+        assert status["state"] is TapState.IDLE
+        assert status["session_measured_volume_ml"] == 0
     finally:
         stop_service(service, hardware)
 

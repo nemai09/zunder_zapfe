@@ -125,6 +125,7 @@ class TapStatusResponse(BaseModel):
     measured_pulses: int
     target_pulses: int | None
     measured_volume_ml: int
+    session_measured_volume_ml: int
     target_volume_ml: int | None
     top_up_remaining_ms: int | None
     session_remaining_ms: int | None

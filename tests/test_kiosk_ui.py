@@ -82,6 +82,12 @@ def test_kiosk_does_not_render_nfc_uid() -> None:
     assert "nfc.uid" not in script
 
 
+def test_zz_ui_012_kiosk_displays_accumulated_session_volume() -> None:
+    script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "model.tap?.session_measured_volume_ml ?? 0" in script
+
+
 def styles_for_rule(styles: str, selector: str) -> str:
     return styles.split(f"{selector} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
 

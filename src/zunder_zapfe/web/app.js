@@ -310,7 +310,7 @@ function render() {
     !manualPouring &&
     model.tap?.last_booking?.kind === "manual" &&
     model.tap?.last_booking?.completion === "limit_reached";
-  elements.manualVolume.textContent = String(model.tap?.measured_volume_ml || 0);
+  elements.manualVolume.textContent = String(model.tap?.session_measured_volume_ml ?? 0);
   elements.manualLabel.textContent = limitReachedWhileHeld
     ? "Zeitlimit erreicht"
     : manualPouring

@@ -652,6 +652,16 @@ Abnahme: Ein vollstaendiger Kontext zeigt Zapfbereitschaft; mindestens ein
 fehlendes aktives Fass sowie ein nicht verfuegbarer Hardwareadapter werden als
 nicht zapfbereit gemeldet.
 
+[ZZ-UI-012] Sichtbare Zapfmenge der NFC-Sitzung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Zapfbutton muss waehrend einer NFC-Sitzung die gesamte gemessene Menge aller
+kostenpflichtigen Zapfungen dieser Sitzung anzeigen. Waehrend einer laufenden
+Zapfung muss die aktuelle Messung zur bereits gespeicherten Sitzungsmenge addiert
+werden. Nach dem Loslassen muss die Summe bis zum manuellen oder automatischen
+Logout sichtbar bleiben. Eine neue NFC-Sitzung beginnt bei null.
+Abnahme: Zwei Zapfzyklen innerhalb derselben Anmeldung werden auf dem Button
+addiert angezeigt; nach Logout und erneuter Anmeldung zeigt er wieder null.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
