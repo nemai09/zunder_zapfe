@@ -169,8 +169,9 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   Entwicklung ohne GPIO-Hardware darf ihn zusammen mit explizit aktivierten
   Ventil-/Durchflusssimulatoren per
   `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktivieren.
-- Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
-  nicht den elektrisch gemessenen Zustand eines Ventils.
+- Der angeforderte Ventilzustand bleibt ausschließlich in geschützten
+  Diagnoseansichten sichtbar; die Kiosk-Kopfleiste zeigt WLAN und
+  Zapfbereitschaft.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
 - Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
   wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Davon

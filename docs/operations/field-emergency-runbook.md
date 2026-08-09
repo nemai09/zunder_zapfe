@@ -58,7 +58,7 @@ durch Aktivieren eines Simulators umgangen werden.
 3. Erst im stromlosen Zustand Treiberstufe und Verdrahtung prüfen lassen.
 4. Betrieb nicht durch längere Timeouts oder deaktivierte Watchdogs fortsetzen.
 
-Der Kiosk zeigt nur den angeforderten GPIO-Zustand, keine elektrische
+Der geschützte Diagnosebereich zeigt nur den angeforderten GPIO-Zustand, keine
 Rückmeldung des realen Ventils. Ein elektrisch klemmendes Ventil ist nicht per
 Software behebbar. Da im Beta-Aufbau kein realer Not-Aus-Adapter vorhanden ist,
 muss eine erreichbare Abschaltmöglichkeit gewährleistet sein.

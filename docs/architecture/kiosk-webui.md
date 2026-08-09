@@ -87,14 +87,15 @@ manuelle Öffnungsdauer. Beide sind konfigurierbar und vor realem Betrieb gemä�
 Die WebUI zeigt keine NFC-UID. Ihr Buildstring stammt aus `GET /api/health` und
 folgt [`../versioning.md`](../versioning.md).
 
-Für die hardwarelose Alpha-Phase zeigt die Kopfleiste außerdem dezent den vom
-Backend gemeldeten Sollzustand `valve_open` als `DEBUG · Ventil EIN/AUS`. Dies
-ist keine Rückmeldung eines physischen Ventils und muss zusammen mit dem
-temporären Flow-Debugmodus vor Produktivbetrieb entfernt werden.
-Zwischen Ventil- und Steuerungsstatus zeigt ein weiterer Indikator den vom
-Systemhelfer erkannten WLAN-Modus `AP`, `Client` oder einen Fehlerzustand.
+Die frühere öffentliche Debuganzeige `DEBUG · Ventil EIN/AUS` wurde vor dem
+Feldbetrieb aus der Kiosk-Kopfleiste entfernt. Das API-Feld `valve_open` bleibt
+für geschützte Diagnoseansichten erhalten; es ist keine elektrische Rückmeldung
+eines realen Ventils.
+
+Die Kopfleiste zeigt weiterhin den vom Systemhelfer erkannten WLAN-Modus `AP`,
+`Client` oder einen Fehlerzustand sowie den Steuerungsstatus.
 Er besteht nur aus Statuspunkt und Text ohne eigene Umrandung; die Umrandung
-der temporären Ventil-Debuganzeige bleibt davon unberührt.
+des übrigen Steuerungsstatus bleibt davon unberührt.
 
 Traceability: `ZZ-AUT-010`, `ZZ-TAP-008`, `ZZ-TAP-013`, `ZZ-TAP-014`,
 `ZZ-SAF-008`, `ZZ-UI-001`, `ZZ-UI-002`, `ZZ-UI-004`, `ZZ-UI-005` und

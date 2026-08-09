@@ -131,40 +131,6 @@ button {
   box-shadow: 0 0 1rem rgb(245 166 35 / 45%);
 }
 
-.valve-status {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: #8f8779;
-  font-family: ui-monospace, "Cascadia Mono", monospace;
-  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
-}
-
-.valve-dot {
-  width: 0.55rem;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #8f8779;
-}
-
-.valve-status.is-open {
-  border-color: rgb(245 166 35 / 45%);
-  color: var(--amber-light);
-  background: rgb(245 166 35 / 8%);
-}
-
-.valve-status.flow-debug {
-  border-style: dashed;
-}
-
-.valve-status.is-open .valve-dot {
-  background: var(--amber);
-  box-shadow: 0 0 0.8rem rgb(245 166 35 / 70%);
-}
-
 .wifi-status {
   display: flex;
   align-items: center;

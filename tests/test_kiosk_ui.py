@@ -53,13 +53,14 @@ def test_zz_ui_004_011_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "renderIfChanged()" in script
     assert "window.setTimeout(refreshLoop, STATUS_REFRESH_MS)" in script
     assert "window.setInterval(refresh" not in script
-    assert 'id="valve-status"' in html
+    assert 'id="valve-status"' not in html
     assert 'id="wifi-status"' in html
+    assert 'id="connection"' in html
     assert 'id="idle-eyebrow"' in html
     assert 'id="idle-title-primary"' in html
     assert 'id="idle-lead"' in html
     assert "valve_open" in script
-    assert "DEBUG · Ventil" in script
+    assert "DEBUG · Ventil" not in script
     assert 'id="portion-grid"' not in html
     assert 'id="top-up-button"' not in html
     assert "border: 1px solid var(--line)" not in styles_for_rule(

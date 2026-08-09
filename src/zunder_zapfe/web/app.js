@@ -63,8 +63,6 @@ const elements = {
   screens: [...document.querySelectorAll("[data-screen]")],
   connection: document.querySelector("#connection"),
   connectionLabel: document.querySelector("#connection-label"),
-  valveStatus: document.querySelector("#valve-status"),
-  valveLabel: document.querySelector("#valve-label"),
   wifiStatus: document.querySelector("#wifi-status"),
   wifiLabel: document.querySelector("#wifi-label"),
   readerStatus: document.querySelector("#reader-status"),
@@ -241,12 +239,6 @@ function render() {
         ? "Nicht zapfbereit"
         : "Zapfbereitschaft wird geprüft";
   const valveOpen = Boolean(model.tap?.valve_open);
-  elements.valveStatus.classList.toggle("is-open", valveOpen);
-  elements.valveStatus.classList.toggle(
-    "flow-debug",
-    Boolean(model.options?.debug_flow_watchdog_disabled),
-  );
-  elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
   elements.wifiStatus.classList.remove("is-ap", "is-client", "is-error");
   const wifiLabels = {
     ap: "WLAN · AP",
