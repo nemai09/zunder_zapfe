@@ -1259,6 +1259,17 @@
             "title": "Measured Volume Ml",
             "type": "integer"
           },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
           "user_id": {
             "title": "User Id",
             "type": "integer"
@@ -1269,7 +1280,8 @@
           "user_id",
           "booking_count",
           "measured_volume_ml",
-          "amount_cents"
+          "amount_cents",
+          "rank"
         ],
         "title": "ConsumptionResponse",
         "type": "object"

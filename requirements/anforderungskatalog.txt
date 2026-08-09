@@ -662,6 +662,18 @@ Logout sichtbar bleiben. Eine neue NFC-Sitzung beginnt bei null.
 Abnahme: Zwei Zapfzyklen innerhalb derselben Anmeldung werden auf dem Button
 addiert angezeigt; nach Logout und erneuter Anmeldung zeigt er wieder null.
 
+[ZZ-UI-013] Eigener Verbrauchsrang statt Gesamtbetrag
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Zapfbildschirm muss anstelle des persoenlichen Gesamtbetrags den eigenen
+Platz im Verbrauchsranking der aktiven Veranstaltung anzeigen. Massgeblich ist
+die Summe aller kostenpflichtigen gemessenen Mengen; Wartungsverbrauch wird nicht
+beruecksichtigt. Benutzer mit gleicher Menge teilen sich denselben Platz. Ohne
+kostenpflichtige Buchung wird noch kein Platz angezeigt. Abrechnung, Admin-
+Statistik und gespeicherte Betraege bleiben unveraendert.
+Abnahme: Der Kiosk zeigt nach der ersten Zapfung den nach Verbrauchsmenge
+berechneten Platz und aktualisiert ihn nach weiteren Zapfungen. Ein Gleichstand
+ergibt denselben Platz; der persoenliche Gesamtbetrag wird nicht angezeigt.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der

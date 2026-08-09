@@ -542,7 +542,7 @@ class TapService:
             "special_portion_ml": special,
         }
 
-    def current_consumption(self) -> dict[str, int]:
+    def current_consumption(self) -> dict[str, int | None]:
         user = self._require_authenticated_user()
         with self._sessions() as session:
             repository = Repository(session)

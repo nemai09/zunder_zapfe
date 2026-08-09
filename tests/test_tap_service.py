@@ -39,7 +39,7 @@ from zunder_zapfe.persistence.models import (
     User,
     UserRole,
 )
-from zunder_zapfe.persistence.repository import Repository
+from zunder_zapfe.persistence.repository import NewTapBooking, Repository
 from zunder_zapfe.smoke_test import run_smoke_test
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -278,6 +278,7 @@ def test_zz_dat_001_002_and_keg_004_portion_is_persisted_and_survives_restart(
             "booking_count": 1,
             "measured_volume_ml": 20,
             "amount_cents": 9,
+            "rank": 1,
         }
         assert service.current_keg()["remaining_volume_ml"] == 49_980
     finally:
@@ -290,6 +291,54 @@ def test_zz_dat_001_002_and_keg_004_portion_is_persisted_and_survives_restart(
         assert restarted.current_keg()["remaining_volume_ml"] == 49_980
     finally:
         stop_service(restarted, restarted_hardware)
+
+
+def test_zz_ui_013_current_consumption_reports_shared_volume_rank(
+    database: tuple[Engine, sessionmaker[Session]],
+) -> None:
+    _engine, sessions = database
+    ids = seed_data(sessions)
+    with sessions.begin() as session:
+        repository = Repository(session)
+        tied_user = repository.create_user("Berta")
+        leading_user = repository.create_user("Dieter")
+        for user_id, volume_ml, login_session_id in (
+            (tied_user.id, 20, "berta-session"),
+            (leading_user.id, 40, "dieter-session"),
+        ):
+            repository.add_tap_booking(
+                NewTapBooking(
+                    event_id=ids["event_id"],
+                    user_id=user_id,
+                    beverage_id=ids["beverage_id"],
+                    keg_id=ids["keg_id"],
+                    occurred_at=FIXED_TIME,
+                    target_volume_ml=None,
+                    measured_volume_ml=volume_ml,
+                    measured_pulses=volume_ml // 2,
+                    price_per_liter_cents=450,
+                    kind=BookingKind.MANUAL,
+                    completion=BookingCompletion.RELEASED,
+                    chargeable=True,
+                    login_session_id=login_session_id,
+                )
+            )
+
+    service, hardware, _nfc, flow_meter = start_service(sessions)
+    try:
+        assert service.authenticate_card("04AABBCC") is True
+        assert service.current_consumption()["rank"] is None
+
+        service.start_manual_pour()
+        flow_meter.add_pulses(10)
+        service.stop_manual_pour()
+
+        summary = service.current_consumption()
+        assert summary["measured_volume_ml"] == 20
+        assert summary["amount_cents"] == 9
+        assert summary["rank"] == 2
+    finally:
+        stop_service(service, hardware)
 
 
 def test_zz_keg_004_calculated_stock_is_advisory_and_does_not_block_pouring(

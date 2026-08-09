@@ -1218,7 +1218,7 @@ def create_app(
         response_model=ConsumptionResponse,
         responses=conflict_response,
     )
-    async def current_consumption() -> dict[str, int]:
+    async def current_consumption() -> dict[str, int | None]:
         return tap_service.current_consumption()
 
     @application.get(

@@ -71,6 +71,7 @@ class ConsumptionSummary:
     booking_count: int
     measured_volume_ml: int
     amount_cents: int
+    rank: int | None
 
 
 class Repository:
@@ -537,12 +538,28 @@ class Repository:
                 TapBooking.chargeable.is_(True),
             )
         ).one()
+        ranking = (
+            select(
+                TapBooking.user_id.label("user_id"),
+                func.rank()
+                .over(order_by=func.sum(TapBooking.measured_volume_ml).desc())
+                .label("rank"),
+            )
+            .where(
+                TapBooking.event_id == event_id,
+                TapBooking.chargeable.is_(True),
+            )
+            .group_by(TapBooking.user_id)
+            .subquery()
+        )
+        rank = self.session.scalar(select(ranking.c.rank).where(ranking.c.user_id == user_id))
         return ConsumptionSummary(
             event_id=event_id,
             user_id=user_id,
             booking_count=int(booking_count),
             measured_volume_ml=int(measured_volume_ml),
             amount_cents=int(amount_cents),
+            rank=int(rank) if rank is not None else None,
         )
 
     def remaining_keg_volume_ml(self, keg_id: int) -> int:

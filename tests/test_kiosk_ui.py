@@ -88,6 +88,18 @@ def test_zz_ui_012_kiosk_displays_accumulated_session_volume() -> None:
     assert "model.tap?.session_measured_volume_ml ?? 0" in script
 
 
+def test_zz_ui_013_kiosk_displays_rank_instead_of_personal_amount() -> None:
+    html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
+    script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "Dein Platz" in html
+    assert 'id="consumption-rank"' in html
+    assert "Dein Betrag" not in html
+    assert 'id="consumption-amount"' not in html
+    assert "model.consumption?.rank" in script
+    assert "model.consumption?.amount_cents" not in script
+
+
 def styles_for_rule(styles: str, selector: str) -> str:
     return styles.split(f"{selector} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
 

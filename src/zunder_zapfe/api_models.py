@@ -422,6 +422,7 @@ class ConsumptionResponse(BaseModel):
     booking_count: int
     measured_volume_ml: int
     amount_cents: int
+    rank: int | None
 
 
 class KegStatusResponse(BaseModel):

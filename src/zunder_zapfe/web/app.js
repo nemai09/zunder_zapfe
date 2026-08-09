@@ -86,7 +86,7 @@ const elements = {
   beverageName: document.querySelector("#beverage-name"),
   beverageDetail: document.querySelector("#beverage-detail"),
   consumptionVolume: document.querySelector("#consumption-volume"),
-  consumptionAmount: document.querySelector("#consumption-amount"),
+  consumptionRank: document.querySelector("#consumption-rank"),
   manualButton: document.querySelector("#manual-button"),
   manualVolume: document.querySelector("#manual-volume"),
   manualLabel: document.querySelector("#manual-label"),
@@ -175,6 +175,10 @@ function formatVolume(volumeMl) {
 function formatMoney(amountCents) {
   if (!Number.isFinite(amountCents)) return "–";
   return moneyFormatter.format(amountCents / 100);
+}
+
+function formatRank(rank) {
+  return Number.isInteger(rank) && rank > 0 ? `#${rank}` : "–";
 }
 
 function renderSessionTimeout() {
@@ -301,7 +305,7 @@ function render() {
     ? `${formatMoney(model.keg.price_per_liter_cents)} / Liter · ${formatVolume(model.keg.remaining_volume_ml)} im Fass`
     : "Fassdaten sind noch nicht verfügbar.";
   elements.consumptionVolume.textContent = formatVolume(model.consumption?.measured_volume_ml);
-  elements.consumptionAmount.textContent = formatMoney(model.consumption?.amount_cents);
+  elements.consumptionRank.textContent = formatRank(model.consumption?.rank);
 
   const manualPouring = model.tap?.state === "manual_pouring";
   const holding = manualPouring || model.manualHeld;
