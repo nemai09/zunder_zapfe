@@ -1,10 +1,10 @@
-# Alpha-Feldeinsatz: Übergabe und bewusste Abweichungen
+# Beta-Feldeinsatz: Übergabe und bewusste Abweichungen
 
 Stand: 2026-08-09
 
 Diese Seite ist der operative Übergabepunkt für den ersten sechstägigen
 Feldeinsatz mit ungefähr 300 Litern geplantem Ausschank. Sie ergänzt den
-Anforderungskatalog um bewusst akzeptierte Alpha-Abweichungen. Ein neuer
+Anforderungskatalog um bewusst akzeptierte Beta-Abweichungen. Ein neuer
 Entwicklungsagent liest zuerst `AGENTS.md`, `docs/project-status.md`, diese
 Seite und anschließend die jeweils verlinkte Detailanleitung.
 
@@ -16,12 +16,12 @@ Abrechnung und der Erhalt bereits gespeicherter Buchungen. Deployment ohne
 Internet, allgemeine Fertigungsreife und zusätzliche Komfortfunktionen gehören
 nicht zu diesem Einsatzumfang.
 
-## Bewusst akzeptierte Alpha-Abweichungen
+## Bewusst akzeptierte Beta-Abweichungen
 
 | Thema | Aktueller Feldstand | Konsequenz |
 | --- | --- | --- |
 | Durchflusskalibrierung | `500` Impulse/Liter ist nur ein Demonstratorwert | Vor dem Ausschank zwingend mit realem Sensor und bekannter Flüssigkeitsmenge kalibrieren. Bis dahin sind Mengen und Beträge nicht belastbar. |
-| Not-Aus | Der Softwareadapter ist weiterhin simuliert; ein realer Öffnerkontakt und eine unabhängige elektrische Ventilunterbrechung sind nicht umgesetzt | Bewusste Abweichung von `ZZ-SAF-001` und `ZZ-SAF-002` für diesen beaufsichtigten Alpha-Einsatz. |
+| Not-Aus | Der Softwareadapter ist weiterhin simuliert; ein realer Öffnerkontakt und eine unabhängige elektrische Ventilunterbrechung sind nicht umgesetzt | Bewusste Abweichung von `ZZ-SAF-001` und `ZZ-SAF-002` für diesen beaufsichtigten Beta-Einsatz. |
 | Watchdogs | Durchfluss- und Steuerungsüberwachung bleiben aktiv, verwenden aber vorläufig entspannte Werte von 5/3/5 Sekunden | Kurze Laufzeitverzögerungen verriegeln die Anlage seltener; ein echter Ausfall wird entsprechend später erkannt. |
 | Fassbestand | Startmenge minus Buchungen wird weiter angezeigt, sperrt aber auch bei null oder negativem Ergebnis keine Zapfung | Der Bestand ist nur eine Orientierung. Das tatsächliche Fassende erkennt das Bedienpersonal. |
 | Bereitschaft | Der Kiosk prüft Softwarezustand, Adapterverfügbarkeit, NFC und aktiven Fasskontext | Die Anzeige ist keine elektrische Rückmeldung des physischen Ventils und kein Genauigkeitsnachweis des Sensors. |

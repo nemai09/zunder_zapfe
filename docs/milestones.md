@@ -15,7 +15,7 @@ bestanden sind.
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
 | 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
 | 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Umsetzung |
-| 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
+| 9 / PR 9 | Kalibrierung, Gesamttest und Beta-Felderprobung | geplant |
 
 `PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
 PR 6. Er erzeugt keinen neuen Meilenstein und verändert weder Produktversion
@@ -155,6 +155,7 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 | `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren |
 | `M8.9 DB/OPS` | automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download aufs Smartphone |
 | `M8.10 FIX/OPS` | feldtaugliche Bereitschaftsanzeige, rein informativer Fassbestand, entspannte aktive Watchdogs, Chromium-Neustart und Einsatzübergabe |
+| `M8.11 FIX/OPS` | reparierter Backupdienststart und Kennzeichnung des integrierten Feldstands als `0.4.0-beta.1` |
 
 ### Abnahmekriterien
 

@@ -168,7 +168,7 @@ def create_app(
     application = FastAPI(
         title="Zunder Zapfe",
         description=(
-            "Local alpha API for NFC authentication, safe tap control and SQLite bookings."
+            "Local beta API for NFC authentication, safe tap control and SQLite bookings."
         ),
         version=__version__,
         license_info={

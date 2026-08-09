@@ -1,7 +1,7 @@
 # Projektstatus
 
 Stand: 2026-08-09
-Phase: Alpha-Entwicklung
+Phase: Beta-Felderprobung
 
 ## Implementiert und geprüft
 
@@ -136,9 +136,9 @@ vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
 ## Nächste Entwicklungsreihenfolge
 
 1. Gesamtsystem mit realem Ventil und Durchflusssensor kalibrieren sowie den
-   verbindlichen Inbetriebnahmetest für den Alpha-Feldeinsatz durchführen.
+   verbindlichen Inbetriebnahmetest für den Beta-Feldeinsatz durchführen.
 2. Nach dem Einsatz die bewusst akzeptierten Abweichungen aus
-   [`Alpha-Feldeinsatz`](operations/alpha-field-operation.md) erneut bewerten.
+   [`Beta-Feldeinsatz`](operations/alpha-field-operation.md) erneut bewerten.
 3. ESP8266-HIL für Neustart, Verbindungsabbruch und Safety-Verriegelung
    vollständig abnehmen.
 4. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie später den
@@ -149,7 +149,7 @@ vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 [`milestones.md`](milestones.md).
 
-## Bekannte Alpha-Eigenschaften
+## Bekannte Beta-Eigenschaften
 
 - Kompatibel gestartete Portionen bleiben im Backend erhalten; nach einer Portion bleibt der Zustand acht Sekunden lang
   `top_up_available`; eine unmittelbar gestartete weitere Portion wird bewusst
@@ -181,4 +181,4 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   oder Rolle ist als `OD-014` offen.
 - Die für den bevorstehenden Einsatz akzeptierten Abweichungen und der
   Inbetriebnahmeablauf stehen zentral unter
-  [`Alpha-Feldeinsatz`](operations/alpha-field-operation.md).
+  [`Beta-Feldeinsatz`](operations/alpha-field-operation.md).

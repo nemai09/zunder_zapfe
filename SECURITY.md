@@ -2,7 +2,7 @@
 
 ## Unterstützter Stand
 
-Zunder Zapfe befindet sich in der Alpha-Entwicklung. Sicherheitskorrekturen
+Zunder Zapfe befindet sich in der Beta-Entwicklung. Sicherheitskorrekturen
 werden nur für den aktuellen Stand von `main` vorgenommen; es gibt noch keine
 unterstützten Releases oder garantierten Reaktionszeiten.
 
@@ -26,7 +26,7 @@ werden. Bei einem möglichen unkontrollierten Ventil- oder Not-Aus-Verhalten die
 reale Anlage sofort außer Betrieb nehmen und die elektrische Versorgung des
 Ventils fachgerecht trennen.
 
-## Sicherheitsgrenzen des Alpha-Stands
+## Sicherheitsgrenzen des Beta-Stands
 
 - Die Software ersetzt keine hardwareseitige Not-Aus-Unterbrechung.
 - Simulierte Komponenten sind kein Nachweis für elektrische Sicherheit.

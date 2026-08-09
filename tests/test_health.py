@@ -33,8 +33,8 @@ def test_health_endpoint_reports_ready(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "ready"
     assert response.json()["application"] == "zunder-zapfe"
-    assert response.json()["version"] == "0.4.0-alpha.1"
-    assert response.json()["build"].startswith("zzapfe_v0.4.0_alpha.1_")
+    assert response.json()["version"] == "0.4.0-beta.1"
+    assert response.json()["build"].startswith("zzapfe_v0.4.0_beta.1_")
     assert response.json()["build"].endswith(response.json()["revision"])
 
 
@@ -44,10 +44,10 @@ def test_kiosk_page_is_available(client: TestClient) -> None:
     assert response.status_code == 200
     assert "Zunder Zapfe" in response.text
     assert "NFC-Leser" in response.text
-    assert 'href="/static/styles.css?v=0.4.0-alpha.1"' in response.text
-    assert 'src="/static/app.js?v=0.4.0-alpha.1"' in response.text
+    assert 'href="/static/styles.css?v=0.4.0-beta.1"' in response.text
+    assert 'src="/static/app.js?v=0.4.0-beta.1"' in response.text
     assert response.headers["cache-control"] == "no-store"
-    script = client.get("/static/app.js?v=0.4.0-alpha.1")
+    script = client.get("/static/app.js?v=0.4.0-beta.1")
     assert script.status_code == 200
     assert script.headers["cache-control"] == "no-store"
     assert '"use strict"' in script.text
@@ -58,8 +58,8 @@ def test_smartphone_admin_page_is_available(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert "Administration" in response.text
-    assert 'href="/static/admin-styles.css?v=0.4.0-alpha.1"' in response.text
-    assert 'src="/static/admin-app.js?v=0.4.0-alpha.1"' in response.text
+    assert 'href="/static/admin-styles.css?v=0.4.0-beta.1"' in response.text
+    assert 'src="/static/admin-app.js?v=0.4.0-beta.1"' in response.text
     assert response.headers["cache-control"] == "no-store"
 
 

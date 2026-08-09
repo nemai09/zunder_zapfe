@@ -2275,13 +2275,13 @@
     }
   },
   "info": {
-    "description": "Local alpha API for NFC authentication, safe tap control and SQLite bookings.",
+    "description": "Local beta API for NFC authentication, safe tap control and SQLite bookings.",
     "license": {
       "identifier": "GPL-3.0-or-later",
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.4.0-alpha.1"
+    "version": "0.4.0-beta.1"
   },
   "openapi": "3.1.0",
   "paths": {

@@ -8,7 +8,7 @@ Basis eines Raspberry Pi. Das Projekt verbindet einen NFC-Leser, einen
 sicherheitsorientierten Zapfzustandsautomaten, lokale SQLite-Datenhaltung und
 eine Weboberfläche für den Kioskbetrieb.
 
-> **Alpha-Hinweis:** GPIO-Adapter für Ventil und Durchfluss sind integriert,
+> **Beta-Hinweis:** GPIO-Adapter für Ventil und Durchfluss sind integriert,
 > aber reale Treiber-, Sensor- und Not-Aus-Hardware ist noch nicht elektrisch
 > oder sicherheitstechnisch abgenommen. Ein echtes Ventil darf nicht ohne
 > fachgerechte Treiberstufe und unabhängige Sicherheitskette angeschlossen
@@ -25,7 +25,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
 | Admin-Sicherheitsreset | Mit physisch aufgelegter Admin-Karte oder in der geschützten Smartphone-Diagnose integriert |
-| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Alpha bei 800 × 480, WLAN-Status, lokales Systemmenü mit Netzwerk- und Energieaktionen sowie Pi-optimierte Statusabfragen |
+| Kiosk-WebUI | Ein-Knopf-Push-to-Fill-Beta bei 800 × 480, WLAN-Status, lokales Systemmenü mit Netzwerk- und Energieaktionen sowie Pi-optimierte Statusabfragen |
 | Admin-WebUI | Milestone 7 abgeschlossen: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose auf dem Pi geprüft |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil auf dem Pi geprüft |
 | Offline-Zeit | DS3231-Startdienst und lokales CLI implementiert; stromlose Zielsystemabnahme offen |
