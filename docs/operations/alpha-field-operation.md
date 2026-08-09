@@ -44,6 +44,10 @@ ZUNDER_ZAPFE_PULSES_PER_LITER=<Ergebnis der realen Kalibrierung>
 Die Watchdogs dürfen für den realen Ausschank nicht vollständig deaktiviert
 werden. Details zu allen Variablen stehen unter
 [`Laufzeitkonfiguration`](../interfaces/configuration.md).
+Für einen betriebsverhindernden Sensorfehler beschreibt das
+[`Offline-Notfallhandbuch`](field-emergency-runbook.md) einen zeitlich
+begrenzten, ständig beaufsichtigten Notbetrieb sowie die verbindliche Rückkehr
+zu diesen Feldwerten.
 
 ## Verbindlicher Inbetriebnahmetest
 
@@ -93,3 +97,5 @@ Mindestens einmal täglich wird das aktuelle CSV-Sicherungspaket über die
 Smartphone-Administration heruntergeladen. Weitere Funktionsentwicklung
 während des Einsatzes unterbleibt; bei Problemen werden zuerst Konfiguration,
 Verkabelung und die vorhandenen Diagnoseanzeigen geprüft.
+Die dafür ohne Entwicklungszugang zulässigen Maßnahmen und Abbruchkriterien
+stehen im [`Offline-Notfallhandbuch`](field-emergency-runbook.md).

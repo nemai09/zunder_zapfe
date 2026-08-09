@@ -93,6 +93,7 @@ dokumentiert:
 - [ACR122U-NFC-Leser](docs/operations/acr122u-nfc.md)
 - [Alpha-Integrationstest](docs/operations/alpha-integration-test.md)
 - [SQLite-Diagnose](docs/operations/database-browser.md)
+- [Offline-Notfallhandbuch](docs/operations/field-emergency-runbook.md)
 - [Admin-WLAN und Smartphone-Zugang](docs/operations/admin-wifi.md)
 - [GPIO- und ESP8266-HIL-Test](docs/operations/gpio-hil-test.md)
 - [DS3231-Offline-Zeitbasis](docs/operations/ds3231-rtc.md)

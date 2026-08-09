@@ -62,6 +62,7 @@ zu korrigieren.
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Automatische Datensicherung](operations/database-backup.md)
 - [Beta-Feldeinsatz: Übergabe und bewusste Abweichungen](operations/alpha-field-operation.md)
+- [Offline-Notfallhandbuch für den Feldbetrieb](operations/field-emergency-runbook.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 - [ESP8266-Durchflussemulator](../esp8266_flow_emulator/README.md)
 - [GPIO- und ESP8266-Hardware-in-the-Loop-Test](operations/gpio-hil-test.md)

@@ -62,6 +62,10 @@ vorläufigen Werte und Abweichungen stehen unter
 Die zeitlich begrenzte Abweichung für lokale Tests ohne Durchflusshardware ist unter
 [`../operations/debug-without-flow-hardware.md`](../operations/debug-without-flow-hardware.md)
 dokumentiert.
+Der davon getrennte, ständig beaufsichtigte Notbetrieb während des
+Beta-Feldeinsatzes ist einschließlich Abbruchkriterien und Rückbau unter
+[`Offline-Notfallhandbuch`](../operations/field-emergency-runbook.md)
+dokumentiert.
 
 Zielverdrahtung und ESP-Prüfablauf stehen unter
 [`GPIO- und ESP8266-HIL-Test`](../operations/gpio-hil-test.md).
