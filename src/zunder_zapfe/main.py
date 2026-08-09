@@ -42,6 +42,7 @@ from zunder_zapfe.api_models import (
     AdminUserCreateRequest,
     AdminUserResponse,
     AdminUserUpdateRequest,
+    BackupStatusResponse,
     ConsumptionResponse,
     ErrorResponse,
     HardwareStatusResponse,
@@ -53,7 +54,10 @@ from zunder_zapfe.api_models import (
     SessionStatusResponse,
     SimulatedCardRequest,
     SimulatedPulsesRequest,
+    SystemPowerActionResponse,
+    SystemStatusResponse,
     TapOptionsResponse,
+    TapReadinessResponse,
     TapStatusResponse,
     WebAdminLoginOptionResponse,
     WebAdminLoginRequest,
@@ -64,6 +68,7 @@ from zunder_zapfe.api_models import (
     WifiStatusResponse,
 )
 from zunder_zapfe.backend.admin_service import AdminConflict, AdminService
+from zunder_zapfe.backend.system_power_service import SystemPowerError, SystemPowerService
 from zunder_zapfe.backend.tap_controller import InvalidTransition, development_limits
 from zunder_zapfe.backend.tap_service import FlowCalibration, TapService, TapUnavailable
 from zunder_zapfe.backend.web_auth_service import (
@@ -75,6 +80,7 @@ from zunder_zapfe.backend.web_auth_service import (
     WebLoginRateLimited,
 )
 from zunder_zapfe.backend.wifi_mode_service import WifiModeError, WifiModeService
+from zunder_zapfe.backup import BackupError, BackupService
 from zunder_zapfe.build_info import current_build_info
 from zunder_zapfe.configuration import KioskSettings, load_kiosk_settings
 from zunder_zapfe.hardware import HardwareLayer, create_default_hardware
@@ -99,6 +105,8 @@ def create_app(
     run_background: bool = True,
     kiosk_settings: KioskSettings | None = None,
     wifi_mode_service: WifiModeService | None = None,
+    system_power_service: SystemPowerService | None = None,
+    backup_service: BackupService | None = None,
 ) -> FastAPI:
     """Create the HTTP application with replaceable hardware dependencies."""
     hardware_layer = hardware or create_default_hardware(
@@ -123,6 +131,9 @@ def create_app(
             session_timeout_seconds=resolved_kiosk_settings.session_timeout_seconds,
             admin_session_timeout_seconds=(resolved_kiosk_settings.admin_session_timeout_seconds),
             manual_maximum_seconds=resolved_kiosk_settings.manual_maximum_pour_seconds,
+            first_pulse_timeout_seconds=(resolved_kiosk_settings.first_pulse_timeout_seconds),
+            between_pulses_timeout_seconds=(resolved_kiosk_settings.between_pulses_timeout_seconds),
+            watchdog_timeout_seconds=(resolved_kiosk_settings.controller_watchdog_timeout_seconds),
             flow_watchdog_enabled=(not resolved_kiosk_settings.debug_disable_flow_watchdog),
         ),
         calibration=FlowCalibration(
@@ -137,8 +148,10 @@ def create_app(
         tap_service,
         default_timeout_seconds=resolved_kiosk_settings.admin_session_timeout_seconds,
         wifi_mode_service=resolved_wifi_mode_service,
+        system_power_service=system_power_service,
     )
     web_auth_service = WebAuthService(sessions)
+    resolved_backup_service = backup_service or BackupService()
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
@@ -155,7 +168,7 @@ def create_app(
     application = FastAPI(
         title="Zunder Zapfe",
         description=(
-            "Local alpha API for NFC authentication, safe tap control and SQLite bookings."
+            "Local beta API for NFC authentication, safe tap control and SQLite bookings."
         ),
         version=__version__,
         license_info={
@@ -170,15 +183,17 @@ def create_app(
 
     @application.middleware("http")
     async def prevent_kiosk_asset_cache(request: Request, call_next: Any) -> Response:
-        local_only = request.url.path == "/system" or request.url.path.startswith("/api/admin/")
+        local_only = request.url.path.startswith("/system") or request.url.path.startswith(
+            "/api/admin/"
+        )
         if local_only and not _is_loopback_request(request):
             return JSONResponse(
                 status_code=403,
                 content={"detail": "Local admin API is only available over loopback"},
             )
         response = await call_next(request)
-        if request.url.path in {"/", "/admin", "/system"} or request.url.path.startswith(
-            "/static/"
+        if request.url.path in {"/", "/admin"} or request.url.path.startswith(
+            ("/system", "/static/")
         ):
             response.headers["Cache-Control"] = "no-store"
         return response
@@ -219,7 +234,9 @@ def create_app(
         return JSONResponse(status_code=422, content={"detail": str(error)})
 
     @application.exception_handler(WifiModeError)
-    async def wifi_mode_failed(_request: Request, error: Exception) -> JSONResponse:
+    @application.exception_handler(SystemPowerError)
+    @application.exception_handler(BackupError)
+    async def system_integration_failed(_request: Request, error: Exception) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": str(error)})
 
     @application.get("/", include_in_schema=False)
@@ -234,6 +251,11 @@ def create_app(
     async def local_system_admin() -> FileResponse:
         tap_service.require_admin_user_id()
         return FileResponse(WEB_ROOT / "system.html")
+
+    @application.get("/system/power", include_in_schema=False)
+    async def local_system_power() -> FileResponse:
+        tap_service.require_admin_user_id()
+        return FileResponse(WEB_ROOT / "power.html")
 
     conflict_response = {409: {"model": ErrorResponse, "description": "Domain conflict"}}
 
@@ -368,6 +390,10 @@ def create_app(
     async def tap_status() -> dict[str, object]:
         return tap_service.status_dict()
 
+    @application.get("/api/tap/readiness", response_model=TapReadinessResponse)
+    async def tap_readiness() -> dict[str, object]:
+        return tap_service.readiness()
+
     @application.get("/api/session/status", response_model=SessionStatusResponse)
     async def session_status() -> dict[str, object]:
         status = tap_service.status_dict()
@@ -385,6 +411,13 @@ def create_app(
             "session_timeout_seconds": resolved_kiosk_settings.session_timeout_seconds,
             "manual_press_debounce_ms": resolved_kiosk_settings.manual_press_debounce_ms,
             "manual_maximum_pour_seconds": (resolved_kiosk_settings.manual_maximum_pour_seconds),
+            "first_pulse_timeout_seconds": (resolved_kiosk_settings.first_pulse_timeout_seconds),
+            "between_pulses_timeout_seconds": (
+                resolved_kiosk_settings.between_pulses_timeout_seconds
+            ),
+            "controller_watchdog_timeout_seconds": (
+                resolved_kiosk_settings.controller_watchdog_timeout_seconds
+            ),
             "debug_flow_watchdog_disabled": (resolved_kiosk_settings.debug_disable_flow_watchdog),
             "admin_session_timeout_seconds": (
                 resolved_kiosk_settings.admin_session_timeout_seconds
@@ -443,6 +476,43 @@ def create_app(
         request: WifiModeRequest,
     ) -> dict[str, str | bool | None]:
         return admin_service.switch_wifi_mode(request.mode)
+
+    @application.get(
+        "/api/admin/system/status",
+        response_model=SystemStatusResponse,
+        responses=admin_responses,
+    )
+    def local_system_status() -> dict[str, str | int | bool | None]:
+        return {
+            **admin_service.system_status(),
+            "version": __version__,
+            "build": BUILD_INFO.display_version,
+            "revision": BUILD_INFO.revision,
+        }
+
+    @application.post(
+        "/api/admin/system/reboot",
+        response_model=SystemPowerActionResponse,
+        status_code=202,
+        responses={
+            **admin_responses,
+            503: {"model": ErrorResponse, "description": "System control unavailable"},
+        },
+    )
+    def reboot_local_system() -> dict[str, str]:
+        return admin_service.request_system_power("reboot")
+
+    @application.post(
+        "/api/admin/system/shutdown",
+        response_model=SystemPowerActionResponse,
+        status_code=202,
+        responses={
+            **admin_responses,
+            503: {"model": ErrorResponse, "description": "System control unavailable"},
+        },
+    )
+    def shutdown_local_system() -> dict[str, str]:
+        return admin_service.request_system_power("poweroff")
 
     @application.get(
         "/api/admin/users",
@@ -649,6 +719,35 @@ def create_app(
     async def list_web_admin_kegs(request: Request) -> list[dict[str, Any]]:
         identity = require_web_admin(request)
         return admin_service.list_kegs(admin_user_id=identity.user_id)
+
+    @application.get(
+        "/api/web-admin/backups/status",
+        response_model=BackupStatusResponse,
+        responses=web_admin_responses,
+    )
+    async def web_admin_backup_status(request: Request) -> dict[str, Any]:
+        require_web_admin(request)
+        return resolved_backup_service.status().as_dict()
+
+    @application.get(
+        "/api/web-admin/backups/latest.csv.zip",
+        response_class=FileResponse,
+        responses={
+            **web_admin_responses,
+            200: {
+                "description": "Latest privacy-reduced CSV backup package",
+                "content": {"application/zip": {}},
+            },
+        },
+    )
+    async def download_latest_web_admin_backup(request: Request) -> FileResponse:
+        require_web_admin(request)
+        archive = resolved_backup_service.latest_csv_archive()
+        return FileResponse(
+            archive,
+            media_type="application/zip",
+            filename=archive.name,
+        )
 
     @application.post(
         "/api/web-admin/kegs/switch",
@@ -1119,7 +1218,7 @@ def create_app(
         response_model=ConsumptionResponse,
         responses=conflict_response,
     )
-    async def current_consumption() -> dict[str, int]:
+    async def current_consumption() -> dict[str, int | None]:
         return tap_service.current_consumption()
 
     @application.get(

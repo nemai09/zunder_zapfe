@@ -123,3 +123,60 @@ def test_pi_verification_isolates_tests_from_production_database() -> None:
 
     assert "env -u ZUNDER_ZAPFE_DATABASE_URL" in verification
     assert pytest_position < environment_position
+
+
+def test_rtc_service_runs_before_web_and_is_verified_on_target() -> None:
+    rtc_service = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-rtc.service.in").read_text(
+        encoding="utf-8"
+    )
+    web_service = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-web.service.in").read_text(
+        encoding="utf-8"
+    )
+    installer = (PROJECT_ROOT / "scripts" / "install-pi.sh").read_text(encoding="utf-8")
+    verification = (PROJECT_ROOT / "scripts" / "pi-verify.sh").read_text(encoding="utf-8")
+
+    assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-rtc load" in rtc_service
+    assert "Before=zunder-zapfe-web.service" in rtc_service
+    assert "ConditionPathExists=/var/lib/zunder-zapfe/rtc-initialized" in rtc_service
+    assert "CapabilityBoundingSet=CAP_SYS_TIME CAP_DAC_READ_SEARCH" in rtc_service
+    assert "DeviceAllow=/dev/rtc0 rw" in rtc_service
+    assert "Wants=zunder-zapfe-rtc.service" in web_service
+    assert "After=local-fs.target zunder-zapfe-rtc.service" in web_service
+    assert "dtoverlay=i2c-rtc,ds3231" in installer
+    assert "util-linux-extra" in installer
+    assert "systemctl enable zunder-zapfe-rtc.service" in installer
+    assert "/usr/local/sbin/zunder-zapfe-rtc" in installer
+    assert "systemctl is-active --quiet zunder-zapfe-rtc.service" in verification
+    assert "rtc-ds1307" in verification
+    assert "0068" in verification
+
+
+def test_kiosk_does_not_open_the_desktop_keyring_during_autologin() -> None:
+    launcher = (PROJECT_ROOT / "deploy" / "kiosk" / "zunder-zapfe-kiosk").read_text(
+        encoding="utf-8"
+    )
+
+    assert "--password-store=basic" in launcher
+    assert "while true; do" in launcher
+    assert "sleep 2" in launcher
+
+
+def test_backup_timer_is_installed_and_verified_without_blocking_the_web_service() -> None:
+    timer = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-backup.timer").read_text(
+        encoding="utf-8"
+    )
+    service = (PROJECT_ROOT / "deploy" / "systemd" / "zunder-zapfe-backup.service.in").read_text(
+        encoding="utf-8"
+    )
+    installer = (PROJECT_ROOT / "scripts" / "install-pi.sh").read_text(encoding="utf-8")
+    verification = (PROJECT_ROOT / "scripts" / "pi-verify.sh").read_text(encoding="utf-8")
+
+    assert "OnUnitActiveSec=30min" in timer
+    assert "Persistent=true" in timer
+    assert "ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-backup" in service
+    assert "ReadWritePaths=/var/lib/zunder-zapfe" in service
+    assert "ProtectHome=read-only" in service
+    assert "ProtectHome=true" not in service
+    assert "systemctl enable --now zunder-zapfe-backup.timer" in installer
+    assert "if ! systemctl start zunder-zapfe-backup.service" in installer
+    assert "systemctl is-active --quiet zunder-zapfe-backup.timer" in verification

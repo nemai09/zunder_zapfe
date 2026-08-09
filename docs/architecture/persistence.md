@@ -92,5 +92,10 @@ bewusste Fehlerbehandlung.
 Die Impulsumrechnung und der vollstaendige Komponentenfluss sind unter
 [`backend-core-integration.md`](backend-core-integration.md) beschrieben.
 
-Backup, Export, Wiederherstellung und die verbindliche Offline-Zeitbasis bleiben
-gemaess `OD-007` beziehungsweise `OD-008` offene Folgeschritte.
+Der unabhängige systemd-Timer erzeugt alle 30 Minuten über die SQLite-Online-
+Backup-API eine konsistente, integritätsgeprüfte Kopie sowie CSV-Snapshots der
+Buchungen und Abrechnung. Der genaue Betriebsvertrag steht unter
+[`../operations/database-backup.md`](../operations/database-backup.md). Die
+verbindliche Offline-Zeitbasis ist durch `ZZ-TIM-001` als
+DS3231 festgelegt; ihr Start- und Betriebsvertrag steht unter
+[`../operations/ds3231-rtc.md`](../operations/ds3231-rtc.md).

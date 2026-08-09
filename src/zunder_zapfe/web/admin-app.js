@@ -9,6 +9,7 @@ const model = {
   bookings: [],
   statistics: null,
   participantReport: null,
+  backupStatus: null,
   diagnosticTap: null,
   auditEntries: [],
   technicalEvents: [],
@@ -92,6 +93,8 @@ const elements = {
   participantReportTotal: document.querySelector("#participant-report-total"),
   participantBeverageList: document.querySelector("#participant-beverage-list"),
   downloadParticipantReport: document.querySelector("#download-participant-report"),
+  backupStatus: document.querySelector("#backup-status"),
+  downloadBackup: document.querySelector("#download-backup"),
   bookingFilterForm: document.querySelector("#booking-filter-form"),
   bookingUserFilter: document.querySelector("#booking-user-filter"),
   bookingKegFilter: document.querySelector("#booking-keg-filter"),
@@ -662,6 +665,11 @@ function dateFilterValue(input) {
 }
 
 async function loadReporting() {
+  try {
+    model.backupStatus = await api("/api/web-admin/backups/status");
+  } catch (error) {
+    model.backupStatus = { state: "error", detail: error.message };
+  }
   const eventId = Number(elements.reportEvent.value);
   if (!eventId) {
     model.statistics = null;
@@ -731,6 +739,17 @@ function compactJson(value) {
 }
 
 function renderReporting() {
+  const backup = model.backupStatus;
+  const backupLabels = {
+    missing: "Noch keine automatische Sicherung vorhanden.",
+    overdue: "Letzte Sicherung ist überfällig.",
+    error: "Letzter Sicherungsversuch ist fehlgeschlagen.",
+  };
+  elements.backupStatus.textContent = backup?.state === "ok"
+    ? `${backup.booking_count} Rohbuchungen gesichert · ${formatDateTime(backup.last_success_at)}`
+    : backup?.detail || backupLabels[backup?.state] || "Sicherungsstatus nicht verfügbar.";
+  elements.downloadBackup.disabled = !backup?.csv_archive_file;
+
   const statistics = model.statistics;
   elements.reportBookingCount.textContent = statistics
     ? String(statistics.booking_count)
@@ -1169,6 +1188,37 @@ async function downloadParticipantReport() {
   }
 }
 
+async function downloadLatestBackup() {
+  try {
+    const response = await fetch("/api/web-admin/backups/latest.csv.zip", {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      if (response.status === 401) showLogin();
+      let detail = `HTTP ${response.status}`;
+      try {
+        detail = (await response.json()).detail || detail;
+      } catch (_error) {
+        // HTTP status remains useful when no JSON error body exists.
+      }
+      throw new Error(detail);
+    }
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const filenameMatch = disposition.match(/filename="([^"]+)"/);
+    const filename = filenameMatch?.[1] || "zunder-zapfe-csv-sicherung.zip";
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 async function resetSafetyLock() {
   if (elements.safetyResetButton.disabled) return;
   if (!window.confirm("Fehlersperre wirklich zurücksetzen?")) return;
@@ -1247,6 +1297,7 @@ elements.bookingFilterForm.addEventListener("submit", (event) => {
 });
 document.querySelector("#refresh-reporting-button").addEventListener("click", loadReporting);
 elements.downloadParticipantReport.addEventListener("click", downloadParticipantReport);
+elements.downloadBackup.addEventListener("click", downloadLatestBackup);
 document.querySelector("#refresh-diagnostics-button").addEventListener("click", loadDiagnostics);
 elements.safetyResetButton.addEventListener("click", resetSafetyLock);
 document.querySelector("#capture-card-button").addEventListener("click", beginCapture);

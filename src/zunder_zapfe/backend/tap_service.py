@@ -108,6 +108,7 @@ class TapService:
         self._background_thread: threading.Thread | None = None
         self._authenticated_user: AuthenticatedUser | None = None
         self._login_session_id: str | None = None
+        self._session_measured_volume_ml = 0
         self._pending_booking: _PendingBooking | None = None
         self._last_presented_uid: str | None = None
         self._nfc_login_suppressed_until_removal = False
@@ -154,6 +155,7 @@ class TapService:
             self._controller.shutdown()
             self._authenticated_user = None
             self._login_session_id = None
+            self._session_measured_volume_ml = 0
             self._pending_booking = None
 
     def authenticate_card(self, uid: str) -> bool:
@@ -183,6 +185,7 @@ class TapService:
             if accepted:
                 self._authenticated_user = authenticated
                 self._login_session_id = uuid4().hex
+                self._session_measured_volume_ml = 0
                 self._persistence_error = None
             return accepted
 
@@ -223,6 +226,7 @@ class TapService:
         with self._mutex:
             self._authenticated_user = None
             self._login_session_id = None
+            self._session_measured_volume_ml = 0
 
     def enter_admin_mode(self, timeout_seconds: float) -> dict[str, Any]:
         user = self._require_authenticated_user()
@@ -244,6 +248,7 @@ class TapService:
         with self._mutex:
             self._authenticated_user = None
             self._login_session_id = None
+            self._session_measured_volume_ml = 0
             self._last_presented_uid = None
             self._nfc_login_suppressed_until_removal = False
             self._clear_nfc_feedback()
@@ -404,6 +409,18 @@ class TapService:
             pending = self._pending_booking
             nfc_feedback = self._active_nfc_feedback()
             registration_welcome = self._active_registration_welcome()
+            measured_volume_ml = self._calibration.measured_volume_ml(
+                int(status["measured_pulses"])
+            )
+            session_measured_volume_ml = 0
+            if (
+                user is not None
+                and self._login_session_id is not None
+                and status["user_id"] == str(user.id)
+            ):
+                session_measured_volume_ml = self._session_measured_volume_ml
+                if status["state"] != TapState.MAINTENANCE_POURING:
+                    session_measured_volume_ml += measured_volume_ml
             status.update(
                 {
                     "user_display_name": user.display_name if user else None,
@@ -412,13 +429,71 @@ class TapService:
                     "last_booking": self._last_booking,
                     "nfc_feedback": nfc_feedback,
                     "registration_welcome": registration_welcome,
-                    "measured_volume_ml": self._calibration.measured_volume_ml(
-                        int(status["measured_pulses"])
-                    ),
+                    "measured_volume_ml": measured_volume_ml,
+                    "session_measured_volume_ml": session_measured_volume_ml,
                     "target_volume_ml": pending.target_volume_ml if pending else None,
                 }
             )
         return status
+
+    def readiness(self) -> dict[str, object]:
+        """Report whether the installed system can accept a normal tap login."""
+        status = self._controller.snapshot()
+        if status.state in {TapState.FAULT_LOCKED, TapState.EMERGENCY_STOP}:
+            return {
+                "ready": False,
+                "code": "safety_locked",
+                "message": status.safety_reason or "Zapfsteuerung ist verriegelt",
+            }
+        if status.state in {TapState.STARTING, TapState.STOPPED}:
+            return {
+                "ready": False,
+                "code": "controller_unavailable",
+                "message": "Zapfsteuerung ist nicht gestartet",
+            }
+        if status.state is TapState.NFC_CAPTURE:
+            return {
+                "ready": False,
+                "code": "nfc_capture",
+                "message": "Armbandzuordnung läuft",
+            }
+
+        hardware = self._hardware.snapshot()
+        if not bool(hardware["valve"]["available"]):
+            return {
+                "ready": False,
+                "code": "valve_unavailable",
+                "message": "Ventilsteuerung ist nicht bereit",
+            }
+        if not bool(hardware["flow_meter"]["available"]):
+            return {
+                "ready": False,
+                "code": "flow_meter_unavailable",
+                "message": "Durchflussmessung ist nicht bereit",
+            }
+        if hardware["nfc"]["state"] not in {"ready", "card"}:
+            return {
+                "ready": False,
+                "code": "nfc_unavailable",
+                "message": "NFC-Leser ist nicht bereit",
+            }
+
+        try:
+            with self._sessions() as session:
+                context = Repository(session).active_tap_context()
+        except Exception:
+            return {
+                "ready": False,
+                "code": "database_unavailable",
+                "message": "Datenbank ist nicht bereit",
+            }
+        if context is None:
+            return {
+                "ready": False,
+                "code": "no_active_keg",
+                "message": "Kein Fass aktiv",
+            }
+        return {"ready": True, "code": "ready", "message": "Bereit zum Zapfen"}
 
     def _set_nfc_feedback(self, feedback: str) -> None:
         with self._mutex:
@@ -467,7 +542,7 @@ class TapService:
             "special_portion_ml": special,
         }
 
-    def current_consumption(self) -> dict[str, int]:
+    def current_consumption(self) -> dict[str, int | None]:
         user = self._require_authenticated_user()
         with self._sessions() as session:
             repository = Repository(session)
@@ -496,11 +571,6 @@ class TapService:
             with self._sessions() as session:
                 repository = Repository(session)
                 context = self._require_active_context(repository)
-                remaining_volume_ml = repository.remaining_keg_volume_ml(context.keg_id)
-                if remaining_volume_ml <= 0:
-                    raise TapUnavailable("The active keg has no calculated remaining volume")
-                if target_volume_ml is not None and target_volume_ml > remaining_volume_ml:
-                    raise TapUnavailable("Target volume exceeds calculated keg stock")
             pending = _PendingBooking(
                 event_id=context.event_id,
                 user_id=user.id,
@@ -565,6 +635,8 @@ class TapService:
                 return
 
             self._last_booking = booking_snapshot
+            if record.chargeable:
+                self._session_measured_volume_ml += measured_volume_ml
             self._persistence_error = None
             self._pending_booking = None
 
@@ -575,6 +647,7 @@ class TapService:
             if user is None or status.user_id != str(user.id):
                 self._authenticated_user = None
                 self._login_session_id = None
+                self._session_measured_volume_ml = 0
                 raise TapUnavailable("No active authenticated user")
             return user
 
@@ -590,6 +663,7 @@ class TapService:
             if controller_user_id is None:
                 self._authenticated_user = None
                 self._login_session_id = None
+                self._session_measured_volume_ml = 0
 
     def _observe_state(self, state: TapState, reason: str | None) -> None:
         with self._mutex:

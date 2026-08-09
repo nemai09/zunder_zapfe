@@ -5,12 +5,16 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
+from math import isfinite
 
 DEFAULT_STANDARD_PORTIONS_ML = (300, 500)
 DEFAULT_SESSION_TIMEOUT_SECONDS = 15
 DEFAULT_ADMIN_SESSION_TIMEOUT_SECONDS = 30
 DEFAULT_MANUAL_PRESS_DEBOUNCE_MS = 120
 DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS = 30
+DEFAULT_FIRST_PULSE_TIMEOUT_SECONDS = 5.0
+DEFAULT_BETWEEN_PULSES_TIMEOUT_SECONDS = 3.0
+DEFAULT_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS = 5.0
 DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG = False
 
 
@@ -21,6 +25,9 @@ class KioskSettings:
     admin_session_timeout_seconds: int = DEFAULT_ADMIN_SESSION_TIMEOUT_SECONDS
     manual_press_debounce_ms: int = DEFAULT_MANUAL_PRESS_DEBOUNCE_MS
     manual_maximum_pour_seconds: int = DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS
+    first_pulse_timeout_seconds: float = DEFAULT_FIRST_PULSE_TIMEOUT_SECONDS
+    between_pulses_timeout_seconds: float = DEFAULT_BETWEEN_PULSES_TIMEOUT_SECONDS
+    controller_watchdog_timeout_seconds: float = DEFAULT_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS
     debug_disable_flow_watchdog: bool = DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG
 
     def __post_init__(self) -> None:
@@ -38,6 +45,18 @@ class KioskSettings:
             raise ValueError("Manual press debounce must not be negative")
         if self.manual_maximum_pour_seconds <= 0:
             raise ValueError("Manual maximum pour time must be greater than zero")
+        if not isfinite(self.first_pulse_timeout_seconds) or self.first_pulse_timeout_seconds <= 0:
+            raise ValueError("First pulse timeout must be greater than zero")
+        if (
+            not isfinite(self.between_pulses_timeout_seconds)
+            or self.between_pulses_timeout_seconds <= 0
+        ):
+            raise ValueError("Between-pulses timeout must be greater than zero")
+        if (
+            not isfinite(self.controller_watchdog_timeout_seconds)
+            or self.controller_watchdog_timeout_seconds <= 0
+        ):
+            raise ValueError("Controller watchdog timeout must be greater than zero")
 
 
 def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSettings:
@@ -72,8 +91,26 @@ def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSe
                 str(DEFAULT_MANUAL_MAXIMUM_POUR_SECONDS),
             )
         )
+        first_pulse_timeout_seconds = float(
+            values.get(
+                "ZUNDER_ZAPFE_FIRST_PULSE_TIMEOUT_SECONDS",
+                str(DEFAULT_FIRST_PULSE_TIMEOUT_SECONDS),
+            )
+        )
+        between_pulses_timeout_seconds = float(
+            values.get(
+                "ZUNDER_ZAPFE_BETWEEN_PULSES_TIMEOUT_SECONDS",
+                str(DEFAULT_BETWEEN_PULSES_TIMEOUT_SECONDS),
+            )
+        )
+        controller_watchdog_timeout_seconds = float(
+            values.get(
+                "ZUNDER_ZAPFE_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS",
+                str(DEFAULT_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS),
+            )
+        )
     except ValueError as error:
-        raise ValueError("Kiosk configuration must contain integer values") from error
+        raise ValueError("Kiosk configuration must contain valid numeric values") from error
     raw_debug_disable_flow_watchdog = values.get(
         "ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG",
         "1" if DEFAULT_DEBUG_DISABLE_FLOW_WATCHDOG else "0",
@@ -86,5 +123,8 @@ def load_kiosk_settings(environment: Mapping[str, str] | None = None) -> KioskSe
         admin_session_timeout_seconds=admin_timeout,
         manual_press_debounce_ms=manual_press_debounce_ms,
         manual_maximum_pour_seconds=manual_maximum_pour_seconds,
+        first_pulse_timeout_seconds=first_pulse_timeout_seconds,
+        between_pulses_timeout_seconds=between_pulses_timeout_seconds,
+        controller_watchdog_timeout_seconds=controller_watchdog_timeout_seconds,
         debug_disable_flow_watchdog=raw_debug_disable_flow_watchdog == "1",
     )

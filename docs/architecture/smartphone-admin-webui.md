@@ -173,8 +173,10 @@ werden nicht angeboten. Der Teilnehmerauszug fasst ausschließlich
 kostenpflichtige Rohbuchungen einer Veranstaltung je Teilnehmer und Getränk
 zusammen. Er enthält stabile IDs, Namen, Anzahl der Anmeldesitzungen, Menge in
 Millilitern und Betrag in Cent. Die Alpha-WebUI liefert ihn zusätzlich als
-semikolongetrennte UTF-8-CSV-Datei mit BOM. Storno, Korrektur sowie allgemeines
-Backup und Wiederherstellung bleiben außerhalb dieses Umfangs.
+semikolongetrennte UTF-8-CSV-Datei mit BOM. Seit `M8.9` zeigt derselbe Bereich
+den Zustand der automatischen Datensicherung und bietet das letzte NFC- und
+passwortfreie CSV-Sicherungspaket zum Download an. Storno und Korrektur bleiben
+außerhalb dieses Umfangs.
 
 ### Spätere hardwareabhängige Einstellungen (`M8` und `M9`)
 

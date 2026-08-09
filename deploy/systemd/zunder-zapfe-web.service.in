@@ -1,6 +1,7 @@
 [Unit]
 Description=Zunder Zapfe local web application
-After=local-fs.target
+Wants=zunder-zapfe-rtc.service
+After=local-fs.target zunder-zapfe-rtc.service
 
 [Service]
 Type=simple

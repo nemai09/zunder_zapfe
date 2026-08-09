@@ -7,17 +7,19 @@ WEB_ROOT = PROJECT_ROOT / "src" / "zunder_zapfe" / "web"
 def test_zz_ui_001_kiosk_assets_are_offline_and_packaged_locally() -> None:
     html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
 
-    assert 'href="/static/styles.css?v=0.4.0-alpha.1"' in html
-    assert 'src="/static/app.js?v=0.4.0-alpha.1"' in html
+    assert 'href="/static/styles.css?v=0.4.0-beta.1"' in html
+    assert 'src="/static/app.js?v=0.4.0-beta.1"' in html
     assert "https://" not in html
     assert "http://" not in html
+    assert '<a class="brand"' not in html
 
 
-def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
+def test_zz_ui_004_011_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
 
     for route in (
         "/api/tap/options",
+        "/api/tap/readiness",
         "/api/tap/manual/start",
         "/api/tap/manual/stop",
         "/api/tap/heartbeat",
@@ -45,15 +47,20 @@ def test_zz_ui_004_and_nfr_005_kiosk_exposes_manual_touch_flow() -> None:
     assert "session_timeout_seconds" in script
     assert "WIFI_REFRESH_MS = 30000" in script
     assert "NFC_REFRESH_MS = 2000" in script
+    assert "READINESS_REFRESH_MS = 2000" in script
     assert "CONTEXT_REFRESH_MS = 15000" in script
     assert "HEALTH_REFRESH_MS = 30000" in script
     assert "renderIfChanged()" in script
     assert "window.setTimeout(refreshLoop, STATUS_REFRESH_MS)" in script
     assert "window.setInterval(refresh" not in script
-    assert 'id="valve-status"' in html
+    assert 'id="valve-status"' not in html
     assert 'id="wifi-status"' in html
+    assert 'id="connection"' in html
+    assert 'id="idle-eyebrow"' in html
+    assert 'id="idle-title-primary"' in html
+    assert 'id="idle-lead"' in html
     assert "valve_open" in script
-    assert "DEBUG · Ventil" in script
+    assert "DEBUG · Ventil" not in script
     assert 'id="portion-grid"' not in html
     assert 'id="top-up-button"' not in html
     assert "border: 1px solid var(--line)" not in styles_for_rule(
@@ -76,6 +83,24 @@ def test_kiosk_does_not_render_nfc_uid() -> None:
     assert "nfc.uid" not in script
 
 
+def test_zz_ui_012_kiosk_displays_accumulated_session_volume() -> None:
+    script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "model.tap?.session_measured_volume_ml ?? 0" in script
+
+
+def test_zz_ui_013_kiosk_displays_rank_instead_of_personal_amount() -> None:
+    html = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
+    script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "Dein Platz" in html
+    assert 'id="consumption-rank"' in html
+    assert "Dein Betrag" not in html
+    assert 'id="consumption-amount"' not in html
+    assert "model.consumption?.rank" in script
+    assert "model.consumption?.amount_cents" not in script
+
+
 def styles_for_rule(styles: str, selector: str) -> str:
     return styles.split(f"{selector} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
 
@@ -85,6 +110,8 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     script = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
     system_html = (WEB_ROOT / "system.html").read_text(encoding="utf-8")
     system_script = (WEB_ROOT / "system.js").read_text(encoding="utf-8")
+    power_html = (WEB_ROOT / "power.html").read_text(encoding="utf-8")
+    power_script = (WEB_ROOT / "power.js").read_text(encoding="utf-8")
 
     assert 'id="admin-button"' in html
     assert 'class="session-actions"' in html
@@ -102,6 +129,12 @@ def test_zz_ui_006_admin_mode_and_live_wristband_flow_are_packaged() -> None:
     assert 'api("/api/admin/session/enter"' in script
     assert "ZUNDER_ZAPFE" in system_html
     assert "/api/admin/wifi/mode" in system_script
+    assert 'href="/system/power"' in system_html
+    assert "Raspberry Pi neu starten" in power_html
+    assert "Raspberry Pi herunterfahren" in power_html
+    assert "/api/admin/system/status" in power_script
+    assert "/api/admin/system/reboot" in power_script
+    assert "/api/admin/system/shutdown" in power_script
     assert '"nfc_capture"' in script
     assert "Armband wird zugeordnet." in script
     assert 'data-screen="registration"' in html

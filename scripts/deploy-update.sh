@@ -47,7 +47,11 @@ if [[ ! -x "${repo_dir}/.venv/bin/python" ]] \
   || ! "${repo_dir}/.venv/bin/python" -c \
     "import alembic, fastapi, gpiozero, lgpio, pwdlib, smartcard, sqlalchemy, uvicorn" \
     >/dev/null 2>&1 \
-  || ! command -v pcsc_scan >/dev/null 2>&1; then
+  || ! command -v pcsc_scan >/dev/null 2>&1 \
+  || ! command -v hwclock >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-rtc >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-backup >/dev/null 2>&1 \
+  || ! command -v zunder-zapfe-system-power >/dev/null 2>&1; then
   needs_full_install=true
 elif [[ -z "${deployed_revision}" ]] \
   || ! git_as_owner cat-file -e "${deployed_revision}^{commit}" 2>/dev/null; then
@@ -56,6 +60,7 @@ elif [[ -z "${deployed_revision}" ]] \
 elif [[ "${deployed_revision}" != "${new_revision}" ]] && ! git_as_owner diff --quiet \
   "${deployed_revision}" "${new_revision}" -- \
   pyproject.toml scripts/install-pi.sh scripts/install-admin-wifi.sh scripts/wifi-mode.sh \
+  scripts/system-power.sh \
   deploy/systemd deploy/kiosk deploy/nginx deploy/polkit config/web.env.example; then
   needs_full_install=true
 fi
@@ -69,6 +74,14 @@ fi
 
 echo "Starte Webdienst mit dem neuen Stand neu"
 systemctl restart zunder-zapfe-web.service
+if [[ -f /run/zunder-zapfe-rtc-action-required ]]; then
+  if [[ -e /dev/rtc0 ]] && [[ ! -f /var/lib/zunder-zapfe/rtc-initialized ]]; then
+    echo "Deployment installiert. Jetzt sudo zunder-zapfe-rtc set ausfuehren."
+  else
+    echo "Deployment installiert. Jetzt neu starten und deploy-update.sh erneut ausfuehren."
+  fi
+  exit 0
+fi
 "${repo_dir}/scripts/pi-verify.sh"
 printf '%s\n' "${new_revision}" >"${deployed_revision_path}"
 chmod 0644 "${deployed_revision_path}"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Zunder Zapfe Datensicherung alle 30 Minuten
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=zunder-zapfe-backup.service
+
+[Install]
+WantedBy=timers.target

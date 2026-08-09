@@ -207,7 +207,7 @@ watch -n 0.5 'curl -s http://127.0.0.1:8000/api/tap/status'
 Erwartetes Ergebnis:
 
 - `BCM17` wird zunächst HIGH;
-- ohne ersten Impuls verriegelt die Steuerung nach ungefähr zwei Sekunden;
+- ohne ersten Impuls verriegelt die Steuerung nach ungefähr fünf Sekunden;
 - `BCM17` wird LOW und der ESP zeigt `Ventil-Steuersignal AUS`;
 - `/api/tap/status` meldet `fault_locked` sowie
   `safety_reason: "Kein Durchfluss erkannt"`;
@@ -215,8 +215,8 @@ Erwartetes Ergebnis:
 - ein Admin muss die Sperre bewusst über Diagnose zurücksetzen.
 
 Wird das Feedback erst während einer laufenden Zapfung ausgeschaltet, greift
-der aktuelle Entwicklungsgrenzwert für ausbleibende Folgeimpulse nach ungefähr
-einer Sekunde.
+der vorläufige Feldtestwert für ausbleibende Folgeimpulse nach ungefähr drei
+Sekunden.
 
 ## Abbruchbedingungen
 

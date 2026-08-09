@@ -1,7 +1,7 @@
 # Zu Zunder Zapfe beitragen
 
 Beiträge zu Software, Dokumentation und Hardwareentwürfen sind willkommen.
-Das Projekt befindet sich in der Alpha-Phase; klare Schnittstellen und sichere
+Das Projekt befindet sich in der Beta-Phase; klare Schnittstellen und sichere
 Fehlerzustände sind wichtiger als Rückwärtskompatibilität um jeden Preis.
 
 ## Vor einer Änderung

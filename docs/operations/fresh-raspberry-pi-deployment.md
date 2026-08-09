@@ -44,6 +44,7 @@ Benötigt werden:
 - Tastatur oder SSH-Zugang für die Einrichtung;
 - vorübergehender Internetzugang;
 - ACR122U-NFC-Leser für die vollständige Verifikation;
+- DS3231-Modul mit geeigneter Stützbatterie für die Offline-Zeitbasis;
 - mindestens ein NFC-Armband für den initialen Admin;
 - GitHub-Adminzugriff, um einen read-only Deploy-Key einzutragen;
 - gewünschter Deployment-Branch oder freigegebener Commit;
@@ -175,13 +176,14 @@ sudo ./scripts/install-pi.sh "$(whoami)"
 ```
 
 Das Skript installiert unter anderem Python-Werkzeuge, Chromium, PC/SC,
-`liblgpio`, NetworkManager und nginx. Anschließend richtet es ein:
+`liblgpio`, I2C-Werkzeuge, NetworkManager und nginx. Anschließend richtet es ein:
 
 - `.venv` im Checkout, im Besitz des Desktop-Benutzers;
 - `zunder-zapfe-web.service`;
 - Datenverzeichnis `/var/lib/zunder-zapfe`;
 - Laufzeitkonfiguration `/etc/zunder-zapfe/web.env`;
 - Chromium-Kioskstart über den labwc-Autostart;
+- DS3231-Device-Tree-Overlay und RTC-Startdienst vor der Zapfanwendung;
 - Werkzeuge für Admin-WLAN und WLAN-Moduswechsel.
 
 Kontrolle:
@@ -190,6 +192,8 @@ Kontrolle:
 systemctl status zunder-zapfe-web.service --no-pager
 curl --fail http://127.0.0.1:8000/api/health
 curl --fail http://127.0.0.1:8000/api/hardware/status
+systemctl status zunder-zapfe-rtc.service --no-pager
+sudo zunder-zapfe-rtc status
 ```
 
 Die Standardkonfiguration verwendet:
@@ -200,7 +204,18 @@ Durchfluss:   BCM27, fallende Flanke
 Impulse/L:    500, nur Demonstratorwert
 Simulation:   aus
 Flow-Watchdog: aktiv
+Offline-Zeit:  DS3231 auf /dev/rtc0, intern UTC
 ```
+
+Falls `/dev/rtc0` unmittelbar nach der ersten Installation noch fehlt, muss der
+Pi einmal neu gestartet werden. Die RTC wird anschließend gemäß
+[`ds3231-rtc.md`](ds3231-rtc.md) einmalig lokal gestellt.
+
+Ist `/dev/rtc0` vorhanden, aber noch nicht initialisiert, fordert der Installer
+stattdessen `sudo zunder-zapfe-rtc set` an. Dieser Befehl übernimmt die bereits
+korrekte Systemzeit, ohne NTP zu deaktivieren. Danach muss
+`deploy-update.sh` erneut ausgeführt werden, damit Startdienst und vollständige
+Zielsystemprüfung erfolgreich abschließen.
 
 Vor realer Ventilhardware kontrollieren:
 
@@ -354,13 +369,14 @@ sudo reboot
 Nach dem Neustart manuell prüfen:
 
 1. Der Benutzer `zapfe` wird automatisch grafisch angemeldet.
-2. Chromium startet ohne Browserrahmen im Kioskmodus.
-3. Der Kiosk erreicht den Bereitschaftszustand.
-4. Eine bekannte NFC-Karte wird erkannt.
-5. `ZUNDER_ZAPFE` ist erreichbar.
-6. Die Smartphone-Adminseite verlangt das persönliche Adminpasswort.
-7. Ventilstatus ist im Ruhezustand geschlossen.
-8. Bei ESP-HIL funktionieren Normalfluss und die verriegelte Abschaltung bei
+2. `zunder-zapfe-rtc.service` hat die Systemzeit aus der DS3231 geladen.
+3. Chromium startet ohne Browserrahmen im Kioskmodus.
+4. Der Kiosk erreicht den Bereitschaftszustand.
+5. Eine bekannte NFC-Karte wird erkannt.
+6. `ZUNDER_ZAPFE` ist erreichbar.
+7. Die Smartphone-Adminseite verlangt das persönliche Adminpasswort.
+8. Ventilstatus ist im Ruhezustand geschlossen.
+9. Bei ESP-HIL funktionieren Normalfluss und die verriegelte Abschaltung bei
    ausbleibenden Impulsen gemäß `gpio-hil-test.md`.
 
 Nützliche Diagnose:
@@ -393,6 +409,13 @@ Das Skript:
 - speichert den erfolgreich geprüften Commit unter
   `/var/lib/zunder-zapfe/deployed-revision`.
 
+Bei der erstmaligen DS3231-Einrichtung kann die neue Bootkonfiguration einen
+Neustart oder die einmalige Übernahme der Systemzeit mit
+`sudo zunder-zapfe-rtc set` erfordern. Das Skript meldet die notwendige Aktion,
+überspringt die noch nicht mögliche Zielsystemprüfung und muss danach erneut
+ausgeführt werden. Erst der erfolgreich geprüfte Folgelauf speichert die
+Revision.
+
 Vor einem Branchwechsel:
 
 ```bash
@@ -408,11 +431,14 @@ Ein detached Checkout ist für `deploy-update.sh` nicht geeignet.
 
 - produktiver Initial-Admin-Bootstrap fehlt; aktuell existiert nur der
   Demo-Seed für eine leere Datenbank;
-- Backup und Wiederherstellung sind noch nicht als verbindlicher Workflow
-  implementiert;
+- eine automatische Wiederherstellung ist nicht implementiert; die
+  30-Minuten-Sicherung und der Smartphone-CSV-Download sind unter
+  [`database-backup.md`](database-backup.md) beschrieben;
 - das Installationsskript installiert auch Entwicklungs- und
   Diagnoseabhängigkeiten;
 - ein Internet-unabhängiges Paketdeployment existiert noch nicht;
+- die zulässige DS3231-Abweichung über den einwöchigen Einsatz ist noch durch
+  einen mehrtägigen Zielsystemtest festzulegen;
 - der reale Not-Aus-Adapter und die elektrische Gesamtabnahme fehlen;
 - `500` Impulse pro Liter sowie Zeit- und Plausibilitätsgrenzen müssen mit
   realer Hardware kalibriert werden;
@@ -421,4 +447,5 @@ Ein detached Checkout ist für `deploy-update.sh` nicht geeignet.
 
 Traceability: `ZZ-SYS-001`, `ZZ-SYS-002`, `ZZ-AUT-002`, `ZZ-AUT-003`,
 `ZZ-AUT-006`, `ZZ-HW-002`, `ZZ-HW-003`, `ZZ-HW-004`, `ZZ-SAF-008`,
-`ZZ-SAF-009`, `ZZ-UI-002`, `ZZ-NET-001`, `ZZ-NET-002` und `ZZ-NFR-001`.
+`ZZ-SAF-009`, `ZZ-UI-002`, `ZZ-NET-001`, `ZZ-NET-002`, `ZZ-DAT-008` und
+`ZZ-NFR-001`.

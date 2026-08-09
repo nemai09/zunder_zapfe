@@ -15,7 +15,7 @@ bestanden sind.
 | 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
 | 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
 | 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Umsetzung |
-| 9 / PR 9 | Kalibrierung, Gesamttest und Alpha-Härtung | geplant |
+| 9 / PR 9 | Kalibrierung, Gesamttest und Beta-Felderprobung | geplant |
 
 `PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
 PR 6. Er erzeugt keinen neuen Meilenstein und verändert weder Produktversion
@@ -151,6 +151,11 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 | `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
 | `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
 | `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |
+| `M8.7 OPS` | DS3231 als verbindliche Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen |
+| `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren |
+| `M8.9 DB/OPS` | automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download aufs Smartphone |
+| `M8.10 FIX/OPS` | feldtaugliche Bereitschaftsanzeige, rein informativer Fassbestand, entspannte aktive Watchdogs, Chromium-Neustart und Einsatzübergabe |
+| `M8.11 FIX/OPS` | reparierter Backupdienststart und Kennzeichnung des integrierten Feldstands als `0.4.0-beta.1` |
 
 ### Abnahmekriterien
 
@@ -168,3 +173,11 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 
 Traceability: `ZZ-HW-002`, `ZZ-HW-004`, `ZZ-HW-005`, `ZZ-SAF-001`,
 `ZZ-SAF-004`, `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009` und `ZZ-MNT-002`.
+Die Offline-Zeitbasis aus `M8.7` referenziert zusätzlich `ZZ-TIM-001` und
+`ZZ-DAT-002` bis `ZZ-DAT-004`.
+Die lokale Systemsteuerung aus `M8.8` referenziert zusätzlich `ZZ-UI-010`,
+`ZZ-DAT-003` und `ZZ-SAF-009`.
+Die Datensicherung aus `M8.9` referenziert `ZZ-DAT-001`, `ZZ-DAT-002`,
+`ZZ-DAT-006`, `ZZ-DAT-008` und `ZZ-DAT-010`.
+Die Feldvorbereitung aus `M8.10` referenziert `ZZ-KEG-004`, `ZZ-SAF-004`,
+`ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009`, `ZZ-UI-002` und `ZZ-UI-011`.

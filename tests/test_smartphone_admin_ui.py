@@ -67,6 +67,9 @@ def test_reporting_wraps_audit_text_and_groups_login_bookings() -> None:
     assert 'id="top-ten-list"' in html
     assert 'id="participant-report-user"' in html
     assert 'id="download-participant-report"' in html
+    assert 'id="download-backup"' in html
+    assert "/api/web-admin/backups/status" in script
+    assert "/api/web-admin/backups/latest.csv.zip" in script
     assert "<details" in html
     assert 'data-view="diagnostics"' in html
     assert "white-space: pre-wrap" in styles

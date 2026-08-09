@@ -7,10 +7,18 @@ Endpunkt erreichbar ist, oeffnet Chromium automatisch die Testseite im
 Kioskmodus. Die Anwendung ist nur ueber Loopback erreichbar und benoetigt keine
 Internetverbindung zur Laufzeit.
 
+Der Launcher verwendet `--password-store=basic`, damit Desktop-Autologin nicht
+durch einen Dialog zum Entsperren des Linux-Schlüsselbunds blockiert wird. Im
+Kiosk dürfen deshalb keine Browserpasswörter gespeichert werden; persönliche
+Adminpasswörter werden weiterhin ausschließlich von der Anwendung geprüft.
+
+Nach einem unerwarteten Chromium-Ende wartet der Launcher zwei Sekunden und
+startet den Browser erneut. Das betrifft nur den Kioskprozess; der unabhängig
+durch systemd überwachte Webdienst läuft dabei weiter.
+
 Der aktuelle Alpha-Stand bindet den ACR122U-NFC-Leser ein und verbindet ihn mit
-Zapfzustandsautomat und SQLite-Persistenz. Ventil, Durchflussmesser und Not-Aus
-sind als Simulatoren im Hardware-Zwischenlayer vorhanden; ihre reale
-Ansteuerung fehlt noch.
+Zapfzustandsautomat und SQLite-Persistenz. Ventil und Durchflussmesser verwenden
+im Zielbetrieb die GPIO-Adapter; nur der Not-Aus ist noch simuliert.
 
 ## Voraussetzungen
 
@@ -109,7 +117,8 @@ sudo reboot
 
 Das Installationsskript:
 
-1. installiert `python3-venv`, Chromium, curl, NetworkManager, `iw` und nginx,
+1. installiert `python3-venv`, Chromium, curl, I2C-Werkzeuge, NetworkManager,
+   `iw` und nginx,
 2. erzeugt die virtuelle Python-Umgebung `.venv`,
 3. installiert Anwendung und Testabhaengigkeiten,
 4. konfiguriert den Webdienst fuer den angegebenen Desktop-Benutzer,
@@ -118,7 +127,10 @@ Das Installationsskript:
 7. ergaenzt den labwc-Autostart des Desktop-Benutzers,
 8. installiert das Werkzeug zur bewussten Ersteinrichtung des Admin-WLANs,
 9. installiert den begrenzten WLAN-Modushelfer und seine NetworkManager-
-   Berechtigung für das lokale Low-Level-Menü.
+   Berechtigung für das lokale Low-Level-Menü,
+10. installiert den auf Neustart und Ausschalten begrenzten Systemhelfer mit
+    seinen exakten Polkit-Berechtigungen,
+11. aktiviert die DS3231 und lädt deren UTC-Zeit vor dem Webdienst.
 
 Die produktive Laufzeitkonfiguration liegt unter
 `/etc/zunder-zapfe/web.env`. Ihre Vorlage ist `config/web.env.example`.
@@ -151,12 +163,15 @@ Das Skript prueft:
 - angeschlossenen und betriebsbereiten ACR122U.
 - nach bewusster Einrichtung den aktiven AP- oder Clientmodus und im AP-Modus
   den Admin-Webzugang.
+- installierten Systemhelfer, dessen Polkit-Regel und die ausgelieferte lokale
+  Systemseite, ohne dabei eine Energieaktion auszulösen.
 
 Nach einem Neustart muss zusaetzlich visuell geprueft werden:
 
 - Chromium erscheint ohne Browserrahmen,
 - die Seite zeigt "Zunder Zapfe",
-- der Backendstatus wechselt auf "Bereit",
+- der Bereitschaftsstatus meldet bei vollständigem Fass- und Hardwarekontext
+  "Bereit zum Zapfen",
 - keine externe Netzwerkverbindung ist fuer die Anzeige erforderlich.
 
 Der Testbericht soll die ausgegebene Commit-ID enthalten.
@@ -187,6 +202,16 @@ Health-Endpunkt:
 ```bash
 curl http://127.0.0.1:8000/api/health
 ```
+
+Offline-Zeitbasis:
+
+```bash
+systemctl status zunder-zapfe-rtc.service --no-pager
+sudo zunder-zapfe-rtc status
+```
+
+Verdrahtung, einmaliges Stellen und stromlose Abnahme beschreibt
+[`ds3231-rtc.md`](ds3231-rtc.md).
 
 ### Laufzeitlast prüfen
 
@@ -241,6 +266,20 @@ Lokaler WLAN-Moduswechsel:
 4. Über **Zurück zum Zapfen** den Adminmodus verlassen. Der
    WLAN-Statusindikator im Kiosk zeigt den erkannten Modus.
 
+Lokale Systemsteuerung:
+
+1. Im selben Low-Level-Menü **System** öffnen.
+2. **Raspberry Pi neu starten** oder **Raspberry Pi herunterfahren** wählen.
+3. Die Sicherheitsabfrage bewusst bestätigen. Nach Annahme zeigt der Kiosk
+   den laufenden Systemwechsel vollflächig an.
+4. Beim Herunterfahren warten, bis der Pi vollständig beendet ist, bevor die
+   Versorgung getrennt wird. Zum erneuten Start muss die Stromversorgung
+   eingeschaltet beziehungsweise kurz getrennt und wieder verbunden werden.
+
+Die Seite akzeptiert keine freien Kommandos und ist weder über das Admin-WLAN
+noch ohne aktive NFC-Adminsitzung erreichbar. Details und gezielte Prüfung
+stehen unter [`local-system-control.md`](local-system-control.md).
+
 Während der Zuordnung zeigt der Kiosk den gesperrten Zustand
 `nfc_capture`; das Ventil bleibt geschlossen. Erfolg, Abbruch oder das
 serverseitige Zeitlimit geben die Anlage wieder frei. Die finale
@@ -280,8 +319,10 @@ aus. Den letzten erfolgreich verifizierten Commit speichert es unter
 Neuinstallationen auch dann, wenn vor dem Aufruf bereits auf einen anderen
 Branch gewechselt wurde. Fehlende Laufzeitabhängigkeiten erzwingen ebenfalls
 eine vollständige Installation. Bei reinen Python-, HTML- oder CSS-Aenderungen
-wird nur der Dienst neu
-gestartet. Ein Neustart des Raspberry Pi ist nicht erforderlich.
+wird nur der Dienst neu gestartet. Normale Updates benötigen keinen Neustart.
+Bei der erstmaligen DS3231-Einrichtung kann das Skript ausdrücklich einen
+Neustart oder `sudo zunder-zapfe-rtc set` und anschließend einen zweiten Aufruf
+von `deploy-update.sh` verlangen. Das Stellen der RTC verändert NTP nicht.
 
 Der Kiosk erkennt einen geaenderten Git-Commit ueber den Health-Endpunkt und
 laedt die Seite automatisch neu. Deshalb sind fuer normale Updates weder ein

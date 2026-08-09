@@ -1,0 +1,17 @@
+[Unit]
+Description=Zunder Zapfe lokale Datensicherung
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=@@SERVICE_USER@@
+Group=@@SERVICE_USER@@
+Environment=ZUNDER_ZAPFE_DATABASE_URL=sqlite:////var/lib/zunder-zapfe/zunder-zapfe.db
+Environment=ZUNDER_ZAPFE_BACKUP_DIR=/var/lib/zunder-zapfe/backups
+EnvironmentFile=-/etc/zunder-zapfe/web.env
+ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-backup
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/zunder-zapfe

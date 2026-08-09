@@ -1115,6 +1115,99 @@
         "title": "AdminUserUpdateRequest",
         "type": "object"
       },
+      "BackupStatusResponse": {
+        "properties": {
+          "booking_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Count"
+          },
+          "csv_archive_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csv Archive File"
+          },
+          "database_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Database File"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "last_attempt_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attempt At"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "state": {
+            "enum": [
+              "missing",
+              "ok",
+              "overdue",
+              "error"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "last_attempt_at",
+          "last_success_at",
+          "booking_count",
+          "database_file",
+          "csv_archive_file",
+          "detail"
+        ],
+        "title": "BackupStatusResponse",
+        "type": "object"
+      },
       "BookingSummaryResponse": {
         "properties": {
           "amount_cents": {
@@ -1166,6 +1259,17 @@
             "title": "Measured Volume Ml",
             "type": "integer"
           },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
           "user_id": {
             "title": "User Id",
             "type": "integer"
@@ -1176,7 +1280,8 @@
           "user_id",
           "booking_count",
           "measured_volume_ml",
-          "amount_cents"
+          "amount_cents",
+          "rank"
         ],
         "title": "ConsumptionResponse",
         "type": "object"
@@ -1565,15 +1670,100 @@
         "title": "SessionStatusResponse",
         "type": "object"
       },
+      "SystemPowerActionResponse": {
+        "properties": {
+          "action": {
+            "enum": [
+              "reboot",
+              "poweroff"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "status": {
+            "const": "accepted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "status"
+        ],
+        "title": "SystemPowerActionResponse",
+        "type": "object"
+      },
+      "SystemStatusResponse": {
+        "properties": {
+          "build": {
+            "title": "Build",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "hostname": {
+            "title": "Hostname",
+            "type": "string"
+          },
+          "power_control_available": {
+            "title": "Power Control Available",
+            "type": "boolean"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "uptime_seconds": {
+            "title": "Uptime Seconds",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hostname",
+          "uptime_seconds",
+          "power_control_available",
+          "detail",
+          "version",
+          "build",
+          "revision"
+        ],
+        "title": "SystemStatusResponse",
+        "type": "object"
+      },
       "TapOptionsResponse": {
         "properties": {
           "admin_session_timeout_seconds": {
             "title": "Admin Session Timeout Seconds",
             "type": "integer"
           },
+          "between_pulses_timeout_seconds": {
+            "title": "Between Pulses Timeout Seconds",
+            "type": "number"
+          },
+          "controller_watchdog_timeout_seconds": {
+            "title": "Controller Watchdog Timeout Seconds",
+            "type": "number"
+          },
           "debug_flow_watchdog_disabled": {
             "title": "Debug Flow Watchdog Disabled",
             "type": "boolean"
+          },
+          "first_pulse_timeout_seconds": {
+            "title": "First Pulse Timeout Seconds",
+            "type": "number"
           },
           "manual_maximum_pour_seconds": {
             "title": "Manual Maximum Pour Seconds",
@@ -1612,10 +1802,47 @@
           "session_timeout_seconds",
           "manual_press_debounce_ms",
           "manual_maximum_pour_seconds",
+          "first_pulse_timeout_seconds",
+          "between_pulses_timeout_seconds",
+          "controller_watchdog_timeout_seconds",
           "debug_flow_watchdog_disabled",
           "admin_session_timeout_seconds"
         ],
         "title": "TapOptionsResponse",
+        "type": "object"
+      },
+      "TapReadinessResponse": {
+        "properties": {
+          "code": {
+            "enum": [
+              "ready",
+              "safety_locked",
+              "controller_unavailable",
+              "nfc_capture",
+              "valve_unavailable",
+              "flow_meter_unavailable",
+              "nfc_unavailable",
+              "database_unavailable",
+              "no_active_keg"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ready",
+          "code",
+          "message"
+        ],
+        "title": "TapReadinessResponse",
         "type": "object"
       },
       "TapStatusResponse": {
@@ -1685,6 +1912,10 @@
               }
             ],
             "title": "Safety Reason"
+          },
+          "session_measured_volume_ml": {
+            "title": "Session Measured Volume Ml",
+            "type": "integer"
           },
           "session_remaining_ms": {
             "anyOf": [
@@ -1780,6 +2011,7 @@
           "measured_pulses",
           "target_pulses",
           "measured_volume_ml",
+          "session_measured_volume_ml",
           "target_volume_ml",
           "top_up_remaining_ms",
           "session_remaining_ms",
@@ -2060,13 +2292,13 @@
     }
   },
   "info": {
-    "description": "Local alpha API for NFC authentication, safe tap control and SQLite bookings.",
+    "description": "Local beta API for NFC authentication, safe tap control and SQLite bookings.",
     "license": {
       "identifier": "GPL-3.0-or-later",
       "name": "GNU General Public License v3.0 or later"
     },
     "title": "Zunder Zapfe",
-    "version": "0.4.0-alpha.1"
+    "version": "0.4.0-beta.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2428,6 +2660,170 @@
           }
         },
         "summary": "Update Admin Settings"
+      }
+    },
+    "/api/admin/system/reboot": {
+      "post": {
+        "operationId": "reboot_local_system_api_admin_system_reboot_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPowerActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Active admin mode required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "System control unavailable"
+          }
+        },
+        "summary": "Reboot Local System"
+      }
+    },
+    "/api/admin/system/shutdown": {
+      "post": {
+        "operationId": "shutdown_local_system_api_admin_system_shutdown_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPowerActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Active admin mode required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "System control unavailable"
+          }
+        },
+        "summary": "Shutdown Local System"
+      }
+    },
+    "/api/admin/system/status": {
+      "get": {
+        "operationId": "local_system_status_api_admin_system_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Active admin mode required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Local System Status"
       }
     },
     "/api/admin/users": {
@@ -3294,6 +3690,24 @@
         "summary": "Abort Portion"
       }
     },
+    "/api/tap/readiness": {
+      "get": {
+        "operationId": "tap_readiness_api_tap_readiness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TapReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Tap Readiness"
+      }
+    },
     "/api/tap/safety/reset": {
       "post": {
         "operationId": "reset_safety_lock_api_tap_safety_reset_post",
@@ -3502,6 +3916,118 @@
           }
         },
         "summary": "List Web Admin Audit"
+      }
+    },
+    "/api/web-admin/backups/latest.csv.zip": {
+      "get": {
+        "operationId": "download_latest_web_admin_backup_api_web_admin_backups_latest_csv_zip_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {}
+            },
+            "description": "Latest privacy-reduced CSV backup package"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Download Latest Web Admin Backup"
+      }
+    },
+    "/api/web-admin/backups/status": {
+      "get": {
+        "operationId": "web_admin_backup_status_api_web_admin_backups_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Valid web admin session required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Admin authorization failed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Domain conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid value"
+          }
+        },
+        "summary": "Web Admin Backup Status"
       }
     },
     "/api/web-admin/beverages": {

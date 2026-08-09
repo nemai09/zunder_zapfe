@@ -8,6 +8,7 @@ const ACTIVE_POUR_STATES = new Set([
 ]);
 const STATUS_REFRESH_MS = 300;
 const NFC_REFRESH_MS = 2000;
+const READINESS_REFRESH_MS = 2000;
 const CONTEXT_REFRESH_MS = 15000;
 const HEALTH_REFRESH_MS = 30000;
 const WIFI_REFRESH_MS = 30000;
@@ -24,6 +25,7 @@ const clockFormatter = new Intl.DateTimeFormat("de-DE", {
 const model = {
   connected: false,
   tap: null,
+  readiness: null,
   nfc: null,
   options: null,
   consumption: null,
@@ -41,6 +43,7 @@ const model = {
   lastContextRefresh: 0,
   lastHealthRefresh: 0,
   lastNfcRefresh: 0,
+  lastReadinessRefresh: 0,
   lastWifiRefresh: 0,
   lastActivitySentAt: 0,
   lastRenderSignature: null,
@@ -60,12 +63,14 @@ const elements = {
   screens: [...document.querySelectorAll("[data-screen]")],
   connection: document.querySelector("#connection"),
   connectionLabel: document.querySelector("#connection-label"),
-  valveStatus: document.querySelector("#valve-status"),
-  valveLabel: document.querySelector("#valve-label"),
   wifiStatus: document.querySelector("#wifi-status"),
   wifiLabel: document.querySelector("#wifi-label"),
   readerStatus: document.querySelector("#reader-status"),
   readerLabel: document.querySelector("#reader-label"),
+  idleEyebrow: document.querySelector("#idle-eyebrow"),
+  idleTitlePrimary: document.querySelector("#idle-title-primary"),
+  idleTitleAccent: document.querySelector("#idle-title-accent"),
+  idleLead: document.querySelector("#idle-lead"),
   buildVersion: document.querySelector("#build-version"),
   registrationName: document.querySelector("#registration-name"),
   clock: document.querySelector("#clock"),
@@ -79,7 +84,7 @@ const elements = {
   beverageName: document.querySelector("#beverage-name"),
   beverageDetail: document.querySelector("#beverage-detail"),
   consumptionVolume: document.querySelector("#consumption-volume"),
-  consumptionAmount: document.querySelector("#consumption-amount"),
+  consumptionRank: document.querySelector("#consumption-rank"),
   manualButton: document.querySelector("#manual-button"),
   manualVolume: document.querySelector("#manual-volume"),
   manualLabel: document.querySelector("#manual-label"),
@@ -170,6 +175,10 @@ function formatMoney(amountCents) {
   return moneyFormatter.format(amountCents / 100);
 }
 
+function formatRank(rank) {
+  return Number.isInteger(rank) && rank > 0 ? `#${rank}` : "–";
+}
+
 function renderSessionTimeout() {
   const sessionRemainingMs = model.tap?.session_remaining_ms;
   const sessionTimeoutSeconds = model.tap?.state === "admin"
@@ -199,6 +208,7 @@ function renderSignature() {
   return JSON.stringify({
     connected: model.connected,
     tap,
+    readiness: model.readiness,
     nfc: model.nfc,
     options: model.options,
     consumption: model.consumption,
@@ -217,15 +227,18 @@ function renderIfChanged() {
 
 function render() {
   setScreen(currentScreen());
-  elements.connection.className = `connection ${model.connected ? "is-online" : "is-offline"}`;
-  elements.connectionLabel.textContent = model.connected ? "Steuerung bereit" : "Keine Verbindung";
+  const operationalReady = model.connected && Boolean(model.readiness?.ready);
+  elements.connection.className = `connection ${
+    !model.connected ? "is-offline" : operationalReady ? "is-online" : "is-warning"
+  }`;
+  elements.connectionLabel.textContent = !model.connected
+    ? "Keine Verbindung"
+    : operationalReady
+      ? "Steuerung bereit"
+      : model.readiness
+        ? "Nicht zapfbereit"
+        : "Zapfbereitschaft wird geprüft";
   const valveOpen = Boolean(model.tap?.valve_open);
-  elements.valveStatus.classList.toggle("is-open", valveOpen);
-  elements.valveStatus.classList.toggle(
-    "flow-debug",
-    Boolean(model.options?.debug_flow_watchdog_disabled),
-  );
-  elements.valveLabel.textContent = `DEBUG · Ventil ${valveOpen ? "EIN" : "AUS"}`;
   elements.wifiStatus.classList.remove("is-ap", "is-client", "is-error");
   const wifiLabels = {
     ap: "WLAN · AP",
@@ -266,13 +279,25 @@ function render() {
     elements.readerLabel.textContent = "Karte gesperrt";
   }
 
+  const readinessKnown = Boolean(model.readiness);
+  elements.idleEyebrow.textContent = !readinessKnown
+    ? "Systemprüfung"
+    : operationalReady
+      ? "Bereit zum Zapfen"
+      : "Nicht zapfbereit";
+  elements.idleTitlePrimary.textContent = operationalReady ? "Karte auflegen." : "Noch nicht";
+  elements.idleTitleAccent.textContent = operationalReady ? "Bier genießen." : "zapfbereit.";
+  elements.idleLead.textContent = operationalReady
+    ? "Halte deine NFC-Karte kurz an den Leser."
+    : model.readiness?.message || "Die Zapfbereitschaft wird geprüft.";
+
   elements.userName.textContent = model.tap?.user_display_name || "Zapfer";
   elements.beverageName.textContent = model.keg?.beverage_name || "Kein aktives Getränk";
   elements.beverageDetail.textContent = model.keg
     ? `${formatMoney(model.keg.price_per_liter_cents)} / Liter · ${formatVolume(model.keg.remaining_volume_ml)} im Fass`
     : "Fassdaten sind noch nicht verfügbar.";
   elements.consumptionVolume.textContent = formatVolume(model.consumption?.measured_volume_ml);
-  elements.consumptionAmount.textContent = formatMoney(model.consumption?.amount_cents);
+  elements.consumptionRank.textContent = formatRank(model.consumption?.rank);
 
   const manualPouring = model.tap?.state === "manual_pouring";
   const holding = manualPouring || model.manualHeld;
@@ -281,7 +306,7 @@ function render() {
     !manualPouring &&
     model.tap?.last_booking?.kind === "manual" &&
     model.tap?.last_booking?.completion === "limit_reached";
-  elements.manualVolume.textContent = String(model.tap?.measured_volume_ml || 0);
+  elements.manualVolume.textContent = String(model.tap?.session_measured_volume_ml ?? 0);
   elements.manualLabel.textContent = limitReachedWhileHeld
     ? "Zeitlimit erreicht"
     : manualPouring
@@ -372,6 +397,12 @@ async function refresh() {
     ) {
       requests.push(api("/api/nfc/status"));
     }
+    if (
+      (!model.tap || model.tap.state === "idle")
+      && (!model.readiness || now - model.lastReadinessRefresh >= READINESS_REFRESH_MS)
+    ) {
+      requests.push(api("/api/tap/readiness"));
+    }
     const [tap, ...secondary] = await Promise.all(requests);
     model.tap = tap;
     for (const result of secondary) {
@@ -390,6 +421,10 @@ async function refresh() {
       if (result?.mode && "client_profile_available" in result) {
         model.wifi = result;
         model.lastWifiRefresh = now;
+      }
+      if (typeof result?.ready === "boolean" && result?.code) {
+        model.readiness = result;
+        model.lastReadinessRefresh = now;
       }
     }
     model.connected = true;

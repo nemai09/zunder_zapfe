@@ -37,6 +37,7 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `GET /api/hardware/status` | `200 HardwareStatusResponse` | Status aller Hardwarekomponenten |
 | `GET /api/wifi/status` | `200 WifiStatusResponse` | lokaler NetworkManager-Modus ohne Zugangsdaten |
 | `GET /api/tap/status` | `200 TapStatusResponse` | vollständiger Zapfzustand |
+| `GET /api/tap/readiness` | `200 TapReadinessResponse` | fachliche Zapfbereitschaft mit stabilem Ursachencode und Bedienhinweis |
 | `POST /api/tap/poll` | `200 TapStatusResponse` | Zustand sofort auswerten; primär Diagnose/Test |
 
 `TapStatusResponse` enthält:
@@ -64,6 +65,17 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
 Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
 
+`TapReadinessResponse` trennt die reine Prozesslebendigkeit von der
+Zapfbereitschaft. `ready` ist nur wahr, wenn Steuerung, NFC, Ventiladapter,
+Durchflussadapter, Datenbank sowie ein aktiver Veranstaltungs-/Fasskontext
+verfügbar sind. `code` ist ein stabiler maschinenlesbarer Grund; `message` ist
+der deutsche Bedienhinweis für den Kiosk. Der rechnerische Fassbestand ist
+ausdrücklich kein Bereitschaftskriterium.
+
+Definierte Codes sind `ready`, `safety_locked`, `controller_unavailable`,
+`nfc_capture`, `valve_unavailable`, `flow_meter_unavailable`,
+`nfc_unavailable`, `database_unavailable` und `no_active_keg`.
+
 ## Sitzung
 
 | Methode und Pfad | Vorbedingung | Ergebnis |
@@ -85,9 +97,9 @@ Zapfungen und das Nachfüllfenster werden dadurch nicht unterbrochen.
 | Methode und Pfad | Vorbedingung | Erfolg und Zustandswirkung |
 | --- | --- | --- |
 | `GET /api/tap/options` | keine | kompatible Portionen, Sitzungszeit, manuelle Grenzen und temporärer Flow-Debugstatus |
-| `POST /api/tap/manual/start` | `authenticated`, aktiver Kontext und Fassbestand | wechselt zu `manual_pouring` |
+| `POST /api/tap/manual/start` | `authenticated` und aktiver Kontext | wechselt zu `manual_pouring` |
 | `POST /api/tap/manual/stop` | `manual_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
-| `POST /api/tap/portion` | `authenticated`, aktiver Kontext und Fassbestand | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
+| `POST /api/tap/portion` | `authenticated` und aktiver Kontext | `{"target_volume_ml":500}`; wechselt zu `portion_pouring` |
 | `POST /api/tap/portion/abort` | `portion_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
 | `POST /api/tap/top-up/start` | `top_up_available` innerhalb Zeitfenster | wechselt zu `top_up_pouring` |
 | `POST /api/tap/top-up/stop` | `top_up_pouring` | schließt, bucht Istmenge, zurück zu `authenticated` |
@@ -117,6 +129,9 @@ ausführende Benutzer-ID.
 | `POST /api/admin/session/enter` | `TapStatusResponse` | authentifizierter Admin wechselt bei geschlossenem Ventil zu `admin` |
 | `POST /api/admin/session/exit` | `TapStatusResponse` | zurück zu `authenticated` und normalem Timeout |
 | `POST /api/admin/wifi/mode` | `{"mode":"ap"}` oder `{"mode":"client"}` | vorhandenes AP- oder Clientprofil aktivieren und Aktion auditieren |
+| `GET /api/admin/system/status` | `SystemStatusResponse` | Gerätename, Laufzeit, Build und Verfügbarkeit der lokalen Systemsteuerung |
+| `POST /api/admin/system/reboot` | `202 SystemPowerActionResponse` | Neustart auditieren und nicht blockierend anfordern |
+| `POST /api/admin/system/shutdown` | `202 SystemPowerActionResponse` | Herunterfahren auditieren und nicht blockierend anfordern |
 | `GET /api/admin/users` | `AdminUserResponse[]` | Benutzer, Rollen-, Aktiv- und Armbandstatus |
 | `POST /api/admin/users` | Vorname, optional Nachname/Zusatzfeld, `is_admin` | Benutzer anlegen und auditieren |
 | `PATCH /api/admin/users/{id}` | vollständige editierbare Benutzerdaten | Benutzer, Rolle und Aktivstatus ändern und auditieren |
@@ -135,6 +150,15 @@ Systemintegration einen nicht vertraulichen `detail`-Hinweis. Das schreibende
 Gegenstück akzeptiert ausschließlich `ap` oder `client`, erfordert eine aktive
 lokale NFC-Adminsitzung und wird nicht über den Smartphone-Proxy veröffentlicht.
 Es legt keine Profile an und verarbeitet keine WLAN-Schlüssel.
+
+Die Systemaktionen sind ebenfalls ausschließlich über Loopback und im aktiven
+lokalen NFC-Adminzustand erreichbar. Beide schreibenden Routen besitzen keinen
+Request-Body: Die Route legt die einzige erlaubte Aktion bereits fest. Das
+Backend schreibt zuerst `system.reboot_requested` beziehungsweise
+`system.poweroff_requested` in den Admin-Audit und ruft danach den installierten
+Helfer auf. Dieser akzeptiert nur `reboot` oder `poweroff`; ein allgemeiner
+Shell- oder Befehlsparameter existiert nicht. Fehler beim Systemaufruf werden
+als technisches Ereignis protokolliert und mit `503` gemeldet.
 
 Der Capture-Request besitzt bewusst keinen UID-Parameter. Nach seinem Start
 muss der Leser mindestens einmal ohne Karte beobachtet werden, bevor das nächste
@@ -266,6 +290,8 @@ CSRF-Header.
 | `GET /api/web-admin/statistics?event_id={id}` | Veranstaltungs-, Wartungs- und Abrechnungssummen je Benutzer liefern |
 | `GET /api/web-admin/reports/participants?event_id={id}&user_id={id}` | Teilnehmerabrechnung insgesamt oder optional für einen Benutzer nach Getränk aufteilen |
 | `GET /api/web-admin/reports/participants.csv?event_id={id}` | vollständigen Teilnehmerauszug der Veranstaltung als CSV herunterladen |
+| `GET /api/web-admin/backups/status` | Zeitpunkt, Ergebnis und Buchungszahl der letzten automatischen Sicherung anzeigen |
+| `GET /api/web-admin/backups/latest.csv.zip` | letztes CSV-Sicherungspaket ohne NFC- und Passwortdaten herunterladen |
 | `GET /api/web-admin/diagnostics/tap` | Zustand der Zapfsteuerung und verriegelte Fehlerursache anzeigen |
 | `POST /api/web-admin/diagnostics/safety-reset` | verriegelten Fehler nach Zustandsprüfung als angemeldeter Webadmin zurücksetzen |
 | `GET /api/web-admin/audit` | Adminaktionen mit Admin, Objekt sowie alten und neuen Werten auflisten |

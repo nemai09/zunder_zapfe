@@ -27,10 +27,10 @@ Aktiv bleiben insbesondere:
 - persistente Buchung der tatsächlich gemessenen Menge, im Debugfall also
   gegebenenfalls `0 ml`.
 
-Die Kiosk-Kopfleiste zeigt zusätzlich `DEBUG · Ventil EIN/AUS`. Grundlage ist
-das API-Feld `valve_open`, also der angeforderte Softwarezustand. Die Anzeige
-bestätigt weder eine elektrische Ausgangsspannung noch die mechanische Stellung
-eines realen Ventils.
+Der vom Backend angeforderte Ausgangszustand bleibt über das API-Feld
+`valve_open` und geschützte Diagnoseansichten prüfbar, wird aber nicht mehr in
+der öffentlichen Kiosk-Kopfleiste angezeigt. Er bestätigt weder eine
+elektrische Ausgangsspannung noch die mechanische Stellung eines realen Ventils.
 
 ## Rückbaukriterium
 

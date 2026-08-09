@@ -1,6 +1,6 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.12
-Stand: 2026-07-25
+Version: 0.16
+Stand: 2026-08-09
 Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
 
 1. ZWECK UND FORMAT
@@ -223,9 +223,12 @@ Abnahme: Der Fasswechsel kann ohne Restbestandsuebernahme abgeschlossen werden.
 [ZZ-KEG-004] Rechnerischer Fassbestand
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
 Das System muss den Fassbestand aus Startmenge und allen gemessenen Entnahmen
-fortschreiben.
+fortschreiben. Der rechnerische Bestand ist ein rein informativer Schaetzwert.
+Ein Wert von null oder darunter darf weder eine manuelle Zapfung noch eine
+kompatible Portionszapfung verhindern.
 Abnahme: Der angezeigte Bestand entspricht Startmenge minus protokollierter
-Entnahmen.
+Entnahmen; auch nach rechnerischem Verbrauch der Startmenge bleibt eine Zapfung
+bei ansonsten erfuellten Voraussetzungen moeglich.
 
 [ZZ-KEG-005] Erweiterung um Waage
 Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: INSPEKTION
@@ -623,6 +626,54 @@ Abnahme: Ein erfolgreich zugeordnetes Armband fuehrt fuer kurze Zeit zu einer
 Begruessungsansicht und anschliessend zum Sperrbildschirm; der Benutzer ist
 nicht angemeldet und das Ventil bleibt geschlossen.
 
+[ZZ-UI-010] Begrenzte lokale Systemsteuerung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Ein per NFC angemeldeter Admin muss im lokalen Low-Level-Menue den Raspberry Pi
+nach ausdruecklicher Bestaetigung neu starten oder geordnet herunterfahren
+koennen. Die Aktionen muessen auf den lokalen Kioskzugang und den ventil-
+gesperrten Adminzustand begrenzt sein. Der Webdienst darf keine freien Befehle
+entgegennehmen; ausschliesslich Neustart und Ausschalten sind zulaessig. Der
+Auftrag muss vor seiner Ausfuehrung mit der ausfuehrenden Admin-ID auditiert
+werden. Beim Beenden des Systems muss die bestehende sichere Abschaltlogik das
+Ventil geschlossen hinterlassen.
+Abnahme: Ohne aktive NFC-Adminsitzung sowie ueber einen entfernten Webclient
+werden beide Aktionen abgewiesen. Nach sichtbarer Bestaetigung fuehrt der Pi
+die gewaehlte Aktion aus, der Audit-Eintrag bleibt erhalten und ein beliebiger
+Systembefehl kann weder ueber API noch Hilfsprogramm aufgerufen werden.
+
+[ZZ-UI-011] Wahrheitsgemaesse Zapfbereitschaft
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Kiosk darf "Bereit zum Zapfen" nur anzeigen, wenn Backend, NFC-Leser,
+Ventiladapter, Durchflussadapter, Datenbank und ein aktiver Veranstaltungs-
+und Fasskontext verfuegbar sind. Bei fehlender Voraussetzung muss der
+Sperrbildschirm stattdessen einen verstaendlichen Grund anzeigen. Der
+rechnerische Fassbestand gemaess `ZZ-KEG-004` ist kein Bereitschaftskriterium.
+Abnahme: Ein vollstaendiger Kontext zeigt Zapfbereitschaft; mindestens ein
+fehlendes aktives Fass sowie ein nicht verfuegbarer Hardwareadapter werden als
+nicht zapfbereit gemeldet.
+
+[ZZ-UI-012] Sichtbare Zapfmenge der NFC-Sitzung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Zapfbutton muss waehrend einer NFC-Sitzung die gesamte gemessene Menge aller
+kostenpflichtigen Zapfungen dieser Sitzung anzeigen. Waehrend einer laufenden
+Zapfung muss die aktuelle Messung zur bereits gespeicherten Sitzungsmenge addiert
+werden. Nach dem Loslassen muss die Summe bis zum manuellen oder automatischen
+Logout sichtbar bleiben. Eine neue NFC-Sitzung beginnt bei null.
+Abnahme: Zwei Zapfzyklen innerhalb derselben Anmeldung werden auf dem Button
+addiert angezeigt; nach Logout und erneuter Anmeldung zeigt er wieder null.
+
+[ZZ-UI-013] Eigener Verbrauchsrang statt Gesamtbetrag
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Zapfbildschirm muss anstelle des persoenlichen Gesamtbetrags den eigenen
+Platz im Verbrauchsranking der aktiven Veranstaltung anzeigen. Massgeblich ist
+die Summe aller kostenpflichtigen gemessenen Mengen; Wartungsverbrauch wird nicht
+beruecksichtigt. Benutzer mit gleicher Menge teilen sich denselben Platz. Ohne
+kostenpflichtige Buchung wird noch kein Platz angezeigt. Abrechnung, Admin-
+Statistik und gespeicherte Betraege bleiben unveraendert.
+Abnahme: Der Kiosk zeigt nach der ersten Zapfung den nach Verbrauchsmenge
+berechneten Platz und aktualisiert ihn nach weiteren Zapfungen. Ein Gleichstand
+ergibt denselben Platz; der persoenliche Gesamtbetrag wird nicht angezeigt.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
@@ -710,11 +761,20 @@ filter- und abrechenbar sein.
 Abnahme: Auswertungen einer Veranstaltung enthalten keine Buchungen einer
 anderen Veranstaltung.
 
-[ZZ-DAT-008] Backup und Wiederherstellung
-Prioritaet: SOLL | Status: VERTAGT | Pruefung: DEMONSTRATION
-Das System soll Backup, Export und Wiederherstellung der relevanten Daten
-unterstuetzen. Verfahren, Frequenz und Zielmedium werden spaeter festgelegt.
-Abnahme: Wird nach spaeterer Spezifikation ergaenzt.
+[ZZ-DAT-008] Automatische Datensicherung
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss die laufende SQLite-Datenbank im Betrieb mindestens alle 30
+Minuten konsistent lokal sichern und die Sicherung vor der Veroeffentlichung
+auf Integritaet pruefen. Zusaetzlich muss ein authentifizierter Admin ein
+CSV-Sicherungspaket aller Rohbuchungen und der nach Teilnehmer und Getraenk
+gruppierten Abrechnung auf ein Smartphone herunterladen koennen. NFC-UIDs und
+Passwortdaten duerfen nicht im CSV-Paket enthalten sein. Ein Sicherungsfehler
+darf den Zapfbetrieb nicht stoppen und keine letzte erfolgreiche Sicherung
+ueberschreiben.
+Abnahme: Eine laufende Zapfanwendung erzeugt ueber den 30-Minuten-Timer eine
+lesbare SQLite-Kopie und ein herunterladbares CSV-Paket; ein provozierter
+Fehler erhaelt die letzte erfolgreiche Sicherung und der Zapfdienst bleibt
+aktiv.
 
 [ZZ-DAT-009] Zusammenfassung einer NFC-Anmeldesitzung
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST
@@ -746,12 +806,20 @@ Teilnehmers getrennt nach Getraenk und keine Daten einer anderen Veranstaltung.
 =========================================
 
 [ZZ-TIM-001] Verlaessliche Offline-Zeit
-Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST
-Das System soll ohne Internet eine fuer Buchungen, Protokolle und Happy Hour
-ausreichend verlaessliche Uhrzeit bereitstellen. Eine I2C-Echtzeituhr wird als
-moegliche Loesung geprueft.
-Abnahme: Nach einem stromlosen Test sind Datum und Uhrzeit innerhalb der spaeter
-festgelegten Toleranz korrekt.
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Das System muss ohne Internet eine fuer Buchungen und Protokolle ausreichend
+verlaessliche Uhrzeit bereitstellen. Dazu wird eine batteriegepufferte DS3231-
+Echtzeituhr ueber I2C verwendet. Der Raspberry Pi muss seine Systemzeit vor dem
+Start der Zapfanwendung aus der in UTC gefuehrten RTC laden. Datum und Uhrzeit
+werden einmalig ueber ein lokales CLI aus der bereits korrekten Systemzeit in
+die RTC uebernommen; die Systemzeit und eine vorhandene NTP-Synchronisierung
+werden dabei nicht veraendert. Nach dem Start darf NTP die aus der RTC geladene
+Systemzeit korrigieren, wenn ein Zeitserver erreichbar ist. Eine Bedienung ueber
+Kiosk- oder Smartphone-WebUI ist nicht erforderlich.
+Abnahme: Nach korrekter einmaliger Uebernahme, stromlosem Ausschalten und erneutem
+Start wird die Systemzeit vor der Zapfanwendung aus der DS3231 geladen. Das CLI
+zeigt System- und RTC-Zeit an und kann die RTC aus der Systemzeit stellen, ohne
+NTP zu deaktivieren.
 
 
 13. NICHTFUNKTIONALE ANFORDERUNGEN
@@ -802,12 +870,19 @@ OD-001: Konkrete Standard-Portionsgroessen.
 OD-002: Der Alpha-Default fuer automatischen Logout ist auf 15 Sekunden
 festgelegt. Der Produktivwert und das kompatible Nachfuellfenster bleiben
 spaeter zu bewerten.
-OD-003: Konkrete Mengen-, Zeit- und Plausibilitaetsgrenzen.
+OD-003: Endgueltige Mengen-, Zeit- und Plausibilitaetsgrenzen. Fuer den ersten
+Feldeinsatz gelten vorlaeufig 5 Sekunden bis zum ersten Impuls, 3 Sekunden
+zwischen Impulsen und 5 Sekunden fuer den Steuerungs-Watchdog. Die Ueberwachung
+bleibt aktiv; die Werte sind bis zur realen Kalibrierung Umgebungsparameter.
 OD-004: Detailregeln der Happy Hour.
 OD-005: Durch ZZ-BIL-004 und ZZ-DAT-010 fuer die Alpha-Ausbaustufe entschieden.
 OD-006: Storno- und Korrekturverfahren.
-OD-007: Backup-, Export- und Wiederherstellungsverfahren.
-OD-008: Verbindlicher Einsatz und Typ einer Offline-Echtzeituhr.
+OD-007: Durch ZZ-DAT-008 fuer die Alpha-Ausbaustufe entschieden: konsistente
+lokale SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download.
+Eine Wiederherstellungsfunktion ist nicht Teil dieses Umfangs.
+OD-008: Durch ZZ-TIM-001 entschieden: DS3231 ueber I2C, Speicherung in UTC,
+einmalige lokale CLI-Einrichtung ohne Aenderung der NTP-Konfiguration und keine
+Bedienung ueber die WebUI.
 OD-009: Durch CR-002 entschieden: Raspberry Pi als eigenstaendiger Access Point
 mit SSID `ZUNDER_ZAPFE`, WPA-Schutz und persoenlichen Adminpasswoertern;
 HTTPS ist fuer die isolierte Alpha-Ausbaustufe nicht erforderlich.

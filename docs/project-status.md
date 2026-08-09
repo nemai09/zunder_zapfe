@@ -1,7 +1,7 @@
 # Projektstatus
 
-Stand: 2026-07-25
-Phase: Alpha-Entwicklung
+Stand: 2026-08-09
+Phase: Beta-Felderprobung
 
 ## Implementiert und geprüft
 
@@ -57,10 +57,22 @@ Phase: Alpha-Entwicklung
 - Einzelanalyse je Teilnehmer mit Kosten und Menge, getrennt nach Getränk
 - vollständiger CSV-Teilnehmerauszug je Veranstaltung mit ganzzahligen Mengen
   und Beträgen
+- automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten mit 400
+  lokalen Sicherungsständen und Smartphone-Download eines NFC- und
+  passwortfreien CSV-Pakets
+- fachlicher Kiosk-Bereitschaftsstatus für Steuerung, NFC, GPIO-Adapter,
+  Datenbank und aktiven Fasskontext; der rechnerische Fassbestand bleibt
+  informativ und sperrt keine Zapfung
+- vorläufig entspannte, weiterhin aktive und per Umgebung konfigurierbare
+  Watchdogs mit 5 Sekunden Anlaufzeit, 3 Sekunden Impulspause und 5 Sekunden
+  Steuerungstimeout
+- automatischer Chromium-Neustart nach einem unerwarteten Browserende
 - Smartphone-Diagnose mit Steuerungszustand, Safety-Reset sowie standardmäßig
   eingeklapptem Adminaudit und technischen Ereignissen
 - lokales, NFC-adminautorisiertes Systemmenü für den Wechsel zwischen
   `ZUNDER_ZAPFE` und einem bereits bekannten WLAN-Clientprofil
+- getrennte lokale Systemseite für auditierten Neustart und geordnetes
+  Herunterfahren mit ausdrücklicher Touchbestätigung
 - WLAN-Modusindikator in der Kiosk-Kopfleiste sowie automatische
   Access-Point-Rückkehr bei fehlgeschlagenem Clientwechsel
 - reduzierte Pi-Laufzeitlast durch gecachten WLAN-Systemstatus, getrennte
@@ -93,12 +105,19 @@ Armbandverwaltung, Fassablauf, Buchungen, Auswertung und Diagnose wurde auf
 dem Raspberry Pi bedient und für den Alpha-Stand abgenommen. Milestone 7 ist
 damit abgeschlossen.
 
+Der lokale Entwicklungsstand nach `M8.10` umfasst 175 bestandene automatisierte
+Tests einschließlich rein informativem Fassbestand, fachlicher
+Zapfbereitschaft, konfigurierbaren Feld-Watchdogs, RTC, Systemsteuerung und
+Datensicherung. Diese PC-Prüfung ersetzt nicht den für den nächsten Tag
+vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
+
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN-Systemmenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
+| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN- und Energiemenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
 | Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
+| Offline-Zeit | DS3231-Konfiguration, Startdienst vor der Zapfanwendung und lokales CLI für Status sowie einmalige Übernahme der Systemzeit ohne NTP-Änderung | Zielsystemnachweis nach stromlosem Neustart und Bewertung der Abweichung über den Einsatzzeitraum |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
 
@@ -111,25 +130,26 @@ damit abgeschlossen.
 - elektrisch abgenommene Ventiltreiber- und Durchflusshardware
 - kalibrierte Mengenmessung und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
-- Happy Hour, Storno, Korrektur, Backup und Wiederherstellung
+- Happy Hour, Storno und Korrektur
 - optionale Fasswaage und MQTT-Vertrag
-- verbindliche Offline-Zeitquelle
 
 ## Nächste Entwicklungsreihenfolge
 
-1. ESP8266-HIL für ausbleibenden Durchfluss, Neustart, Verbindungsabbruch und
-   Safety-Verriegelung vollständig abnehmen.
-2. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie den
+1. Gesamtsystem mit realem Ventil und Durchflusssensor kalibrieren sowie den
+   verbindlichen Inbetriebnahmetest für den Beta-Feldeinsatz durchführen.
+2. Nach dem Einsatz die bewusst akzeptierten Abweichungen aus
+   [`Beta-Feldeinsatz`](operations/alpha-field-operation.md) erneut bewerten.
+3. ESP8266-HIL für Neustart, Verbindungsabbruch und Safety-Verriegelung
+   vollständig abnehmen.
+4. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie später den
    Not-Aus-Adapter implementieren.
-3. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
+5. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
    integrieren.
-4. Gesamtsystem mit realer Zapfhardware kalibrieren und sicherheitstechnisch
-   prüfen.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 [`milestones.md`](milestones.md).
 
-## Bekannte Alpha-Eigenschaften
+## Bekannte Beta-Eigenschaften
 
 - Kompatibel gestartete Portionen bleiben im Backend erhalten; nach einer Portion bleibt der Zustand acht Sekunden lang
   `top_up_available`; eine unmittelbar gestartete weitere Portion wird bewusst
@@ -140,16 +160,26 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
   keine Produktionskalibrierung.
 - `120 ms` Touchentprellung und `30 s` maximale manuelle Zapfdauer sind
   konfigurierbare Alpha-Werte und gemäß `OD-012` noch zu kalibrieren.
+- Für den ersten Feldeinsatz gelten vorläufig 5 Sekunden bis zum ersten
+  Durchflussimpuls, 3 Sekunden zwischen Impulsen und 5 Sekunden für den
+  Steuerungs-Watchdog. Die Überwachung bleibt aktiv.
+- Der rechnerische Fassbestand ist ausschließlich informativ. Auch null oder
+  negative Restmenge verhindert keine Zapfung.
 - Der Durchfluss-Watchdog ist standardmäßig aktiv. Ausschließlich lokale
   Entwicklung ohne GPIO-Hardware darf ihn zusammen mit explizit aktivierten
   Ventil-/Durchflusssimulatoren per
   `ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG=1` deaktivieren.
-- Die Kiosk-Kopfleiste zeigt als Debughilfe den angeforderten Ventilzustand,
-  nicht den elektrisch gemessenen Zustand eines Ventils.
+- Der angeforderte Ventilzustand bleibt ausschließlich in geschützten
+  Diagnoseansichten sichtbar; die Kiosk-Kopfleiste zeigt WLAN und
+  Zapfbereitschaft.
 - Der Demo-Seed ist nur für eine leere Datenbank vorgesehen.
 - Die in Milestone 6 implementierte lokale Adminoberfläche bleibt erhalten,
   wird gemäß CR-002 vorerst aber nicht geöffnet oder weiter ausgebaut. Davon
-  ausgenommen ist das eng begrenzte lokale WLAN-Systemmenü.
+  ausgenommen ist das eng begrenzte lokale Systemmenü für WLAN-Modus und
+  Energieaktionen.
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
   Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
   oder Rolle ist als `OD-014` offen.
+- Die für den bevorstehenden Einsatz akzeptierten Abweichungen und der
+  Inbetriebnahmeablauf stehen zentral unter
+  [`Beta-Feldeinsatz`](operations/alpha-field-operation.md).

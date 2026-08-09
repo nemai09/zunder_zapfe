@@ -5,21 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#15120d">
     <title>Zunder Zapfe</title>
-    <link rel="stylesheet" href="/static/styles.css?v=0.4.0-alpha.1">
-    <script src="/static/app.js?v=0.4.0-alpha.1" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=0.4.0-beta.1">
+    <script src="/static/app.js?v=0.4.0-beta.1" defer></script>
   </head>
   <body>
     <main class="kiosk-shell">
       <header class="topbar">
-        <a class="brand" href="/" aria-label="Zunder Zapfe Startseite">
+        <div class="brand" aria-label="Zunder Zapfe">
           <span class="brand-mark" aria-hidden="true">Z</span>
           <span>Zunder Zapfe</span>
-        </a>
+        </div>
         <div class="status-cluster">
-          <div class="valve-status" id="valve-status" role="status" title="Debuganzeige des angeforderten Ventilzustands">
-            <span class="valve-dot"></span>
-            <span id="valve-label">DEBUG · Ventil AUS</span>
-          </div>
           <div class="wifi-status" id="wifi-status" role="status" title="Aktueller WLAN-Betriebsmodus">
             <span class="wifi-dot"></span>
             <span id="wifi-label">WLAN · prüft</span>
@@ -40,9 +36,9 @@
 
       <section class="screen screen-idle is-active" data-screen="idle" aria-labelledby="idle-title">
         <div class="idle-copy">
-          <p class="eyebrow">Bereit zum Zapfen</p>
-          <h1 id="idle-title">Karte auflegen.<br><span>Bier genießen.</span></h1>
-          <p class="lead">Halte deine NFC-Karte kurz an den Leser.</p>
+          <p class="eyebrow" id="idle-eyebrow">Systemprüfung</p>
+          <h1 id="idle-title"><span class="idle-title-primary" id="idle-title-primary">Bitte kurz</span><br><span id="idle-title-accent">warten.</span></h1>
+          <p class="lead" id="idle-lead">Die Zapfbereitschaft wird geprüft.</p>
           <div class="reader-status" id="reader-status">
             <span class="reader-wave" aria-hidden="true"></span>
             <span id="reader-label">NFC-Leser wird geprüft …</span>
@@ -93,8 +89,8 @@
                 <strong id="consumption-volume">–</strong>
               </div>
               <div class="stat">
-                <span>Dein Betrag</span>
-                <strong id="consumption-amount">–</strong>
+                <span>Dein Platz</span>
+                <strong id="consumption-rank">–</strong>
               </div>
             </div>
           </aside>
@@ -264,7 +260,7 @@
       </section>
 
       <footer class="footer">
-        <span id="build-version">zzapfe_v0.4.0_alpha.1_unknown_gunknown</span>
+        <span id="build-version">zzapfe_v0.4.0_beta.1_unknown_gunknown</span>
         <time id="clock"></time>
       </footer>
       <div class="session-timeout" id="session-timeout" aria-hidden="true">

@@ -1,0 +1,22 @@
+[Unit]
+Description=Zunder Zapfe DS3231 system clock initialization
+Documentation=https://github.com/nemai09/zunder_zapfe
+After=local-fs.target
+Before=zunder-zapfe-web.service
+ConditionPathExists=/dev/rtc0
+ConditionPathExists=/var/lib/zunder-zapfe/rtc-initialized
+
+[Service]
+Type=oneshot
+ExecStart=@@APP_DIR@@/.venv/bin/zunder-zapfe-rtc load
+RemainAfterExit=yes
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+CapabilityBoundingSet=CAP_SYS_TIME CAP_DAC_READ_SEARCH
+DevicePolicy=closed
+DeviceAllow=/dev/rtc0 rw
+
+[Install]
+WantedBy=multi-user.target

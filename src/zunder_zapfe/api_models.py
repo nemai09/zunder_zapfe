@@ -84,6 +84,31 @@ class WifiModeRequest(BaseModel):
     mode: Literal["ap", "client"]
 
 
+class SystemStatusResponse(BaseModel):
+    hostname: str
+    uptime_seconds: int
+    power_control_available: bool
+    detail: str | None
+    version: str
+    build: str
+    revision: str
+
+
+class SystemPowerActionResponse(BaseModel):
+    action: Literal["reboot", "poweroff"]
+    status: Literal["accepted"]
+
+
+class BackupStatusResponse(BaseModel):
+    state: Literal["missing", "ok", "overdue", "error"]
+    last_attempt_at: datetime | None
+    last_success_at: datetime | None
+    booking_count: int | None
+    database_file: str | None
+    csv_archive_file: str | None
+    detail: str | None
+
+
 class BookingSummaryResponse(BaseModel):
     id: int
     measured_volume_ml: int
@@ -100,6 +125,7 @@ class TapStatusResponse(BaseModel):
     measured_pulses: int
     target_pulses: int | None
     measured_volume_ml: int
+    session_measured_volume_ml: int
     target_volume_ml: int | None
     top_up_remaining_ms: int | None
     session_remaining_ms: int | None
@@ -110,6 +136,22 @@ class TapStatusResponse(BaseModel):
     last_booking: BookingSummaryResponse | None
     nfc_feedback: str | None
     registration_welcome: str | None
+
+
+class TapReadinessResponse(BaseModel):
+    ready: bool
+    code: Literal[
+        "ready",
+        "safety_locked",
+        "controller_unavailable",
+        "nfc_capture",
+        "valve_unavailable",
+        "flow_meter_unavailable",
+        "nfc_unavailable",
+        "database_unavailable",
+        "no_active_keg",
+    ]
+    message: str
 
 
 class SessionStatusResponse(BaseModel):
@@ -125,6 +167,9 @@ class TapOptionsResponse(BaseModel):
     session_timeout_seconds: int
     manual_press_debounce_ms: int
     manual_maximum_pour_seconds: int
+    first_pulse_timeout_seconds: float
+    between_pulses_timeout_seconds: float
+    controller_watchdog_timeout_seconds: float
     debug_flow_watchdog_disabled: bool
     admin_session_timeout_seconds: int
 
@@ -377,6 +422,7 @@ class ConsumptionResponse(BaseModel):
     booking_count: int
     measured_volume_ml: int
     amount_cents: int
+    rank: int | None
 
 
 class KegStatusResponse(BaseModel):

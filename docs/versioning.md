@@ -13,15 +13,15 @@ zzapfe_v<major>.<minor>.<patch>_<phase>.<iteration>_<commit-number>_g<short-hash
 Beispiel:
 
 ```text
-zzapfe_v0.2.0_alpha.1_14_g2700c1a
+zzapfe_v0.4.0_beta.1_176_gabcdef0
 ```
 
 Die Bestandteile bedeuten:
 
-- `0.2.0`: fachlicher Releaseumfang nach `MAJOR.MINOR.PATCH`;
-- `alpha.1`: Reifegrad und Iteration;
-- `14`: fortlaufende Anzahl der Git-Commits im Repository;
-- `g2700c1a`: kurzer Git-Commit-Hash, eingeleitet durch `g`.
+- `0.4.0`: fachlicher Releaseumfang nach `MAJOR.MINOR.PATCH`;
+- `beta.1`: Reifegrad und Iteration;
+- `176`: fortlaufende Anzahl der Git-Commits im Repository;
+- `gabcdef0`: kurzer Git-Commit-Hash, eingeleitet durch `g`.
 
 Unterstriche trennen die für Menschen sichtbaren Abschnitte. Die technische
 Python-Paketversion verwendet weiterhin die von Python-Werkzeugen erwartete
@@ -32,7 +32,10 @@ PEP-440-Schreibweise und kann deshalb anders normalisiert dargestellt werden.
 - Vor der ersten Hardwarefreigabe bleibt die Major-Version `0`.
 - Ein neuer abgeschlossener Milestone erhöht in der Regel `MINOR`.
 - Eine reine kompatible Fehlerkorrektur erhöht `PATCH`.
-- Sichtbare Reviewstände eines Milestones erhöhen die Alpha-Iteration.
+- Sichtbare Reviewstände eines Milestones erhöhen die Iteration des aktuellen
+  Vorab-Reifegrads.
+- `alpha` bezeichnet frühe, noch wesentlich veränderliche Integrationsstände;
+  `beta` beginnt mit dem integrierten Zielsystemstand für die Felderprobung.
 - `1.0.0` ist erst nach realer Hardwareintegration, Kalibrierung und
   Sicherheitsabnahme vorgesehen.
 

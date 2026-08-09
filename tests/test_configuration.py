@@ -11,6 +11,9 @@ def test_kiosk_defaults_use_approved_alpha_portions() -> None:
     assert settings.admin_session_timeout_seconds == 30
     assert settings.manual_press_debounce_ms == 120
     assert settings.manual_maximum_pour_seconds == 30
+    assert settings.first_pulse_timeout_seconds == 5
+    assert settings.between_pulses_timeout_seconds == 3
+    assert settings.controller_watchdog_timeout_seconds == 5
     assert settings.debug_disable_flow_watchdog is False
 
 
@@ -22,6 +25,9 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
             "ZUNDER_ZAPFE_ADMIN_SESSION_TIMEOUT_SECONDS": "45",
             "ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS": "150",
             "ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS": "45",
+            "ZUNDER_ZAPFE_FIRST_PULSE_TIMEOUT_SECONDS": "6.5",
+            "ZUNDER_ZAPFE_BETWEEN_PULSES_TIMEOUT_SECONDS": "2.5",
+            "ZUNDER_ZAPFE_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS": "7.5",
             "ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG": "0",
         }
     )
@@ -32,6 +38,9 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
         admin_session_timeout_seconds=45,
         manual_press_debounce_ms=150,
         manual_maximum_pour_seconds=45,
+        first_pulse_timeout_seconds=6.5,
+        between_pulses_timeout_seconds=2.5,
+        controller_watchdog_timeout_seconds=7.5,
         debug_disable_flow_watchdog=False,
     )
 
@@ -47,6 +56,11 @@ def test_kiosk_settings_can_be_overridden_without_source_change() -> None:
         {"ZUNDER_ZAPFE_ADMIN_SESSION_TIMEOUT_SECONDS": "3601"},
         {"ZUNDER_ZAPFE_MANUAL_PRESS_DEBOUNCE_MS": "-1"},
         {"ZUNDER_ZAPFE_MANUAL_MAXIMUM_POUR_SECONDS": "0"},
+        {"ZUNDER_ZAPFE_FIRST_PULSE_TIMEOUT_SECONDS": "0"},
+        {"ZUNDER_ZAPFE_BETWEEN_PULSES_TIMEOUT_SECONDS": "-1"},
+        {"ZUNDER_ZAPFE_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS": "nope"},
+        {"ZUNDER_ZAPFE_CONTROLLER_WATCHDOG_TIMEOUT_SECONDS": "nan"},
+        {"ZUNDER_ZAPFE_FIRST_PULSE_TIMEOUT_SECONDS": "inf"},
         {"ZUNDER_ZAPFE_DEBUG_DISABLE_FLOW_WATCHDOG": "true"},
     ],
 )
