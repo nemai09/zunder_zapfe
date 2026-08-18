@@ -1,7 +1,7 @@
 ANFORDERUNGSKATALOG – ZUNDER ZAPFE
-Version: 0.16
-Stand: 2026-08-09
-Status: Milestone 7 abgeschlossen; Hardwareintegration in Umsetzung
+Version: 0.17
+Stand: 2026-08-18
+Status: Erster Beta-Feldeinsatz abgeschlossen; Milestone 9 in Planung
 
 1. ZWECK UND FORMAT
 ===================
@@ -198,6 +198,17 @@ technischen Protokolleintrag ohne vertrauliche Werte. Beim geschuetzten Admin
 wird ein Webreset durch einen anderen Admin abgewiesen, waehrend eigener
 Passwortwechsel und lokaler Reset funktionieren.
 
+[ZZ-AUT-013] Offener Ausschankmodus
+Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST + DEMONSTRATION
+Das System soll fuer kostenlosen oder nicht personenbezogen abgerechneten
+Ausschank einen zeitlich bewusst aktivierten Modus ohne NFC-Anmeldung anbieten.
+Der Modus darf die gemessene Gesamtmenge und den Fassbestand nicht verlieren.
+Aktivierung, Beendigung, Kennzeichnung der Buchungen und Berechtigungen sind vor
+der Annahme gemaess `OD-016` festzulegen.
+Abnahme: Im aktivierten Modus kann ohne Benutzerarmband gezapft werden; die
+Menge bleibt nachvollziehbar, wird keinem Teilnehmer berechnet und nach dem
+Beenden ist wieder eine regulaere Authentifizierung erforderlich.
+
 
 4. GETRAENKE, FAESSER UND BESTAND
 ================================
@@ -250,6 +261,17 @@ kein Getraenk und kein Fass am Hahn aktiv ist.
 Abnahme: Ein volles Standardfass kann allein durch Getraenkeauswahl angezapft
 werden, ein abweichender Fuellstand wird uebernommen und "Abzapfen" hinterlaesst
 einen zapfgesperrten Kontext ohne aktives Fass.
+
+[ZZ-KEG-007] Lokaler operativer Fasswechsel
+Prioritaet: MUSS | Status: VORGESCHLAGEN | Pruefung: TEST + DEMONSTRATION
+Der im Feld haeufige Fasswechsel soll zusaetzlich zur Smartphone-Oberflaeche
+direkt in einer lokalen Adminoberflaeche am Kiosk erreichbar sein. Der Ablauf
+muss die bestehende Fachoperation aus `ZZ-KEG-006` wiederverwenden und waehrend
+der Verwaltung das Ventil geschlossen halten. Zugang und Einordnung gegenueber
+dem gemaess CR-002 vertagten lokalen Adminmodus sind vor der Annahme zu klaeren.
+Abnahme: Ein lokal authentifizierter Admin kann ein Fass ab- und ein neues Fass
+anzapfen, ohne Smartphone oder doppelte Fasslogik; normale Benutzer erhalten
+keinen Zugriff.
 
 
 5. PORTIONSWAHL UND ZAPFVORGANG
@@ -674,6 +696,45 @@ Abnahme: Der Kiosk zeigt nach der ersten Zapfung den nach Verbrauchsmenge
 berechneten Platz und aktualisiert ihn nach weiteren Zapfungen. Ein Gleichstand
 ergibt denselben Platz; der persoenliche Gesamtbetrag wird nicht angezeigt.
 
+[ZZ-UI-014] Oeffentliche Top-Liste als Ticker
+Prioritaet: KANN | Status: VORGESCHLAGEN | Pruefung: TEST + DEMONSTRATION
+Der Kiosk soll ausserhalb einer aktiven Zapfung eine gut lesbare, automatisch
+wechselnde Ranglistenansicht anbieten koennen. Umfang, Aktualisierung,
+Namensdarstellung, Datenschutz und Deaktivierbarkeit sind gemaess `OD-015`
+vor der Annahme festzulegen.
+Abnahme: Die freigegebene Rangliste ist ohne Adminzugang sichtbar, stoert NFC-
+Anmeldung und Zapfen nicht und zeigt nur die dafuer festgelegten Daten.
+
+[ZZ-UI-015] Kompakte Standardansicht der Buchungen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Die Smartphone-Buchungsansicht muss standardmaessig hoechstens die zehn
+neuesten zusammengefassten Buchungen laden und anzeigen. Weitere Buchungen
+muessen bei Bedarf gezielt nachgeladen oder ueber Filter eingegrenzt werden
+koennen; der vollstaendige Export bleibt unveraendert.
+Abnahme: Beim Oeffnen werden maximal zehn Buchungen dargestellt; aeltere
+Buchungen bleiben ohne Datenverlust erreichbar und exportierbar.
+
+[ZZ-UI-016] Erweiterbare Gamification
+Prioritaet: KANN | Status: VORGESCHLAGEN | Pruefung: ANALYSE
+Kiosk und Auswertung sollen spaeter um weitere motivierende, nicht fuer die
+Abrechnung massgebliche Anzeigen erweitert werden koennen. Konkrete Formate,
+Regeln und Grenzen werden gemaess `OD-018` erst nach einem eigenen Konzept
+festgelegt.
+Abnahme: Noch offen; eine Umsetzung benoetigt zuerst freigegebene Spielregeln
+und eine klare Trennung von verbindlicher Abrechnung.
+
+[ZZ-UI-017] Sachliche ursachenbezogene Sperrmeldungen
+Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: TEST + DEMONSTRATION
+Der Kiosk muss eine technische Zapfsperre mit einer verstaendlichen, moeglichst
+konkreten Ursache anzeigen. Die pauschale Ueberschrift "Sicherheit zuerst" darf
+nicht fuer jeden Fehlerzustand verwendet werden. Ein Ablauf des Durchfluss-
+Watchdogs muss mindestens als "Kein Durchfluss erkannt" erkennbar sein;
+Not-Aus, Steuerungsunterbrechung und unbekannte Ursachen erhalten jeweils eine
+passende oder neutrale Meldung.
+Abnahme: Simulierte Sperrursachen zeigen den jeweils vorgesehenen deutschen
+Bedienhinweis; eine unbekannte Ursache wird neutral als gestoppter Zapfvorgang
+und nicht pauschal als Sicherheitsereignis dargestellt.
+
 [ZZ-NET-001] Admin-WLAN
 Prioritaet: MUSS | Status: AKZEPTIERT | Pruefung: DEMONSTRATION
 Der Raspberry Pi muss standardmaessig ein eigenstaendiges lokales WLAN mit der
@@ -691,8 +752,8 @@ WPA-Schluessel geschuetzt werden. Die Adminoberflaeche muss zusaetzlich die
 persoenliche, offlinefaehige Passwortauthentifizierung gemaess `ZZ-AUT-003`
 erzwingen. WLAN-Schluessel, Passwoerter, Sitzungstoken und Passwort-Hashes
 duerfen weder im Repository noch in Frontendquellen, URLs oder Logs stehen.
-Transportverschluesselung per HTTPS ist fuer die erste, physisch isolierte
-Alpha-Ausbaustufe nicht erforderlich und muss vor einer Freigabe in andere
+Transportverschluesselung per HTTPS ist fuer die physisch isolierte
+Beta-Ausbaustufe nicht erforderlich und muss vor einer Freigabe in andere
 Netze neu bewertet werden.
 Abnahme: Ohne WLAN-Zugang und gueltige persoenliche Passwortsitzung ist kein
 Adminzugriff moeglich; vertrauliche Werte erscheinen in keinem ausgelieferten
@@ -801,6 +862,16 @@ werden nicht exportiert; die unveraenderlichen Rohbuchungen bleiben die Quelle.
 Abnahme: Der Export einer Veranstaltung enthaelt die Kosten und Zapfmengen jedes
 Teilnehmers getrennt nach Getraenk und keine Daten einer anderen Veranstaltung.
 
+[ZZ-DAT-011] Verwaltbarer Historien-Lebenszyklus
+Prioritaet: SOLL | Status: VORGESCHLAGEN | Pruefung: TEST + ANALYSE
+Admins sollen nicht mehr benoetigte Fass-, Veranstaltungs- und zugehoerige
+Historienansichten geordnet verwalten koennen. Unveraenderliche Buchungen,
+Abrechnung, Auditierbarkeit und Sicherungen duerfen dabei nicht unbemerkt
+beschaedigt werden. Ob Datensaetze archiviert, ausgeblendet oder nach Export
+gezielt geloescht werden, ist gemaess `OD-017` vor der Annahme festzulegen.
+Abnahme: Noch offen; das spaetere Verfahren muss Referenzen konsistent halten,
+destruktive Schritte bestaetigen und die Folgen vor Ausfuehrung anzeigen.
+
 
 12. ZEITBASIS UND OPTIONALE ERWEITERUNGEN
 =========================================
@@ -885,7 +956,7 @@ einmalige lokale CLI-Einrichtung ohne Aenderung der NTP-Konfiguration und keine
 Bedienung ueber die WebUI.
 OD-009: Durch CR-002 entschieden: Raspberry Pi als eigenstaendiger Access Point
 mit SSID `ZUNDER_ZAPFE`, WPA-Schutz und persoenlichen Adminpasswoertern;
-HTTPS ist fuer die isolierte Alpha-Ausbaustufe nicht erforderlich.
+HTTPS ist fuer die isolierte Beta-Ausbaustufe nicht erforderlich.
 OD-010: Konkrete externe Waagenschnittstelle und MQTT-Nachrichtenmodell.
 OD-011: Konkrete Hardware, Budget, Verantwortlichkeiten und Abnahmetermin.
 OD-012: Produktivwerte fuer Aktivierungsentprellung und maximale Dauer des
@@ -893,7 +964,16 @@ manuellen Zapfens nach Kalibrierung. Alpha-Werte: 120 ms und 30 Sekunden.
 OD-013: Umfang und Ausgestaltung eines lokalen Notzugangs fuer Administration,
 Wartung und Fehlerreset bei nicht verfuegbarem Smartphone.
 OD-014: Eigene NFC-Rolle oder bestimmte Karte fuer das lokale Low-Level-
-Systemmenue. In der Alpha-Ausbaustufe darf jeder aktive Admin zugreifen.
+Systemmenue. Im bisherigen Beta-Stand darf jeder aktive Admin zugreifen.
+OD-015: Darstellung des oeffentlichen Ranglisten-Tickers, insbesondere Anzahl,
+Namensformat, Aktualisierung, Datenschutz und Abschaltbarkeit.
+OD-016: Fachmodell des offenen Ausschankmodus: Aktivierungsberechtigung,
+Zeitgrenze, Buchungsart, Statistikzuordnung und sichtbare Kioskkennzeichnung.
+OD-017: Lebenszyklus historischer Veranstaltungen und Faesser. Vor einer
+Loeschfunktion sind Archivierung, Exportpflicht, Referenzen und Audit zu
+entscheiden; unveraenderliche Buchungen bleiben bis dahin unangetastet.
+OD-018: Konkrete Gamification-Elemente und Grenzen. Ranglisten duerfen die
+verbindliche Abrechnung nicht ersetzen oder veraendern.
 
 
 15. TRACEABILITY-REGELN

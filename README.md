@@ -8,19 +8,18 @@ Basis eines Raspberry Pi. Das Projekt verbindet einen NFC-Leser, einen
 sicherheitsorientierten Zapfzustandsautomaten, lokale SQLite-Datenhaltung und
 eine Weboberfläche für den Kioskbetrieb.
 
-> **Beta-Hinweis:** GPIO-Adapter für Ventil und Durchfluss sind integriert,
-> aber reale Treiber-, Sensor- und Not-Aus-Hardware ist noch nicht elektrisch
-> oder sicherheitstechnisch abgenommen. Ein echtes Ventil darf nicht ohne
-> fachgerechte Treiberstufe und unabhängige Sicherheitskette angeschlossen
-> werden.
+> **Beta-Hinweis:** Ventil, Durchflusssensor und der hardwareseitig trennende
+> Not-Aus wurden sechs Tage erfolgreich im Feld betrieben. Die formale
+> elektrische und sicherheitstechnische Abnahme sowie die softwareseitige
+> Erkennung des Not-Aus stehen weiterhin aus.
 
 ## Aktueller Stand
 
 | Bereich | Status |
 | --- | --- |
 | ACR122U-NFC-Leser | Ereignisgesteuert, Hotplug-fähig und auf dem Raspberry Pi getestet |
-| Ventil und Durchfluss | Zieladapter auf BCM17/BCM27 implementiert; erster ESP8266-HIL-Normalfluss erfolgreich, Fehlerfallabnahme offen |
-| Not-Aus | Vertrag und Simulator vorhanden; realer Adapter noch offen |
+| Ventil und Durchfluss | Zieladapter auf BCM17/BCM27 implementiert und sechs Tage mit realer Zapfhardware im Feld betrieben; formale Fehlerfallabnahme offen |
+| Not-Aus | Unterbricht die Ventilversorgung hardwareseitig; softwareseitiger Eingang und Ereigniserkennung fehlen |
 | Zapfzustandsautomat | Implementiert und automatisiert getestet |
 | SQLite und Migrationen | Implementiert und neustartfest getestet |
 | Buchungen, Verbrauch, Fassbestand | NFC-Loginzyklen zusammengefasst, unveränderliche Zapfdetails und rechnerischer Bestand |
@@ -29,7 +28,7 @@ eine Weboberfläche für den Kioskbetrieb.
 | Admin-WebUI | Milestone 7 abgeschlossen: Webauthentifizierung, Benutzer, Fassbereich, Buchungen, Gesamt- und Einzelanalyse, CSV-Auszug und Diagnose auf dem Pi geprüft |
 | Admin-WLAN | `ZUNDER_ZAPFE`, eingeschränkter Reverse Proxy und lokaler Wechsel zu bekanntem Clientprofil auf dem Pi geprüft |
 | Offline-Zeit | DS3231-Startdienst und lokales CLI implementiert; stromlose Zielsystemabnahme offen |
-| Reale Zapfhardware | Softwareadapter implementiert; Treiber-, Sensor- und Safety-Abnahme noch offen |
+| Reale Zapfhardware | Sechstägiger Beta-Feldeinsatz erfolgreich; formale Treiber-, Sensor-, Kalibrier- und Safety-Abnahme noch offen |
 
 Der genaue Implementierungsstand und die nächsten Schritte stehen unter
 [Projektstatus](docs/project-status.md).
@@ -98,6 +97,7 @@ dokumentiert:
 - [GPIO- und ESP8266-HIL-Test](docs/operations/gpio-hil-test.md)
 - [DS3231-Offline-Zeitbasis](docs/operations/ds3231-rtc.md)
 - [Lokale Systemsteuerung](docs/operations/local-system-control.md)
+- [Feldbericht 2026](docs/operations/field-report-2026.md)
 
 Die Anwendung lauscht standardmäßig nur auf `127.0.0.1` und benötigt zur
 Laufzeit keine Internetverbindung.

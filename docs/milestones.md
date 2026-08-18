@@ -1,26 +1,26 @@
 # Entwicklungsmeilensteine
 
-Die Meilensteine entsprechen abgeschlossenen, über Pull Requests integrierten
-Projektabschnitten. Ein Meilenstein ist erst abgeschlossen, wenn seine
+Die Meilensteine entsprechen fachlichen Projektabschnitten und sind unabhängig
+von den fortlaufenden Pull-Request-Nummern auf GitHub. Ein Meilenstein ist erst
+abgeschlossen, wenn seine
 automatisierten Prüfungen und die jeweils notwendige Zielsystemprüfung
 bestanden sind.
 
 | Milestone | Inhalt | Status |
 | --- | --- | --- |
-| 1 / PR 1 | Hardware-Zwischenlayer, Simulatoren und Zapf-Zustandsautomat | abgeschlossen |
-| 2 / PR 2 | SQLite-Persistenz, Migrationen und Diagnosezugriff | abgeschlossen |
-| 3 / PR 3 | NFC-, Zapf- und Persistenzintegration mit Smoke-Test | abgeschlossen |
-| 4 / PR 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
-| 5 / PR 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
-| 6 / PR 6 + PR 6.1 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
-| 7 / PR 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
-| 8 / PR 8 | Hardware-in-the-Loop sowie reale Ventil-, Durchfluss- und Not-Aus-Adapter | in Umsetzung |
-| 9 / PR 9 | Kalibrierung, Gesamttest und Beta-Felderprobung | geplant |
+| 1 | Hardware-Zwischenlayer, Simulatoren und Zapf-Zustandsautomat | abgeschlossen |
+| 2 | SQLite-Persistenz, Migrationen und Diagnosezugriff | abgeschlossen |
+| 3 | NFC-, Zapf- und Persistenzintegration mit Smoke-Test | abgeschlossen |
+| 4 | Dokumentations-, Schnittstellen- und Community-Baseline | abgeschlossen |
+| 5 | Touchoptimierte Push-to-Fill-Kiosk-WebUI nach CR-001 | abgeschlossen |
+| 6 | Adminmodus, Verwaltungs-API sowie Benutzer- und NFC-Verwaltung | abgeschlossen |
+| 7 | Smartphone-Admin-WebUI, Webauthentifizierung und priorisierte Verwaltungsabläufe | abgeschlossen |
+| 8 | GPIO-Hardwareintegration, Offline-Betrieb und Beta-Feldkandidat | im Feld bewährt; Safety-Nacharbeit offen |
+| 9 | Feldnachbereitung und priorisierte Betriebsverbesserungen | in Planung |
 
-`PR 6.1` ist ausschließlich der Dokumentationsnachtrag zum bereits integrierten
-PR 6. Er erzeugt keinen neuen Meilenstein und verändert weder Produktversion
-noch die folgenden logischen PR-Bezeichnungen. Die fortlaufende Nummer, die
-GitHub dem Nachtrags-PR technisch zuweist, kann davon abweichen.
+Frühere Bezeichnungen wie `PR 6.1` bleiben historische Checkpointnamen. Seit
+mehrere Arbeitspakete in getrennten Pull Requests umgesetzt wurden, darf aus
+einer Milestone-Nummer keine GitHub-PR-Nummer abgeleitet werden.
 
 ## Milestone 5: Kiosk-WebUI Alpha
 
@@ -143,19 +143,19 @@ bleiben für automatisierte und ausdrücklich aktivierte lokale Tests erhalten.
 
 ### Arbeitspakete
 
-| Paket | Ergebnis |
-| --- | --- |
-| `M8.1 HW` | abgeschlossen: regulärer Pi-GPIO-Pfad und ESP8266-HIL mit aktivem-HIGH-Ventilsignal, definiertem LOW-Ruhezustand, von WLAN unabhängiger Impulserzeugung und erfolgreichem erstem Normalfluss |
-| `M8.2 PLAN` | geprüfter elektrischer Connectorvertrag einschließlich Pegeln, Trennung, Ruhezuständen und Fehlerfällen |
-| `M8.3 HW` | elektrisch abgenommene Ventiltreiber- und Durchflusssensorstufe hinter den implementierten GPIO-Adaptern |
-| `M8.4 HW` | realer Not-Aus-Adapter sowie dokumentierte unabhängige elektrische Ventilunterbrechung |
-| `M8.5 TEST` | HIL-Abnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung |
-| `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer |
-| `M8.7 OPS` | DS3231 als verbindliche Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen |
-| `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren |
-| `M8.9 DB/OPS` | automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download aufs Smartphone |
-| `M8.10 FIX/OPS` | feldtaugliche Bereitschaftsanzeige, rein informativer Fassbestand, entspannte aktive Watchdogs, Chromium-Neustart und Einsatzübergabe |
-| `M8.11 FIX/OPS` | reparierter Backupdienststart und Kennzeichnung des integrierten Feldstands als `0.4.0-beta.1` |
+| Paket | Ergebnis oder verbleibendes Ziel | Status |
+| --- | --- | --- |
+| `M8.1 HW` | regulärer Pi-GPIO-Pfad und ESP8266-HIL mit aktivem-HIGH-Ventilsignal, definiertem LOW-Ruhezustand, von WLAN unabhängiger Impulserzeugung und erfolgreichem Normalfluss | abgeschlossen |
+| `M8.2 PLAN` | elektrischer Connectorvertrag einschließlich Pegeln, Trennung, Ruhezuständen und Fehlerfällen | teilweise dokumentiert; formale Freigabe offen |
+| `M8.3 HW` | reale Ventiltreiber- und Durchflusssensorstufe hinter den GPIO-Adaptern | sechs Tage im Feld bewährt; formale elektrische Abnahme offen |
+| `M8.4 HW` | unabhängige elektrische Ventilunterbrechung und realer Not-Aus-Adapter | hardwareseitige Unterbrechung vorhanden; Softwareadapter offen |
+| `M8.5 TEST` | HIL- und Zielabnahme für Normalfluss, fehlenden Durchfluss, Neustart, Verbindungsabbruch und Safety-Verriegelung | Normal- und Feldbetrieb nachgewiesen; systematische Fehlerfälle offen |
+| `M8.6 UI` | lokale Wartungszapfung für den abgenommenen Hardwareablauf, ohne Zapfbuchung für den ausführenden Benutzer | offen |
+| `M8.7 OPS` | DS3231 als Offline-Zeitbasis, Laden vor der Zapfanwendung und lokales CLI zum einmaligen Stellen | implementiert und auf dem Zielsystem geprüft |
+| `M8.8 FEAT` | lokale, NFC-adminautorisierte Systemseite für auditierten Neustart und geordnetes Herunterfahren | abgeschlossen |
+| `M8.9 DB/OPS` | automatische, integritätsgeprüfte SQLite-Sicherung alle 30 Minuten und authentifizierter CSV-Download aufs Smartphone | abgeschlossen |
+| `M8.10 FIX/OPS` | feldtaugliche Bereitschaftsanzeige, rein informativer Fassbestand, entspannte aktive Watchdogs, Chromium-Neustart und Einsatzübergabe | abgeschlossen |
+| `M8.11 FIX/OPS/FEAT/DOC` | reparierter Backupdienststart, Kennzeichnung als `0.4.0-beta.1`, erhaltene Sitzungsmenge, Verbrauchsrang, Offline-Notfallhandbuch und bereinigte Kioskdiagnose | abgeschlossen und über PR #12 integriert |
 
 ### Abnahmekriterien
 
@@ -181,3 +181,34 @@ Die Datensicherung aus `M8.9` referenziert `ZZ-DAT-001`, `ZZ-DAT-002`,
 `ZZ-DAT-006`, `ZZ-DAT-008` und `ZZ-DAT-010`.
 Die Feldvorbereitung aus `M8.10` referenziert `ZZ-KEG-004`, `ZZ-SAF-004`,
 `ZZ-SAF-005`, `ZZ-SAF-008`, `ZZ-SAF-009`, `ZZ-UI-002` und `ZZ-UI-011`.
+
+## Milestone 9: Feldnachbereitung und Betriebsverbesserungen
+
+Der erste reale Beta-Feldeinsatz wurde über sechs Tage erfolgreich
+abgeschlossen. Milestone 9 überführt die qualitativen Erfahrungen in klar
+abgrenzbare Arbeitspakete. Der Feldnachweis ist keine formale elektrische oder
+sicherheitstechnische Abnahme und enthält noch keine im Repository belegte
+quantitative Kalibrierauswertung.
+
+### Geplante Arbeitspakete
+
+| Paket | Ziel | Status |
+| --- | --- | --- |
+| `M9.1 DOC/PLAN` | Feldbericht, bereinigter Projektstatus, priorisiertes Backlog und Anforderungsabgleich | in Umsetzung |
+| `M9.2 HW` | vorhandenen hardwareseitigen Not-Aus zusätzlich softwareseitig erkennen, verriegeln und protokollieren | geplant |
+| `M9.3 UI` | lokalen, ventilgesperrten Fasswechsel auf Basis der bestehenden Fachoperation bereitstellen | vorgeschlagen; Zugangsweg offen |
+| `M9.4 UI` | Smartphone-Buchungsansicht standardmäßig auf zehn Einträge begrenzen und ältere Einträge gezielt nachladen | fachlich entschieden |
+| `M9.5 FEAT` | offenen Ausschankmodus ohne persönliche Abrechnung fachlich entscheiden und umsetzen | Konzept offen |
+| `M9.6 DB` | Archivierung oder kontrollierte Bereinigung von Fass- und Veranstaltungshistorie festlegen | Konzept offen |
+| `M9.7 UI/PLAN` | öffentlichen Top-Listen-Ticker und weitere Gamification definieren | Konzept offen |
+| `M9.8 TEST/DOC` | Kalibrierwert, quantitative Feldkennzahlen sowie verbleibende HIL- und elektrische Prüfungen dokumentieren | Daten offen |
+| `M9.9 UI` | pauschale Sicherheitsüberschrift durch sachliche, ursachenbezogene Sperrmeldungen ersetzen | fachlich entschieden |
+
+Die Detailentscheidungen und Prioritäten stehen im
+[`Produkt-Backlog`](backlog.md). Neue Funktionen werden erst implementiert,
+wenn ihre vorgeschlagenen Anforderungen und offenen Entscheidungen ausreichend
+konkretisiert sind.
+
+Traceability: `ZZ-SAF-001`, `ZZ-SAF-002`, `ZZ-DAT-004`, `ZZ-KEG-006`,
+`ZZ-KEG-007`, `ZZ-AUT-013`, `ZZ-UI-014` bis `ZZ-UI-017`, `ZZ-DAT-006`,
+`ZZ-DAT-011` und `OD-015` bis `OD-018`.

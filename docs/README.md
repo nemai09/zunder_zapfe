@@ -25,6 +25,7 @@ zu korrigieren.
 
 - [Projektstatus](project-status.md)
 - [Entwicklungsmeilensteine](milestones.md)
+- [Produkt-Backlog](backlog.md)
 - [Versionierung](versioning.md)
 - [Commit-Konvention](commit-konvention.md)
 - [Projektorganisation](organization.md)
@@ -62,6 +63,7 @@ zu korrigieren.
 - [SQLite-Datenbankbrowser](operations/database-browser.md)
 - [Automatische Datensicherung](operations/database-backup.md)
 - [Beta-Feldeinsatz: Übergabe und bewusste Abweichungen](operations/alpha-field-operation.md)
+- [Feldbericht 2026](operations/field-report-2026.md)
 - [Offline-Notfallhandbuch für den Feldbetrieb](operations/field-emergency-runbook.md)
 - [Debugbetrieb ohne Durchflusshardware](operations/debug-without-flow-hardware.md)
 - [ESP8266-Durchflussemulator](../esp8266_flow_emulator/README.md)

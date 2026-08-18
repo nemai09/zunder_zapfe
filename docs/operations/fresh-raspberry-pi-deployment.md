@@ -1,6 +1,6 @@
 # Erstinstallation eines Raspberry Pi aus Git
 
-Status: Alpha-Betriebsanleitung für einen neuen Raspberry Pi 4B
+Status: Beta-Betriebsanleitung für einen neuen Raspberry Pi 4B
 
 Diese Anleitung beschreibt die erstmalige Installation auf einem Raspberry Pi,
 auf dem außer Raspberry Pi OS Desktop und einer Internetverbindung noch keine

@@ -1,7 +1,7 @@
 # Projektstatus
 
-Stand: 2026-08-09
-Phase: Beta-Felderprobung
+Stand: 2026-08-18
+Phase: Beta-Feldnachbereitung
 
 ## Implementiert und geprüft
 
@@ -80,15 +80,17 @@ Phase: Beta-Felderprobung
   HTTP-Access-Log
 - kurze persönliche Kiosk-Begrüßung nach erfolgreicher Live-Zuordnung eines
   Armbands ohne automatische Anmeldung
+- sechstägiger realer Beta-Feldeinsatz mit NFC, Kiosk, Ventil,
+  Durchflusserfassung, SQLite und Smartphone-Administration
+- hardwareseitig trennender Not-Aus; die Softwareerkennung ist noch offen
 
-Der Stand wurde automatisiert und auf dem Raspberry Pi mit realem NFC-Leser
-und simuliertem Durchfluss geprüft. Zusätzlich wurde der reguläre GPIO-Pfad
-mit dem ESP8266-HIL erstmals erfolgreich als vollständiger manueller
-Zapfvorgang geprüft: BCM17 aktivierte das HIL-Ventilsignal, BCM27 zählte die
-erzeugten Impulse, Loslassen schloss den Ausgang und die gemessene Menge wurde
-verbucht. Die übrigen HIL-Fehlerfälle sowie die elektrische Abnahme realer
-Ventilhardware bleiben offen. Eine bestandene Alpha-Prüfung ist keine Freigabe
-für reale Ventilhardware.
+Der Stand wurde automatisiert und auf dem Raspberry Pi zunächst mit realem
+NFC-Leser, simuliertem Durchfluss und anschließend über den regulären GPIO-Pfad
+mit ESP8266-HIL geprüft. Danach lief das Gesamtsystem sechs Tage mit realer
+Zapfhardware im Feld und funktionierte nach Betreiberangabe ausgesprochen gut.
+Dieser qualitative Betriebsnachweis ersetzt keine formale elektrische,
+Kalibrier- oder Safety-Abnahme; insbesondere wird der inzwischen vorhandene,
+hardwareseitig trennende Not-Aus noch nicht von der Software erkannt.
 Die Kiosk-WebUI wurde lokal mit simulierten API-Zuständen bei `800 × 480`
 und anschließend im vollständigen Bedienablauf auf dem Zielsystem geprüft.
 Milestone 5 umfasst 84 bestandene automatisierte Tests sowie die erfolgreiche
@@ -105,18 +107,19 @@ Armbandverwaltung, Fassablauf, Buchungen, Auswertung und Diagnose wurde auf
 dem Raspberry Pi bedient und für den Alpha-Stand abgenommen. Milestone 7 ist
 damit abgeschlossen.
 
-Der lokale Entwicklungsstand nach `M8.10` umfasst 175 bestandene automatisierte
-Tests einschließlich rein informativem Fassbestand, fachlicher
+Der lokale Entwicklungsstand nach `M8.10` umfasste 175 bestandene
+automatisierte Tests einschließlich rein informativem Fassbestand, fachlicher
 Zapfbereitschaft, konfigurierbaren Feld-Watchdogs, RTC, Systemsteuerung und
-Datensicherung. Diese PC-Prüfung ersetzt nicht den für den nächsten Tag
-vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
+Datensicherung. `M8.11` ergänzte Feldkorrekturen und weitere automatisierte
+Prüfungen. Der reale Sechs-Tage-Nachweis und seine Grenzen sind im
+[`Feldbericht 2026`](operations/field-report-2026.md) festgehalten.
 
 ## Teilweise umgesetzt
 
 | Bereich | Vorhanden | Fehlt |
 | --- | --- | --- |
-| Adminfunktionen | Rolle, erhaltener lokaler Adminmodus, begrenztes WLAN- und Energiemenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | hardwareabhängige Kalibrier- und Safety-Einstellungen nach Festlegung der realen Adapter |
-| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL-Firmware, aktiver-HIGH-Ventilausgang auf BCM17, Flankenzähler auf BCM27 und erfolgreicher erster HIL-Normalfluss | vollständige HIL-Fehlerfallabnahme, realer Not-Aus-Adapter und elektrische Abnahme der Ventil-/Sensorhardware |
+| Adminfunktionen | Rolle, begrenztes lokales WLAN- und Energiemenü, Smartphone-WebUI, Webauthentifizierung, Benutzer-/Armbandverwaltung, Veranstaltungen, Getränke, Fasswechsel, Buchungen, Teilnehmerabrechnung und -export, Diagnose, Audit und Sicherheitsreset | lokaler operativer Fasswechsel sowie hardwareabhängige Kalibrier- und Safety-Einstellungen |
+| Zapfhardware | Verträge, Simulatoren, Sicherheitslogik, ESP8266-HIL, GPIO-Adapter, reale Ventil-/Durchflusshardware im Sechs-Tage-Einsatz und hardwareseitige Not-Aus-Unterbrechung | softwareseitiger Not-Aus-Eingang, vollständige Fehlerfallabnahme und formale elektrische Abnahme |
 | Offline-Zeit | DS3231-Konfiguration, Startdienst vor der Zapfanwendung und lokales CLI für Status sowie einmalige Übernahme der Systemzeit ohne NTP-Änderung | Zielsystemnachweis nach stromlosem Neustart und Bewertung der Abweichung über den Einsatzzeitraum |
 | Konfiguration | Umgebungsvariablen, Settings-Tabelle, Admin-WLAN-Installer und lokaler AP-/Client-Moduswechsel | weitere Adminbedienung und verbindliche Grenzwerte |
 | Abrechnung | unveränderliche Zapf-Rohdaten, zusammengefasste NFC-Anmeldebuchungen, Filter, Gesamt- und Einzelanalyse sowie CSV-Gesamtauszug je Veranstaltung | Storno und Korrektur |
@@ -126,30 +129,35 @@ vorgesehenen Inbetriebnahme- und Kalibrierungstest auf dem Raspberry Pi.
 - hardwareabhängige Smartphone-Einstellungen für Kalibrierung,
   Plausibilitäts- und Safety-Grenzen
 - lokale Kiosk-Bedienung für Wartungszapfungen
-- realer Not-Aus-Adapter
-- elektrisch abgenommene Ventiltreiber- und Durchflusshardware
-- kalibrierte Mengenmessung und Genauigkeitsnachweis
+- softwareseitiger Adapter für den realen Not-Aus
+- formal elektrisch abgenommene Ventiltreiber- und Durchflusshardware
+- im Repository dokumentierter Kalibrierwert und Genauigkeitsnachweis
 - automatische Start-Selbsttests für reale Hardware
+- lokaler operativer Fasswechsel
+- offener Ausschankmodus ohne persönliche Abrechnung
+- kontrollierter Lebenszyklus für Fass- und Veranstaltungshistorie
 - Happy Hour, Storno und Korrektur
 - optionale Fasswaage und MQTT-Vertrag
 
 ## Nächste Entwicklungsreihenfolge
 
-1. Gesamtsystem mit realem Ventil und Durchflusssensor kalibrieren sowie den
-   verbindlichen Inbetriebnahmetest für den Beta-Feldeinsatz durchführen.
-2. Nach dem Einsatz die bewusst akzeptierten Abweichungen aus
-   [`Beta-Feldeinsatz`](operations/alpha-field-operation.md) erneut bewerten.
-3. ESP8266-HIL für Neustart, Verbindungsabbruch und Safety-Verriegelung
-   vollständig abnehmen.
-4. Reale Ventiltreiber- und Sensorstufe elektrisch freigeben sowie später den
-   Not-Aus-Adapter implementieren.
-5. Lokale Wartungszapfung passend zum realen Hardwareablauf in die Kiosk-UI
-   integrieren.
+1. Reale Not-Aus-Betätigung zusätzlich zur vorhandenen hardwareseitigen
+   Unterbrechung softwareseitig erkennen, verriegeln und protokollieren.
+2. Operativen Fasswechsel lokal am Kiosk bereitstellen und die
+   Smartphone-Buchungsansicht standardmäßig auf zehn Einträge begrenzen.
+3. Fachmodell für offenen Ausschank ohne persönliche Abrechnung entscheiden.
+4. Archivierung oder kontrollierte Bereinigung historischer Veranstaltungen
+   und Fässer festlegen, ohne Buchungsinvarianten zu verletzen.
+5. Top-Listen-Ticker und weitere Gamification konzipieren.
+6. Technische Kiosksperren mit konkreter Ursache statt einer pauschalen
+   Sicherheitsüberschrift anzeigen.
+7. Kalibrierwert, quantitative Feldkennzahlen und verbleibende elektrische
+   sowie HIL-Fehlerfallabnahmen dokumentieren.
 
 Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 [`milestones.md`](milestones.md).
 
-## Bekannte Beta-Eigenschaften
+## Bekannte Beta-Eigenschaften und offene Feldpunkte
 
 - Kompatibel gestartete Portionen bleiben im Backend erhalten; nach einer Portion bleibt der Zustand acht Sekunden lang
   `top_up_available`; eine unmittelbar gestartete weitere Portion wird bewusst
@@ -180,6 +188,8 @@ Die abgeschlossenen und geplanten PR-Checkpoints stehen unter
 - Das WLAN-Systemmenü kann nur bereits vorhandene, automatisch verbindbare
   Clientprofile verwenden. Die spätere Bindung an eine besondere NFC-Karte
   oder Rolle ist als `OD-014` offen.
-- Die für den bevorstehenden Einsatz akzeptierten Abweichungen und der
-  Inbetriebnahmeablauf stehen zentral unter
-  [`Beta-Feldeinsatz`](operations/alpha-field-operation.md).
+- Die für den ersten Einsatz akzeptierten Abweichungen und der wiederverwendbare
+  Inbetriebnahmeablauf stehen unter
+  [`Beta-Feldeinsatz`](operations/alpha-field-operation.md). Erkenntnisse und
+  Folgearbeiten stehen im [`Feldbericht 2026`](operations/field-report-2026.md)
+  und im [`Produkt-Backlog`](backlog.md).

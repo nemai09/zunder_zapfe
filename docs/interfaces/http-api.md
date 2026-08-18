@@ -1,6 +1,6 @@
 # Lokaler HTTP-API-Vertrag
 
-Status: Alpha-Vertrag
+Status: Beta-Vertrag
 
 Interne Basis-URL: `http://127.0.0.1:8000`
 Maschinenlesbar: [`openapi.json`](openapi.json)
@@ -9,7 +9,7 @@ Maschinenlesbar: [`openapi.json`](openapi.json)
 
 Die API ist die einzige vorgesehene Grenze zwischen WebUI und Backend. Sie ist
 standardmäßig nur über Loopback erreichbar, verwendet JSON und benötigt zur
-Laufzeit kein Netzwerk. Die Alpha-API besitzt noch keinen Versionspräfix;
+Laufzeit kein Netzwerk. Die Beta-API besitzt noch keinen Versionspräfix;
 Änderungen müssen daher in einem gemeinsamen PR mit ihren Clients erfolgen.
 
 ## Allgemeine Antworten
@@ -63,7 +63,8 @@ ausführende Benutzer-ID noch ein Admin-Flag einspeisen.
 | `registration_welcome` | `str | null` | kurzlebiger Anzeigename nach erfolgreicher Armbandzuordnung; keine Anmeldung |
 
 `valve_open` ist ein angeforderter Softwarezustand und keine physische
-Ventilrückmeldung. Die Kiosk-Debuganzeige verwendet genau dieses Feld.
+Ventilrückmeldung. Es bleibt für geschützte Diagnoseansichten verfügbar und
+wird nicht mehr in der öffentlichen Kiosk-Kopfleiste angezeigt.
 
 `TapReadinessResponse` trennt die reine Prozesslebendigkeit von der
 Zapfbereitschaft. `ready` ist nur wahr, wenn Steuerung, NFC, Ventiladapter,
@@ -193,7 +194,7 @@ Header `X-CSRF-Token`. Die Alpha-Defaults sind 30 Minuten Inaktivität und
 Minute sperren weitere Versuche vorübergehend.
 
 Webpasswort und Hash erscheinen weder in Antworten noch in Logs oder
-Auditwerten. Da die isolierte Alpha-Ausbaustufe HTTP verwendet, besitzt das
+Auditwerten. Da die isolierte Beta-Ausbaustufe HTTP verwendet, besitzt das
 Sitzungscookie noch kein `Secure`-Attribut.
 
 ## Smartphone-Benutzerverwaltung

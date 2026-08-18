@@ -1,6 +1,6 @@
 # GPIO- und ESP8266-Hardware-in-the-Loop-Test
 
-Status: Alpha-Prüfaufbau für Milestone 8
+Status: Beta-Prüfaufbau für Milestone 8
 
 Die Anwendung verwendet in diesem Aufbau bereits ihre regulären
 Raspberry-Pi-Adapter. Der ESP8266 ist ausschließlich externe Prüfhardware: Er

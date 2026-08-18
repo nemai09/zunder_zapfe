@@ -15,7 +15,7 @@ Persistenz und Hardwareentwicklung.
 
 ## Stabilitätsregel
 
-Die Verträge sind innerhalb der Alpha-Phase nicht semantisch
+Die Verträge sind innerhalb der Beta-Phase nicht semantisch
 rückwärtskompatibel garantiert. Änderungen müssen dennoch bewusst erfolgen:
 
 1. betroffene Anforderungen und Nutzer identifizieren,

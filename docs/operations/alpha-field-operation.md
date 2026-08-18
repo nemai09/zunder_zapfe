@@ -1,8 +1,8 @@
 # Beta-Feldeinsatz: Übergabe und bewusste Abweichungen
 
-Stand: 2026-08-09
+Stand: 2026-08-18
 
-Diese Seite ist der operative Übergabepunkt für den ersten sechstägigen
+Diese Seite war der operative Übergabepunkt für den ersten sechstägigen
 Feldeinsatz mit ungefähr 300 Litern geplantem Ausschank. Sie ergänzt den
 Anforderungskatalog um bewusst akzeptierte Beta-Abweichungen. Ein neuer
 Entwicklungsagent liest zuerst `AGENTS.md`, `docs/project-status.md`, diese
@@ -26,7 +26,15 @@ nicht zu diesem Einsatzumfang.
 | Fassbestand | Startmenge minus Buchungen wird weiter angezeigt, sperrt aber auch bei null oder negativem Ergebnis keine Zapfung | Der Bestand ist nur eine Orientierung. Das tatsächliche Fassende erkennt das Bedienpersonal. |
 | Bereitschaft | Der Kiosk prüft Softwarezustand, Adapterverfügbarkeit, NFC und aktiven Fasskontext | Die Anzeige ist keine elektrische Rückmeldung des physischen Ventils und kein Genauigkeitsnachweis des Sensors. |
 | Datenwiederherstellung | Alle 30 Minuten entstehen lokale SQLite- und CSV-Sicherungen; eine automatische Wiederherstellung ist absichtlich nicht vorhanden | Die Sicherung schützt vor logischen Schäden bei erhaltener SD-Karte. Gegen einen vollständigen Kartenausfall hilft nur der regelmäßige CSV-Download auf ein Telefon. |
-| Langzeitnachweis | HIL-Normalfluss wurde nachgewiesen; der mehrtägige Betrieb mit realem Ventil und Sensor noch nicht | Die reale Inbetriebnahme und ein möglichst langer Probelauf sind der verbleibende Freigabeschritt. |
+| Langzeitnachweis | Der sechstägige Betrieb mit realer Zapfhardware verlief nach Betreiberangabe ausgesprochen gut | Der qualitative Beta-Nachweis ist erbracht; quantitative Betriebsdaten und die formale elektrische, Kalibrier- und Safety-Abnahme bleiben getrennte Aufgaben. |
+
+## Ergebnis des ersten Einsatzes
+
+Der vorgesehene sechstägige Feldbetrieb wurde erfolgreich abgeschlossen. Die
+beobachteten Stärken, Bedienprobleme und daraus abgeleiteten Arbeitspakete sind
+im [`Feldbericht 2026`](field-report-2026.md) und im
+[`Produkt-Backlog`](../backlog.md) festgehalten. Die folgenden Prüfschritte
+bleiben als Checkliste für künftige Inbetriebnahmen erhalten.
 
 ## Vorläufige Feldparameter
 
@@ -93,7 +101,8 @@ vollständige Zielsystemprüfung steht unter
 - Das lokale WLAN-Menü kann den Access Point wieder aktivieren. Ein vorheriger
   Clientmodus blockiert den Backendstart nicht.
 
-Mindestens einmal täglich wird das aktuelle CSV-Sicherungspaket über die
+Während eines Feldeinsatzes wird mindestens einmal täglich das aktuelle
+CSV-Sicherungspaket über die
 Smartphone-Administration heruntergeladen. Weitere Funktionsentwicklung
 während des Einsatzes unterbleibt; bei Problemen werden zuerst Konfiguration,
 Verkabelung und die vorhandenen Diagnoseanzeigen geprüft.

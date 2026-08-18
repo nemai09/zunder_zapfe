@@ -1,6 +1,6 @@
 # Vertrag zwischen Backend und Zapfhardware
 
-Status: Alpha-Vertrag
+Status: Beta-Vertrag
 Verbindlicher Code: [`src/zunder_zapfe/hardware/interfaces.py`](../../src/zunder_zapfe/hardware/interfaces.py)
 
 ## Zweck und Grenze

@@ -55,7 +55,7 @@ Als Alpha-Defaults gelten:
 - beim eigenen Passwortwechsel bleibt höchstens die neu bestätigte Sitzung
   bestehen.
 
-Da die isolierte Alpha-Ausbaustufe bewusst HTTP verwendet, kann das Cookie noch
+Da die isolierte Beta-Ausbaustufe bewusst HTTP verwendet, kann das Cookie noch
 nicht das Attribut `Secure` tragen. Zustandsändernde Routen prüfen deshalb
 zusätzlich Ursprung und CSRF-Token. Fehlgeschlagene Logins werden gedrosselt
 und ohne Passwortinhalt als technisches Ereignis protokolliert.

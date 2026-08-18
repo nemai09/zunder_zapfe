@@ -57,7 +57,7 @@ Plausibilitäts- und Safety-Werte folgt erst nach Festlegung der realen Adapter
 in Milestone 8 beziehungsweise der Kalibrierung in Milestone 9. Bis dahin sind
 die drei Watchdogzeiten bewusst als lokale Umgebungsparameter verfügbar; ihre
 vorläufigen Werte und Abweichungen stehen unter
-[`Alpha-Feldeinsatz`](../operations/alpha-field-operation.md).
+[`Beta-Feldeinsatz`](../operations/alpha-field-operation.md).
 
 Die zeitlich begrenzte Abweichung für lokale Tests ohne Durchflusshardware ist unter
 [`../operations/debug-without-flow-hardware.md`](../operations/debug-without-flow-hardware.md)
